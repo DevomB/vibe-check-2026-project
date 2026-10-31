@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "vibecheck-lean": {
+      "source": "modiqo/vibecheck-lean",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "5c07a0e30ff09206178634c02060278451b037a2575a1ab7c4318fe96361cb2b"
+    }
+  }
+}
