@@ -21,8 +21,9 @@ export class LeanProcess {
   private exited = false;
 
   constructor(binary = leanBinaryPath()) {
-    if (!existsSync(binary)) throw new Error(`Lean game program not found at ${binary}. Run "make lean" (or "cd engine && lake build") first.`);
-    this.child = spawn(binary, [], { stdio: ["pipe", "pipe", "pipe"] });
+    // Local app: Makefile builds the binary separately. A standalone package must include it explicitly.
+    if (!existsSync(/* turbopackIgnore: true */ binary)) throw new Error(`Lean game program not found at ${binary}. Run "make lean" (or "cd engine && lake build") first.`);
+    this.child = spawn(/* turbopackIgnore: true */ binary, [], { stdio: ["pipe", "pipe", "pipe"] });
     createInterface({ input: this.child.stdout }).on("line", (line) => {
       const next = this.waiting.shift();
       if (!next) return;
