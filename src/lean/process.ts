@@ -6,7 +6,7 @@ import type { LeanCommand, LeanReply } from "./protocol";
 
 /** Where `lake build` puts the game program. Override with POKER_BIN. */
 export function leanBinaryPath(): string {
-  return process.env.POKER_BIN ?? path.join(process.cwd(), "engine", ".lake", "build", "bin", "poker");
+  return process.env.POKER_BIN ?? path.join(process.cwd(), "engine", ".lake", "build", "bin", process.platform === "win32" ? "poker.exe" : "poker");
 }
 
 /**
