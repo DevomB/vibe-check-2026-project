@@ -16,3 +16,8 @@ root = "Main"
 [[lean_exe]]
 name = "equity-bench"
 root = "EquityBench"
+
+# The main theorem statements (Challenge) and their proofs (Solution), for `lake comparator`.
+# Not a default target: the Challenge file is all `sorry` on purpose.
+[[lean_lib]]
+name = "Checks"

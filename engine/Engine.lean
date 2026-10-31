@@ -13,3 +13,4 @@ import Engine.SliderTests
 import Engine.EquityTests
 import Engine.Proofs.BotLegal
 import Engine.Proofs.BotRisk
+import Engine.Proofs.Reachable
