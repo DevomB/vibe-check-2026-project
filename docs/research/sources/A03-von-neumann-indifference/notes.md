@@ -1,6 +1,8 @@
 # A03: Von Neumann's poker model and the indifference principle (bluff share by bet size)
 
-## Summary (also in summary.md)
+## Summary
+
+**Source:** C. Ferguson, T. S. Ferguson. "On the Borel and von Neumann Poker Models." Venue unsure. https://www.math.ucla.edu/~tom/papers/poker1.pdf
 
 TL;DR: Ferguson and Ferguson restate von Neumann's one-bet poker model with exact formulas and derive them from "indifference equations". From their first equation, the bluff share of the betting range is B/(2B+2) for a bet of B into a pot of 2. That is s/(1+2s) with s = bet / pot. We believed s/(1+2s), and it is confirmed under the conditions below.
 

@@ -1,8 +1,9 @@
 # Source index
 
-40 source folders: A 8, B 7, C 8, D 7, E 10. Each folder has a `summary.md` (short, with
-the citation and a link to the original) and a `notes.md` (full extraction, with every URL
-fetched on 2026-10-31). Some folders bundle several closely related items; the notes list
+40 source folders: A 8, B 7, C 8, D 7, E 10. Each folder has one `notes.md`. Its
+**Summary** section comes first: the citation with a link to the original, a short TL;DR,
+the points that matter for us, and the verdict. The full extraction follows, with every URL
+fetched on 2026-10-31. Some folders bundle several closely related items; the notes list
 each one. Items the agents could not open are marked UNVERIFIED in the notes and are not
 counted here. The papers themselves are not stored in the repo; use the citation links.
 

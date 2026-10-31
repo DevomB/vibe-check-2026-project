@@ -1,5 +1,18 @@
 # D07: Performance of compiled Lean for enumeration; `decide` vs `native_decide`; exact `Rat`
 
+## Summary
+
+**Source:** Ullrich, de Moura. "Counting Immutable Beans: Reference Counting Optimized for Purely Functional Programming." IFL 2019. https://arxiv.org/abs/1908.05647. Lean reference manual: https://lean-lang.org/doc/reference/latest/Basic-Types/Natural-Numbers/
+
+**TL;DR.** Prove general theorems instead of evaluating huge cases in the kernel. Use exact `Rat` (it is in core) for EV. Benchmark preflop equity early.
+
+- A preflop all-in has 1,712,304 boards, so about 3.4 million hand evaluations per spot. That needs a fast `UInt64` bitmask evaluator; `UInt64` values get boxed inside `Array`.
+- I found no public benchmarks of compiled Lean for this kind of code. All speed figures here are estimates, not measurements.
+- `decide` runs in the kernel: slow but trusted. `native_decide` trusts the compiler and fails `lake check`.
+- `Rat` is in core at v4.35, so exact rational EV needs no Mathlib.
+
+Verdict: use.
+
 ## Citation / identity (all fetched 2026-10-31)
 - Ullrich, S. and de Moura, L. "Counting Immutable Beans: Reference Counting Optimized for Purely Functional Programming". IFL 2019 (peer-reviewed workshop; arXiv:1908.05647 v3, 2020-03-05). https://arxiv.org/abs/1908.05647
 - Lean reference manual, Natural Numbers: https://lean-lang.org/doc/reference/latest/Basic-Types/Natural-Numbers/ (official; read in two parts)

@@ -1,6 +1,9 @@
 # C05: Game theory libraries in Lean 4 (elazarg/GameTheory; math-xmum) and Isabelle (AFP Nash_Equilibrium)
 
-## Summary (also in summary.md)
+## Summary
+
+**Source:** elazarg/GameTheory (Apache-2.0), https://github.com/elazarg/GameTheory. math-xmum/GameTheory, https://github.com/math-xmum/GameTheory. Isabelle AFP Nash_Equilibrium, https://www.isa-afp.org/entries/Nash_Equilibrium.html
+
 TL;DR: Lean 4 now has game theory libraries on Mathlib with von Neumann's minimax theorem and mixed Nash existence. elazarg/GameTheory (Apache-2.0, Lean v4.33.1) proves minimax for finite two-player zero-sum games with no `sorry` in that file. Isabelle's AFP has a 2026 Nash equilibrium entry.
 - None of them mentions poker, CFR, exploitability, or Kuhn's theorem on behaviour strategies (from what I could see). Verified exploitability for a poker strategy would be new.
 - Payoffs are real numbers (`ℝ`). Good for theory, but not computable. Our Kuhn/Leduc checks need exact `Rat` values to run `decide`.

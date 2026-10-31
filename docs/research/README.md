@@ -18,9 +18,9 @@ chess.com-style game review graded by EV loss in big blinds.
 ## Plan
 
 Five research subagents ran in parallel, one per group, each aiming for about
-six sources (30 in all). Each source gets its own folder with a full
-`notes.md` and a short `summary.md` (the agents could not write `summary.md`
-themselves, so each summary was copied from the top of its `notes.md`). The lead then read every summary and
+six sources (30 in all); they delivered 40. Each source gets one folder with
+one `notes.md`: a short summary at the top (with the citation and a link to
+the original), then the full extraction. The lead then read every summary and
 wrote the synthesis.
 
 | Group | Topic | Folder prefix |
@@ -47,4 +47,4 @@ If time ran short, groups B, C and E had priority.
 - [INDEX.md](INDEX.md): one row per source.
 - [SYNTHESIS.md](SYNTHESIS.md): ranked verification targets, novelty, MVP cut, model-vs-code check, parked ideas.
 - [OPEN_QUESTIONS.md](OPEN_QUESTIONS.md): decisions for the team or the organizers.
-- `sources/<id>-<slug>/summary.md`: short summary with the citation and link; `notes.md`: the full extraction. Papers are not stored; use the links.
+- `sources/<id>-<slug>/notes.md`: summary and citation at the top, full extraction below. Papers are not stored; use the links.

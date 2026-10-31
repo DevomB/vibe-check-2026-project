@@ -1,6 +1,8 @@
 # A04: Counterfactual regret minimization (CFR) and its variants: CFR (2007), CFR+ (2014), Discounted CFR (2018/2019)
 
-## Summary (also in summary.md)
+## Summary
+
+**Source:** Zinkevich, Johanson, Bowling, Piccione. "Regret Minimization in Games with Incomplete Information." NIPS 2007. https://proceedings.neurips.cc/paper/2007/hash/08d98638c6fcd194a4b1e6992063e944-Abstract.html. Tammelin. "Solving Large Imperfect Information Games Using CFR+." arXiv 2014. https://arxiv.org/abs/1407.5042. Brown, Sandholm. Discounted CFR. AAAI 2019. https://arxiv.org/abs/1809.04040
 
 TL;DR: CFR is the standard way to compute near-equilibrium poker strategies. You play the game against yourself many times. At each decision point you keep a running "regret" for each action and play actions in proportion to their positive regret. The average strategy approaches an equilibrium. CFR+ and Discounted CFR are faster versions.
 

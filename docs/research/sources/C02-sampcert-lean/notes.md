@@ -1,6 +1,9 @@
 # C02: SampCert (Lean) and "Verified Foundations for Differential Privacy"
 
-## Summary (also in summary.md)
+## Summary
+
+**Source:** de Medeiros et al. "Verified Foundations for Differential Privacy." arXiv preprint. https://arxiv.org/abs/2412.01671. Code: SampCert (Apache-2.0), https://github.com/leanprover/SampCert
+
 TL;DR: SampCert is a Lean + Mathlib library of verified random samplers (Laplace, Gaussian, uniform and others) for differential privacy, used in AWS. It is the main example of "verified randomness" in Lean.
 - Its probability type `SLang α := α → ℝ≥0∞` is simple: a weight for each outcome. The only random primitive is a uniform byte.
 - Trust boundary: the primitives carry `@[extern]` attributes, so they run as C code that is not verified against the Lean definitions. Our shuffle has the same boundary: the random source stays outside the proof.

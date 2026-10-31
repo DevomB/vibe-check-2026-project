@@ -1,6 +1,8 @@
 # A07: Landscape of big poker AI systems (Cepheus, DeepStack, Libratus, Pluribus, ReBeL, Student of Games)
 
-## Summary (also in summary.md)
+## Summary
+
+**Source:** Moravčík et al. "DeepStack: Expert-Level Artificial Intelligence in No-Limit Poker." https://arxiv.org/abs/1701.01724. Brown, Bakhtin, Lerer, Gong. ReBeL. https://arxiv.org/abs/2007.13544. Schmid et al. Student of Games. https://arxiv.org/abs/2112.03178. Brown, Sandholm. "Safe and Nested Subgame Solving." https://arxiv.org/abs/1705.02955. Bowling et al. "Heads-up limit hold'em poker is solved." Science 2015. https://doi.org/10.1126/science.1259433
 
 TL;DR: Since 2015, research bots have solved heads-up limit hold'em (Cepheus) and beaten professionals at heads-up no-limit (DeepStack, Libratus) and later six-player no-limit (Pluribus). ReBeL and Student of Games add learning plus search with convergence proofs on paper. I read four abstracts; Science pages were blocked, so Cepheus has metadata only and Libratus and Pluribus are unverified.
 

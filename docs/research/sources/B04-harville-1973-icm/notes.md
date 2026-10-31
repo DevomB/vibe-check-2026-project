@@ -1,6 +1,8 @@
 # B04: Harville (1973), "Assigning Probabilities to the Outcomes of Multi-Entry Competitions", and the Independent Chip Model (ICM)
 
-## Summary (also in summary.md)
+## Summary
+
+**Source:** D. A. Harville. "Assigning Probabilities to the Outcomes of Multi-Entry Competitions." JASA 68(342), 1973, pp. 312-316. https://doi.org/10.1080/01621459.1973.10482425. Also Diaconis, Ethier. "Gambler's Ruin and the ICM." https://arxiv.org/abs/2011.07610
 
 TL;DR: Harville's 1973 JASA paper (peer-reviewed; paywalled; I saw only Crossref metadata, no abstract) is the usual citation for the rule "the chance you finish k-th is your share of what is left after the players above you are removed". Poker players call this the Independent Chip Model (ICM). Diaconis and Ethier (open arXiv preprint) say the poker ICM came from Mason Malmuth's 1986 article. The formula itself I verified from Gilbert (2009) and Diaconis-Ethier, not from Harville's paper.
 

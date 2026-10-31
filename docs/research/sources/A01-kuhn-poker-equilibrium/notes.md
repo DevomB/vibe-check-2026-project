@@ -1,6 +1,8 @@
 # A01: Kuhn poker, its equilibrium family and game value
 
-## Summary (also in summary.md)
+## Summary
+
+**Source:** Hoehn, Southey, Holte, Bulitko. "Effective Short-Term Opponent Exploitation in Simplified Poker." AAAI 2005. https://cdn.aaai.org/AAAI/2005/AAAI05-123.pdf. Also Ganzfried, Sandholm, "Safe Opponent Exploitation", ACM TEAC 2015 (see A05).
 
 TL;DR: Kuhn poker (3 cards, ante 1, bet 1, one round) has a known exact solution. Two peer-reviewed papers (Hoehn et al., AAAI 2005; Ganzfried and Sandholm, ACM TEAC 2015) and Wikipedia agree on it. Kuhn's 1950 original was not opened.
 

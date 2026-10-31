@@ -1,6 +1,8 @@
 # B05: Gilbert (2009), "The Independent Chip Model and Risk Aversion"
 
-## Summary (also in summary.md)
+## Summary
+
+**Source:** G. T. Gilbert. "The Independent Chip Model and Risk Aversion." arXiv preprint, 2009. https://arxiv.org/abs/0911.3100
 
 TL;DR: A short open math paper (arXiv preprint, math.PR, not peer-reviewed as far as I saw). Under ICM (B04), with prizes that do not increase by place and at least one player who will get less than 2nd prize, **any chip-fair bet against one opponent lowers your expected prize money**, and **every player not in the bet gains**. Both can fail for bets among three or more players; the paper gives a numeric counterexample.
 

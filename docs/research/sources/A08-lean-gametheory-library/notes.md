@@ -1,6 +1,8 @@
 # A08: Prior machine-checked game theory: the Lean 4 "GameTheory" library (and the gap for poker)
 
-## Summary (also in summary.md)
+## Summary
+
+**Source:** elazarg. "GameTheory" (Lean 4 library, Apache-2.0). https://github.com/elazarg/GameTheory
 
 TL;DR: There is an Apache-2.0 Lean 4 library, elazarg/GameTheory, built on Mathlib. It formalizes finite game theory: Nash equilibria, mixed-Nash existence, minimax, and extensive-form encodings. It has no poker and no Kuhn poker. A web search found no machine-checked result about any poker game.
 

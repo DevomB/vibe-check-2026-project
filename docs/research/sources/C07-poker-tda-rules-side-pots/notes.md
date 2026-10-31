@@ -1,6 +1,9 @@
 # C07: Poker TDA Rules (2026, Version 1.1) on side pots, odd chips, short all-ins, heads-up; plus real pot-award bugs
 
-## Summary (also in summary.md)
+## Summary
+
+**Source:** Poker TDA. "2026 Rules, Version 1.1" (21 Sept 2026). https://www.pokertda.com/view-poker-tda-rules/. Bug reports: see notes.
+
 TL;DR: The official tournament rules (Poker TDA, 2026 v1.1, 21 Sept 2026) say little about how side pots are built. They say each side pot is split on its own, the odd chip goes to the first seat left of the button, and a short all-in does not reopen betting for players who already acted. We must write the side-pot construction ourselves, which is exactly where proofs add value. Real sites have paid pots to the wrong player (GGPoker 2022, UltimateBet 2008).
 - Rule 23: "Each side pot will be split separately." Rule 21: odd chip to the first seat left of the button (board games, like Hold'em).
 - Rule 49-A (no-limit): a short all-in, or several short all-ins together, below a full raise does not reopen betting for players who already acted. Rule 45-A: a raise must be at least the largest prior full bet or raise in the round.

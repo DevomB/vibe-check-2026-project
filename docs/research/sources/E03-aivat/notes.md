@@ -1,6 +1,9 @@
 # E03: AIVAT (Burch, Schmid, Moravčík, [Morrill,] Bowling)
 
-## Summary (also in summary.md)
+## Summary
+
+**Source:** Burch, Schmid, Moravčík, Morrill, Bowling. "AIVAT: A New Variance Reduction Technique for Agent Evaluation in Imperfect Information Games." AAAI 2018. https://arxiv.org/abs/1612.06915. DOI 10.1609/aaai.v32i1.11481
+
 TL;DR: AIVAT scores a played hand as "base value + one correction term per chance event and per known-strategy player action". Each correction is "expected value before the choice minus value after the observed choice", using ANY fixed value function. The proved theorem: every correction term has expected value 0, so the estimate is unbiased. Nothing else (variance) is proved.
 - What must be known: the chance probabilities (public) and the strategy of the players whose actions get corrections. Our bot is known code, so its actions and the deal qualify; the human's actions do not.
 - The value function can be arbitrary (any fixed heuristic). It only affects variance, not unbiasedness.

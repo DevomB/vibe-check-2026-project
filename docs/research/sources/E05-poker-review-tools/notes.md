@@ -1,6 +1,9 @@
 # E05: Poker review tools: GTO Wizard Analyzer, PokerTracker 4 All-in Equity graphs, RTA policies
 
-## Summary (also in summary.md)
+## Summary
+
+**Source:** GTO Wizard Help Center. "How To Work With Analyze Mode." https://help.gtowizard.com/how-to-use-the-hand-history-analyzer/. PokerTracker 4. "All-in Equity Graphs." https://docs.pokertracker.com/pt4/tutorials/hand-analysis-and-tools/all-in-equity-graphs/
+
 TL;DR: GTO Wizard's analyzer reports EV loss per action in big blinds and colors actions green / yellow (inaccuracy) / red (blunder), but publishes no numeric thresholds. PokerTracker 4's "All-in Equity" line replaces the result of all-in hands by (equity x pot - amount bet), using the opponent's actual cards; it is explicitly a luck measure.
 - EV loss in bb per decision is the industry unit (GTO Wizard: "lost 7.65 bb"). Good, matches our plan.
 - No public tool gives label thresholds in bb. We must choose and justify our own; they are part of the spec.

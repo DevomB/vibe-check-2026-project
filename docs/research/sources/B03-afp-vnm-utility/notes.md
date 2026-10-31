@@ -1,6 +1,8 @@
 # B03: Isabelle AFP, "Von-Neumann-Morgenstern Utility Theorem" (Parsert and Kaliszyk, 2018)
 
-## Summary (also in summary.md)
+## Summary
+
+**Source:** Parsert, Kaliszyk. "Von-Neumann-Morgenstern Utility Theorem." Archive of Formal Proofs, 2018. https://www.isa-afp.org/entries/Neumann_Morgenstern_Utility.html
 
 TL;DR: The only proof-assistant formalization of expected utility I found is this Isabelle/HOL entry in the Archive of Formal Proofs. It proves the von Neumann-Morgenstern theorem: for a finite, non-empty set of outcomes, a preference over lotteries is rational, independent and continuous exactly when it is ranked by expected utility. It has **no risk aversion, no concavity, no Arrow-Pratt, no Pratt theorem**.
 
