@@ -92,21 +92,22 @@ def Legal (s : State) : Action → Prop
 
 /-! ## Examples -/
 
-/-- Start of a hand: blinds 10 and 20, stacks of 1000. Player 0 (small blind) acts first. -/
+/-- Start of a hand: blinds 5 and 10, stacks of 500 each. Player 0 is the button: they post
+the small blind and act first. Player 1 posts the big blind. -/
 def exStart : State :=
-  { stack := fun p => if p = 0 then 990 else 980
+  { stack := fun p => if p = 0 then 495 else 490
     pot := 0
-    bet := fun p => if p = 0 then 10 else 20
-    lastRaise := 20
+    bet := fun p => if p = 0 then 5 else 10
+    lastRaise := 10
     toAct := 0 }
 
-example : exStart.total = 2000 := by
+example : exStart.total = 1000 := by
   simp [State.total, exStart]
 
 example : Legal exStart .call := by
   simp [Legal, State.toCall, other, exStart]
 
-example : Legal exStart (.raiseTo 40) := by
+example : Legal exStart (.raiseTo 20) := by
   simp [Legal, other, exStart]
 
 /-- Checking when there is a bet to call is rejected. -/
@@ -114,7 +115,7 @@ example : ¬ Legal exStart .check := by
   simp [Legal, State.toCall, other, exStart]
 
 /-- Raising by less than the last raise (and not all-in) is rejected. -/
-example : ¬ Legal exStart (.raiseTo 30) := by
+example : ¬ Legal exStart (.raiseTo 15) := by
   simp [Legal, other, exStart]
 
 /-- Betting more chips than you have is rejected. -/

@@ -1,4 +1,4 @@
-import Spec
+import Poker
 
 /-- Placeholder. The real game goes here. -/
 def main : IO Unit :=

@@ -1,0 +1,10 @@
+name = "poker"
+defaultTargets = ["poker"]
+
+# The Lean engine. Human-owned specs live in Poker/Spec/; keep them short and reviewable.
+[[lean_lib]]
+name = "Poker"
+
+[[lean_exe]]
+name = "poker"
+root = "Main"
