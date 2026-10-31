@@ -17,10 +17,11 @@ structure Card where
   suit : Suit
   deriving DecidableEq, Repr
 
-/-- A new deck: all 52 cards, each exactly once. -/
+/-- A new deck: all 52 cards, each exactly once. Ordered by rank first, then suit:
+2c, 2d, 2h, 2s, 3c, ..., As. A card's place in this list is its card ID (0 to 51). -/
 def fullDeck : List Card :=
-  [Suit.clubs, .diamonds, .hearts, .spades].flatMap fun s =>
-    (List.finRange 13).map fun r => ⟨r, s⟩
+  (List.finRange 13).flatMap fun r =>
+    [Suit.clubs, .diamonds, .hearts, .spades].map fun s => ⟨r, s⟩
 
 /-- A deck is fair if it has the same 52 cards as a new deck, in any order. -/
 def FairDeck (deck : List Card) : Prop := deck.Perm fullDeck
@@ -34,7 +35,9 @@ example : FairDeck fullDeck := List.Perm.refl _
 example : ¬ FairDeck (fullDeck.drop 1) := by
   intro h
   have := h.length_eq
-  simp [fullDeck] at this
+  have full : fullDeck.length = 52 := by decide
+  rw [List.length_drop] at this
+  omega
 
 /-! ## Players and chips -/
 

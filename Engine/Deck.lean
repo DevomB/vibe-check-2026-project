@@ -47,6 +47,10 @@ instance : ToString Card := ⟨Card.toString⟩
 #guard (card 10 .clubs).toString == "Tc"
 #guard (card 2 .spades).toString == "2s"
 
+-- A new deck runs rank first, then suit.
+#guard (fullDeck.take 5).map Card.toString == ["2c", "2d", "2h", "2s", "3c"]
+#guard (fullDeck.getLast?).map Card.toString == some "As"
+
 #guard (shuffle 42 fullDeck).length == 52
 #guard decide (shuffle 42 fullDeck).Nodup
 #guard shuffle 42 fullDeck != fullDeck
