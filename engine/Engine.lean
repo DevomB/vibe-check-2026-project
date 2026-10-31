@@ -5,3 +5,5 @@ import Engine.Proofs
 import Engine.HandRankTests
 import Engine.Bot
 import Engine.BotTests
+import Engine.Equity
+import Engine.Slider
