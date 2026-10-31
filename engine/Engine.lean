@@ -10,3 +10,4 @@ import Engine.BotTests
 import Engine.Equity
 import Engine.Slider
 import Engine.SliderTests
+import Engine.EquityTests
