@@ -1,4 +1,4 @@
-import Spec
+import Poker
 import Engine.Deck
 
 /-!

@@ -409,3 +409,27 @@ for pct in range(61):
     assert 0 <= b <= 1081 - v
     assert abs(F(b) - F(v*pct, divisor)) <= F(1, 2)
 ```
+
+## Spec-draft merge follow-up, October 31
+
+Reviewed `spec-draft` at `642107b` together with the engine added to main in
+`d4d49ec`, preserving the previously reviewed prototype fixes.
+
+- Consolidated the Lean project under `engine/`, including the new `Engine`
+  library. Updated imports, default build targets, the executable and Makefile.
+- Preserved the all-in theorem and both sets of examples. Capped short calls,
+  rejected moves by all-in players and raises that retract committed chips,
+  and kept the positive all-in comparison at a total of 1,000 chips.
+- Added runtime checks for invalid all-in actions and hands that finish during
+  blind posting. The bounded 300-hand TypeScript stress test now has the same
+  30-second budget as the existing engine stress test.
+- In an isolated checkout: `npm ci`, all 118 TypeScript tests, typechecking,
+  the production Next.js build and an HTTP homepage smoke check passed.
+- `cd engine && lake build` passed, including the scripted checks and 300
+  simulated random games. The Lean executable also ran successfully.
+- `#print axioms no_raise_against_all_in` reported only `propext`. No shipped
+  Lean source contained `sorry`, `admit`, `native_decide` or new axiom declarations.
+
+The JSON command handler, Node-to-Lean bridge, slider bot, river review and
+remaining general proofs are still needed. Linux/WSL Comparator validation
+and interactive browser testing were not performed in this merge review.

@@ -70,12 +70,13 @@ inductive Action where
   | call
   | raiseTo (n : Nat)
 
-/-- How many more chips the player to act must add to match the other player's bet. -/
+/-- Chips actually paid to call, capped at the acting player's remaining stack. -/
 def State.toCall (s : State) : Nat :=
-  s.bet (other s.toAct) - s.bet s.toAct
+  min (s.bet (other s.toAct) - s.bet s.toAct) (s.stack s.toAct)
 
 /-- A move is legal when the rules of `SPEC.md` allow it. -/
-def Legal (s : State) : Action → Prop
+def Legal (s : State) (a : Action) : Prop :=
+  0 < s.stack s.toAct ∧ match a with
   -- Check: only when there is nothing to call.
   | .check => s.toCall = 0
   -- Call: only when there is something to call.
@@ -90,6 +91,7 @@ def Legal (s : State) : Action → Prop
   -- call or fold.
   | .raiseTo n =>
       0 < s.stack (other s.toAct)
+      ∧ s.bet s.toAct < n
       ∧ s.bet (other s.toAct) < n
       ∧ n - s.bet s.toAct ≤ s.stack s.toAct
       ∧ (s.bet (other s.toAct) + s.lastRaise ≤ n
@@ -103,7 +105,8 @@ theorem no_raise_against_all_in (s : State) (n : Nat)
 
 /-! ## Examples -/
 
-/-- Start of a hand: blinds 5 and 10, stacks of 500. Player 0 (small blind) acts first. -/
+/-- Start of a hand: blinds 5 and 10, stacks of 500 each. Player 0 is the button: they post
+the small blind and act first. Player 1 posts the big blind. -/
 def exStart : State :=
   { stack := fun p => if p = 0 then 495 else 490
     pot := 0
@@ -117,7 +120,7 @@ example : exStart.total = 1000 := by
 example : Legal exStart .call := by
   simp [Legal, State.toCall, other, exStart]
 
-example : Legal exStart (.raiseTo 40) := by
+example : Legal exStart (.raiseTo 20) := by
   simp [Legal, other, exStart]
 
 /-- Checking when there is a bet to call is rejected. -/
@@ -151,7 +154,8 @@ example : Legal exShortAllIn .call := by
   simp [Legal, State.toCall, other, exShortAllIn]
 
 /-- ...or fold... -/
-example : Legal exShortAllIn .fold := trivial
+example : Legal exShortAllIn .fold := by
+  simp [Legal, exShortAllIn]
 
 /-- ...but may not re-raise, not even all-in: the short all-in did not reopen the betting. -/
 example : ¬ Legal exShortAllIn (.raiseTo 250) := by
@@ -160,8 +164,28 @@ example : ¬ Legal exShortAllIn (.raiseTo 250) := by
 example : ¬ Legal exShortAllIn (.raiseTo 750) := by
   simp [Legal, other, exShortAllIn]
 
-/-- The same raise is legal when the other player still has chips, so the new rule is
-what blocks it. -/
-example : Legal { exShortAllIn with stack := fun p => if p = 0 then 650 else 50 }
+/-- The same raise is legal when the other player still has chips. Transfer 50 chips
+between stacks so this comparison still has 1,000 chips in total. -/
+example : Legal { exShortAllIn with stack := fun p => if p = 0 then 600 else 50 }
     (.raiseTo 250) := by
   simp [Legal, other, exShortAllIn]
+
+/-- With only three chips left, a call pays three rather than the full five-chip gap. -/
+example : State.toCall { exStart with stack := fun _ => 3 } = 3 := by
+  simp [State.toCall, other, exStart]
+
+/-- An all-in player has no action left, even if their bet is already matched. -/
+example (a : Action) : ¬ Legal { exStart with stack := fun _ => 0, bet := fun _ => 500 } a := by
+  simp [Legal, exStart]
+
+/-- Raising into the only opponent's all-in cannot create a side pot heads-up. -/
+example : ¬ Legal
+    { exStart with stack := fun p => if p = 0 then 895 else 0
+                   bet := fun p => if p = 0 then 5 else 100
+                   lastRaise := 90 }
+    (.raiseTo 200) := by
+  simp [Legal, other, exStart]
+
+/-- Natural subtraction must not let a raise retract chips already committed. -/
+example : ¬ Legal { exStart with bet := fun p => if p = 0 then 30 else 10 } (.raiseTo 20) := by
+  simp [Legal, other, exStart]

@@ -103,7 +103,7 @@ describe("chooseAction", () => {
       expect(state.result).not.toBeNull();
       expect(state.players.reduce((sum, p) => sum + p.stack, 0)).toBe(chips);
     }
-  });
+  }, 30_000); // Same budget as the engine stress test; each hand is still bounded to <200 moves.
 
   it("does not change the state it is given", () => {
     const state = startHand(

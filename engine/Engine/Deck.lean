@@ -1,4 +1,4 @@
-import Spec
+import Poker
 
 /-!
 # Engine: shuffling and printing cards
@@ -30,6 +30,7 @@ def shuffleAux {α : Type} : Nat → Nat → List α → List α
     (x :: xs)[i]'(Nat.mod_lt _ (Nat.succ_pos _)) :: shuffleAux fuel s' ((x :: xs).eraseIdx i)
 
 /-- Shuffle a list from a seed. -/
+-- ponytail: list removal is O(n²), fine for 52 cards; use array Fisher–Yates for larger decks.
 def shuffle {α : Type} (seed : Nat) (l : List α) : List α :=
   shuffleAux l.length seed l
 
