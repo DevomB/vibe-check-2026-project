@@ -18,6 +18,9 @@ implementation and checks before it is complete.
 - Bluff targets the designated bluff share of a defined hand set, not an
   exact observed frequency among played bets.
 - Rank candidate hands by showdown score, then fixed card order for ties.
+  Added October 31: card IDs go rank first, then suit (2c=0, ..., As=51), in
+  both the Lean deck and TypeScript. Among tied hands, the lower card IDs rank
+  higher. No earlier document said which way ties go; see MVP section 5.
 - Detailed bot reasons appear after the hand; live messages remain generic.
 - Bet/raise amounts are street totals throughout the engine, JSON and UI.
 - An explicit Next Hand action holds results for review; hand-over and

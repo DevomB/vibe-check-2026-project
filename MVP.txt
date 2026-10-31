@@ -85,6 +85,7 @@ No bet to face, preflop to turn:
 
 The river, when no bet is being faced (facing a bet still uses the rule above):
 - Consider every unordered two-card hand compatible with the board, without using the human's hidden cards. Rank by best-five-of-seven showdown score; break tied scores by the ascending pair of card IDs, with ranks 2..A and suits c,d,h,s.
+  Card IDs go rank first, then suit: 2c=0, 2d=1, 2h=2, 2s=3, 3c=4, ..., As=51 (the order of fullDeck in Spec/Basics.lean). Among hands with tied scores, the hand with the lower IDs ranks higher: compare the lower cards' IDs, then the higher cards' IDs. (Decided Oct 31; the earlier wording did not say which way.)
 - For N candidate hands, take the highest-ranked V = floor(30*N/100) hands for value. The fixed card-order tie break is for strategy selection ONLY; tied showdown scores still split the pot.
 - For b = bluff_pct, take the lowest-ranked B remaining hands as designated bluffs, where B is V*b/(100-b) rounded to the nearest integer, halves upward. Equivalently, B = floor((2*V*b + (100-b)) / (2*(100-b))). Value and bluff sets are disjoint.
 - Its actual hand decides: value hand, bet; bluff hand, bet; anything else, check.
