@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import type { LeanReview, LeanReviewDecision } from "@/lean/protocol";
+import type { LeanReview, ReviewDecision } from "@/lean/protocol";
 
 interface Props {
   review: LeanReview;
@@ -16,6 +16,14 @@ const LABEL_HELP: Record<string, string> = {
   Blunder: "lost 5 big blinds or more",
 };
 
+const PAST: Record<ReviewDecision["your_action"], string> = {
+  fold: "folded",
+  check: "checked",
+  call: "called",
+  bet: "bet",
+  raise: "raised",
+};
+
 /** Lean's numbers are exact fractions turned into decimals for display; round them only here. */
 function bb(x: number): string {
   const r = Math.round(x * 10) / 10;
@@ -30,13 +38,13 @@ function titleCase(s: string): string {
   return s ? s[0]!.toUpperCase() + s.slice(1) : s;
 }
 
-function Decision({ d }: { d: LeanReviewDecision }) {
+function Decision({ d }: { d: ReviewDecision }) {
   const graded = d.label !== null;
   return (
     <li className={`review-item ${graded ? "" : "is-ungraded"}`}>
       <div className="review-head">
         <span className="review-move">
-          {titleCase(d.street)}: you {d.your_action === "fold" ? "folded" : d.your_action === "call" ? "called" : d.your_action}
+          {titleCase(d.street)}: you {PAST[d.your_action]}
         </span>
         {graded ? (
           <span className={`review-label label-${d.label!.toLowerCase()}`} title={LABEL_HELP[d.label!]}>
