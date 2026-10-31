@@ -5,7 +5,7 @@ It is notes and links only: no PDFs, no project code.
 
 - Start: Sat 2026-10-31 13:27 (local time, from `date`)
 - Planned hard stop: 2026-10-31 14:57 (start + 90 minutes)
-- End: _filled in at the final commit_
+- End: 2026-10-31 13:57 (final commit; all five groups finished by 13:47)
 
 ## The product (fixed going in)
 
@@ -19,7 +19,8 @@ chess.com-style game review graded by EV loss in big blinds.
 
 Five research subagents ran in parallel, one per group, each aiming for about
 six sources (30 in all). Each source gets its own folder with a full
-`notes.md` and a short `summary.md`. The lead then read every summary and
+`notes.md` and a short `summary.md` (the agents could not write `summary.md`
+themselves, so each summary was copied from the top of its `notes.md`). The lead then read every summary and
 wrote the synthesis.
 
 | Group | Topic | Folder prefix |
@@ -46,4 +47,5 @@ If time ran short, groups B, C and E had priority.
 - [INDEX.md](INDEX.md): one row per source.
 - [SYNTHESIS.md](SYNTHESIS.md): ranked verification targets, novelty, MVP cut, model-vs-code check, parked ideas.
 - [OPEN_QUESTIONS.md](OPEN_QUESTIONS.md): decisions for the team or the organizers.
+- [PAPERS.md](PAPERS.md): free full-text links; `sh docs/research/fetch_papers.sh` downloads them to the git-ignored `papers/` folder.
 - `sources/<id>-<slug>/notes.md` and `summary.md`: per-source extraction.
