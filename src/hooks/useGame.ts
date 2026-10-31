@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { type Action, type DealtHand, type HandState, type LegalActions, type Session, evaluate, randomGameSeed } from "@/engine";
-import type { LeanCommand, LeanEvent, LeanReply, LeanState } from "@/lean/protocol";
+import type { LeanCommand, LeanEvent, LeanReply, LeanReview, LeanState } from "@/lean/protocol";
 import { cardText, chips } from "@/lib/format";
-import { HUMAN_COLOR, PLAYABLE_OPPONENTS, type Opponent } from "@/lib/roster";
+import { BOT, HUMAN_COLOR } from "@/lib/roster";
 
 /**
  * Runs a game against the Lean game program. Every rule decision (dealing, which moves are
- * legal, the bot's moves, who wins) is made in Lean and arrives through `/api/game`.
+ * legal, the bot's moves, who wins, the review grades) is made in Lean and arrives through `/api/game`.
  * This file only sends the human's clicks and turns Lean's replies into what the table
  * components draw. The TypeScript engine is used only for its types and to name the
  * hands at showdown ("Two Pair, Kings and Fives"), which is display only.
@@ -16,8 +16,10 @@ import { HUMAN_COLOR, PLAYABLE_OPPONENTS, type Opponent } from "@/lib/roster";
 export const TABLE = { startingStack: 500, smallBlind: 5, bigBlind: 10 } as const;
 
 export interface GameSettings {
-  /** Index into PLAYABLE_OPPONENTS of the AI player. */
-  opponent: number;
+  /** How heavily the bot weighs a lost chip when deciding to call, 0 to 100. */
+  risk: number;
+  /** Target share of bluffs among the bot's river bets, 0 to 60 (percent). */
+  bluffPct: number;
   /** Game seed to replay; null deals a new random game. */
   seed: bigint | null;
   fast: boolean;
@@ -26,8 +28,6 @@ export interface GameSettings {
 export interface Player {
   name: string;
   color: string;
-  /** null for the human. */
-  opponent: Opponent | null;
 }
 
 export interface Stats {
@@ -49,6 +49,8 @@ export interface Game {
   dealt: DealtHand;
   /** The human's moves, from Lean. Null when it is not the human's turn. */
   legal: LegalActions | null;
+  /** The bot's last move in the latest reply, in generic words ("Bot raises to 60"). Null if it did not move. */
+  botLine: string | null;
   /** Board size before the latest reply, so the table can stagger an all-in run-out. */
   boardBefore: number;
   /** Hand history, one line per event. Not shown on screen; kept for testing and checking games afterwards. */
@@ -77,6 +79,16 @@ async function sendToLean(command: LeanCommand): Promise<LeanReply> {
     body: JSON.stringify(command),
   });
   return (await response.json()) as LeanReply;
+}
+
+/** How long the bot "thinks" before its moves appear, in milliseconds. Display only: Lean already chose the moves. */
+function thinkTime(fast: boolean, newStreet: boolean): number {
+  const base = fast ? 350 : 800;
+  return base + Math.random() * base * 0.6 + (newStreet ? base * 0.6 : 0);
+}
+
+function botMoved(events: readonly LeanEvent[]): boolean {
+  return events.some((e) => e.type === "action" && e.player === BOT_SEAT);
 }
 
 /** Lean's reply as a hand the table components can draw. */
@@ -154,16 +166,26 @@ function describeEvents(events: readonly LeanEvent[], names: string[]): string[]
   });
 }
 
+/** The line for the bot's last move among `events`; `lines` are the events' descriptions, in order. */
+function lastBotLine(events: readonly LeanEvent[], lines: string[]): string | null {
+  for (let i = events.length - 1; i >= 0; i--) {
+    const e = events[i]!;
+    if (e.type === "action" && e.player === BOT_SEAT) return lines[i]!;
+  }
+  return null;
+}
+
 function appendLog(log: string[], entries: string[]): string[] {
   const next = log.concat(entries);
   return next.length > LOG_LIMIT ? next.slice(next.length - LOG_LIMIT) : next;
 }
 
 /** The game after a reply from Lean. `previous` is null for a new game. */
-function withReply(base: Omit<Game, "lean" | "session" | "dealt" | "legal" | "boardBefore">, previous: Game | null, s: LeanState): Game {
+function withReply(base: Omit<Game, "lean" | "session" | "dealt" | "legal" | "botLine" | "boardBefore">, previous: Game | null, s: LeanState): Game {
   const names = base.players.map((p) => p.name);
   const newHand = !previous || previous.lean.hand !== s.hand;
   const header = newHand ? [`Hand #${s.hand}`] : [];
+  const lines = describeEvents(s.events, names);
   // Count the hand once, when its result first arrives.
   const justEnded = s.result !== null && (newHand || previous.lean.result === null);
   const won = s.result?.winnings[HUMAN_SEAT] ?? 0;
@@ -186,7 +208,8 @@ function withReply(base: Omit<Game, "lean" | "session" | "dealt" | "legal" | "bo
     dealt: { hand: toHandState(s, names), seatOf: [HUMAN_SEAT, BOT_SEAT] },
     legal: s.legal,
     boardBefore: newHand ? 0 : previous.lean.board.length,
-    log: appendLog(base.log, [...header, ...describeEvents(s.events, names)]),
+    botLine: lastBotLine(s.events, lines),
+    log: appendLog(base.log, [...header, ...lines]),
     stats,
   };
 }
@@ -195,18 +218,23 @@ export function gameStatus(game: Game): Status {
   return game.lean.status;
 }
 
-/** Runs a table against the Lean game program: deals hands, asks Lean for the bot's moves after a short pause, and sends the human's moves. */
+/** Runs a table against the Lean game program: sends the human's moves and shows Lean's replies, which include the bot's moves. */
 export function useGame() {
   const [game, setGame] = useState<Game | null>(null);
   const [error, setError] = useState<string | null>(null);
+  /** True while the bot's reply is held back so it seems to think. */
+  const [thinking, setThinking] = useState(false);
+  /** The review of the finished hand, once asked for. */
+  const [review, setReview] = useState<LeanReview | null>(null);
   const gameRef = useRef(game);
   gameRef.current = game;
   // One request at a time; replies to an abandoned game are ignored.
   const busy = useRef(false);
   const generation = useRef(0);
 
-  /** Send a command and apply Lean's reply. `make` builds the next game from the reply. */
-  const request = useCallback(async (command: LeanCommand, make: (s: LeanState) => Game) => {
+  /** Send a command and apply Lean's reply. `make` builds the next game from the reply.
+   * With `pause`, a reply in which the bot moved is held back while the bot "thinks". */
+  const request = useCallback(async (command: LeanCommand, make: (s: LeanState) => Game, pause?: (s: LeanState) => number) => {
     if (busy.current) return;
     busy.current = true;
     const gen = generation.current;
@@ -215,6 +243,12 @@ export function useGame() {
       if (gen !== generation.current) return;
       if ("ok" in reply) {
         setError(null);
+        const wait = pause && botMoved(reply.state.events) ? pause(reply.state) : 0;
+        if (wait > 0) {
+          setThinking(true);
+          await new Promise((resolve) => window.setTimeout(resolve, wait));
+          if (gen !== generation.current) return;
+        }
         setGame(make(reply.state));
       } else {
         setError(reply.error);
@@ -222,7 +256,10 @@ export function useGame() {
     } catch (e) {
       if (gen === generation.current) setError(`Could not reach the game engine: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
-      busy.current = false;
+      if (gen === generation.current) {
+        busy.current = false;
+        setThinking(false);
+      }
     }
   }, []);
 
@@ -230,14 +267,17 @@ export function useGame() {
     (settings: GameSettings) => {
       generation.current++;
       busy.current = false;
-      const opponent = PLAYABLE_OPPONENTS[settings.opponent] ?? PLAYABLE_OPPONENTS[0]!;
+      setThinking(false);
+      setReview(null);
       const players: Player[] = [
-        { name: "You", color: HUMAN_COLOR, opponent: null },
-        { name: opponent.name, color: opponent.color, opponent },
+        { name: "You", color: HUMAN_COLOR },
+        { name: BOT.name, color: BOT.color },
       ];
       const seed = settings.seed ?? randomGameSeed();
       const base = { settings, seed, players, log: [], stats: { handsPlayed: 0, handsWon: 0, biggestPot: 0 } };
-      void request({ cmd: "new_game", seed: seed.toString() }, (s) => withReply(base, null, s));
+      void request({ cmd: "new_game", seed: seed.toString(), risk: settings.risk, bluff_pct: settings.bluffPct }, (s) =>
+        withReply(base, null, s),
+      );
     },
     [request],
   );
@@ -247,7 +287,11 @@ export function useGame() {
       const g = gameRef.current;
       if (!g || g.lean.toAct !== HUMAN_SEAT || g.lean.status !== "playing") return;
       const command: LeanCommand = action.type === "raise" ? { cmd: "act", action: "raise", amount: action.to } : { cmd: "act", action: action.type };
-      void request(command, (s) => withReply(g, g, s));
+      void request(
+        command,
+        (s) => withReply(g, g, s),
+        (s) => thinkTime(g.settings.fast, s.board.length !== g.lean.board.length),
+      );
     },
     [request],
   );
@@ -255,12 +299,44 @@ export function useGame() {
   const nextHand = useCallback(() => {
     const g = gameRef.current;
     if (!g || g.lean.status !== "handOver") return;
+    setReview(null);
     void request({ cmd: "next_hand" }, (s) => withReply(g, g, s));
   }, [request]);
+
+  /** Ask Lean to grade the finished hand. A review changes nothing in the game. */
+  const openReview = useCallback(async () => {
+    const g = gameRef.current;
+    if (!g || g.lean.status === "playing" || busy.current) return;
+    const hand = g.lean.hand;
+    const gen = generation.current;
+    try {
+      const response = await fetch("/api/game", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cmd: "review", hand } satisfies LeanCommand),
+      });
+      const reply = (await response.json()) as LeanReply;
+      if (gen !== generation.current || gameRef.current?.lean.hand !== hand) return;
+      if ("ok" in reply && reply.review) {
+        setError(null);
+        setReview(reply.review);
+      } else if ("ok" in reply) {
+        setError("The game engine sent no review.");
+      } else {
+        setError(reply.error);
+      }
+    } catch (e) {
+      if (gen === generation.current) setError(`Could not reach the game engine: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }, []);
+
+  const closeReview = useCallback(() => setReview(null), []);
 
   const quit = useCallback(() => {
     generation.current++;
     busy.current = false;
+    setThinking(false);
+    setReview(null);
     setError(null);
     setGame(null);
   }, []);
@@ -271,21 +347,5 @@ export function useGame() {
     window.__holdemLog = log ?? [];
   }, [log]);
 
-  // The bot's turn: wait a moment so the table feels alive, then ask Lean for its move.
-  const lean = game?.lean;
-  useEffect(() => {
-    const g = gameRef.current;
-    if (!g || !lean || lean.status !== "playing" || lean.toAct !== BOT_SEAT) return;
-    const newStreet = g.boardBefore !== lean.board.length;
-    const base = g.settings.fast ? 350 : 800;
-    const delay = base + Math.random() * base * 0.6 + (newStreet ? base * 0.6 : 0);
-    const timer = window.setTimeout(() => {
-      const current = gameRef.current;
-      if (!current || current.lean !== lean) return;
-      void request({ cmd: "bot" }, (s) => withReply(current, current, s));
-    }, delay);
-    return () => window.clearTimeout(timer);
-  }, [lean, request]);
-
-  return { game, error, start, humanAct, nextHand, quit };
+  return { game, error, thinking, review, start, humanAct, nextHand, openReview, closeReview, quit };
 }

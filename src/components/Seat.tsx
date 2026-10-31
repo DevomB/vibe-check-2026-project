@@ -1,5 +1,4 @@
 import type { CSSProperties } from "react";
-import { PERSONALITIES } from "@/ai/bot";
 import type { Card, PlayerState } from "@/engine";
 import { chips } from "@/lib/format";
 import type { Player } from "@/hooks/useGame";
@@ -63,9 +62,7 @@ export function Seat({ player, state, stack, isHuman, isTurn, reveal, revealDela
           )}
         </div>
         <div className="seat-info">
-          <div className="seat-name" title={player.opponent ? PERSONALITIES[player.opponent.personality].label : undefined}>
-            {player.name}
-          </div>
+          <div className="seat-name">{player.name}</div>
           <div className="seat-stack">{chips(state?.stack ?? stack)}</div>
         </div>
         {status && <div className={`seat-status status-${status.split(" ")[0]!.toLowerCase()}`}>{status}</div>}
