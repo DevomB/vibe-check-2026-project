@@ -76,7 +76,8 @@ describe("chooseAction", () => {
       expect(state.result).not.toBeNull();
       expect(state.players.reduce((sum, p) => sum + p.stack, 0)).toBe(chips);
     }
-  });
+    // 300 simulated hands take a few seconds; on a busy machine that passes the 5 s default.
+  }, 30_000);
 
   it("does not change the state it is given", () => {
     const state = startHand(
