@@ -164,9 +164,10 @@ A Proofs screen. Blind increases. 3+ players and side pots. Kuhn/Leduc mode. Rea
 DONE / PRESENT:
 - MVP scope, organizer rules, Lean agent guidance, and published research notes, index and synthesis.
 - Published TypeScript/Next.js prototype source: cards, shuffle, evaluator, betting engine, bot and table UI (commit 69c4e46). It is still active development, not the Lean engine.
-- Prototype corrections and 118 tests across 5 files cover validation, chip accounting, all-ins and hand progression. These are TypeScript tests, not Lean proofs.
+- Prototype corrections and 167 tests across 9 files cover validation, chip accounting, all-ins, hand progression, seeded replays and slider-bot decisions. These are TypeScript tests, not Lean proofs.
+- The prototype now uses heads-up 500-chip games, fixed 5/10 blinds and explicit Next Hand. A separate TypeScript slider-bot module has preflop data and flop/turn/river counts; the browser still uses the earlier personality bot.
 - Lean project under engine/, pinned to 4.35.0. Poker/Spec/ contains card/deck, legality and hand-ranking definitions; Engine/ contains seeded shuffling, hand/game transitions and payouts.
-- Lean examples, scripted engine checks and 300 simulated random games are present. The main theorem proofs remain to be completed.
+- Lean examples, known-showdown checks, scripted engine checks and 300 simulated random games are present. Turn-legality lemmas and general startHand_turn_ok / step_turn_ok proofs are present; remaining MVP proofs and final Comparator checks still need completion.
 - Makefile builds Lean through "cd engine && lake build". The browser still uses TypeScript: the JSON command handler and Node-to-Lean bridge are not implemented yet.
 - Product decisions confirmed above: Lean 4.35.0 shipping engine and standard axioms; actual-outcome Risk utility; hand-set Bluff target; deterministic ranking/rounding; opening-bet call/fold review only; detailed reasons after the hand; street-total amounts and legal pot sizing/fallback; explicit Next Hand and separate statuses; Lean-driven bot scheduling; fixed benchmark-selected turn mode; one local game; Tier 1 mandatory, optional proof claims only once completed.
 

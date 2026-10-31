@@ -27,12 +27,16 @@ Done or present:
 - Published TypeScript/Next.js prototype source for cards, shuffle, evaluator,
   betting, bot and UI (`69c4e46`). It remains active development and is ready
   for teammates to pull; it is not the Lean implementation.
-- Prototype corrections and 118 regression tests across 5 files, covering
+- Prototype corrections and 167 tests across 9 files, covering
   validation, chip accounting, all-ins and hand progression.
+- Heads-up 500-chip games, fixed 5/10 blinds, explicit Next Hand and seeded replays.
+- A TypeScript slider-bot module with preflop data, sampled flop counts and exact
+  turn/river counts. The browser still uses the earlier personality bot.
 - Lean project under `engine/`, pinned to Lean 4.35.0: card/deck definitions,
   reference hand ranking, seeded shuffle, betting, payouts and hand/game transitions.
-- Lean examples, scripted engine checks and 300 simulated random games. These
-  checks are evidence about tested inputs; the main theorem proofs remain work to do.
+- Lean examples, known-showdown checks and 300 simulated random games, plus proofs
+  that new hands and accepted moves give the turn only to a player who may act.
+  The remaining MVP theorem proofs still need completion and final checks.
 - Root Makefile targets build the Lean project through `cd engine && lake build`.
   The browser still uses the TypeScript prototype; the JSON bridge is not implemented.
 

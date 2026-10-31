@@ -83,6 +83,14 @@ def showdown (hole0 hole1 board : List Card) : Outcome :=
   let b := bestScore (hole1 ++ board)
   if a < b then .player1 else if b < a then .player0 else .tie
 
+/-- A deal that can really happen: two hidden cards for each player, five cards on the
+board, and no card twice. `showdown` only gives a meaningful answer for such deals. -/
+def ValidDeal (hole0 hole1 board : List Card) : Prop :=
+  hole0.length = 2 ∧ hole1.length = 2 ∧ board.length = 5 ∧ (hole0 ++ hole1 ++ board).Nodup
+
+instance (hole0 hole1 board : List Card) : Decidable (ValidDeal hole0 hole1 board) := by
+  unfold ValidDeal; infer_instance
+
 /-! ## Tests on known hands -/
 
 /-- A card from a rank number (2 to 10, then 11 = jack, 12 = queen, 13 = king, 14 = ace). -/
@@ -111,3 +119,9 @@ def aceFlush := [card 14 .hearts, card 9 .hearts, card 7 .hearts, card 4 .hearts
 -- When the board is a royal flush, both players play the board and tie.
 #guard showdown [card 2 .diamonds, card 3 .diamonds] [card 4 .hearts, card 5 .hearts]
   [card 14 .clubs, card 13 .clubs, card 12 .clubs, card 11 .clubs, card 10 .clubs] == .tie
+
+-- A real deal is valid. A deal with the same card twice is not.
+#guard decide (ValidDeal [card 14 .spades, card 14 .hearts] [card 13 .spades, card 13 .hearts]
+  [card 2 .diamonds, card 7 .clubs, card 9 .spades, card 11 .hearts, card 4 .diamonds])
+#guard !decide (ValidDeal [card 14 .spades, card 14 .spades] [card 13 .spades, card 13 .hearts]
+  [card 2 .diamonds, card 7 .clubs, card 9 .spades, card 11 .hearts, card 4 .diamonds])

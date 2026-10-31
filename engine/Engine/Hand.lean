@@ -11,15 +11,6 @@ The chips live in the spec's own `State`, and a move is accepted only if the spe
 Ported from the TypeScript prototype `src/engine/game.ts`.
 -/
 
-/-- Small blind, big blind and starting stack, from `MVP.txt`. -/
-def smallBlind : Nat := 5
-def bigBlind : Nat := 10
-def startingStack : Nat := 500
-
-/-- `Legal` can be checked by running code. -/
-instance (s : State) (a : Action) : Decidable (Legal s a) := by
-  cases a <;> dsimp only [Legal] <;> infer_instance
-
 /-- The four betting rounds. -/
 inductive Street where
   | preflop | flop | turn | river
@@ -58,11 +49,12 @@ structure Hand where
 def setFor {β : Type} (f : Player → β) (p : Player) (v : β) : Player → β :=
   fun q => if q = p then v else f q
 
-/-- Does player `p` still have to act in this betting round? Not if they are all-in.
-Yes if they have not matched the other bet. Otherwise only if they have not acted yet
-and the other player still has chips to answer them with. -/
+/-- Does player `p` still have to act in this betting round? Not if they are all-in, and
+not if they have bet more than the other player. Yes if they have not matched the other
+bet. Otherwise only if they have not acted yet and the other player still has chips to
+answer them with. -/
 def Hand.needsAction (h : Hand) (p : Player) : Bool :=
-  0 < h.chips.stack p &&
+  0 < h.chips.stack p && h.chips.bet p ≤ h.chips.bet (other p) &&
     (h.chips.bet p < h.chips.bet (other p) || (!h.acted p && 0 < h.chips.stack (other p)))
 
 /-- Move chips for a check, call or raise by the player to act. Folding moves no chips. -/
@@ -152,17 +144,22 @@ def Hand.finishStreet : Nat → Hand → Hand
       | some p => { h with chips := { h.chips with toAct := p } }
       | none => Hand.finishStreet fuel h
 
-/-- After a check, call or raise: pass the turn on, or end the betting round. -/
-def Hand.afterMove (h : Hand) : Hand :=
-  match h.nextToAct (other h.chips.toAct) with
+/-- Give the turn to the first player who still needs to act, looking at `first` then the
+other player. If neither does, the betting round is over. -/
+def Hand.passTurn (h : Hand) (first : Player) : Hand :=
+  match h.nextToAct first with
   | some p => { h with chips := { h.chips with toAct := p } }
   | none => h.finishStreet 4
 
+/-- After a check, call or raise: pass the turn on, or end the betting round. -/
+def Hand.afterMove (h : Hand) : Hand :=
+  h.passTurn (other h.chips.toAct)
+
 /-! ## The two functions the game uses -/
 
-/-- Deal a new hand: shuffle, deal two cards each, post the blinds.
+/-- Shuffle, deal two cards each and post the blinds. Nobody has the turn yet.
 `stacks` are the chips each player brings to the hand. -/
-def startHand (stacks : Player → Nat) (button : Player) (seed : Nat) : Hand :=
+def dealHand (stacks : Player → Nat) (button : Player) (seed : Nat) : Hand :=
   let deck := shuffle seed fullDeck
   let bb := other button
   -- Deal one card at a time, starting with the player who is not on the button.
@@ -178,13 +175,13 @@ def startHand (stacks : Player → Nat) (button : Player) (seed : Nat) : Hand :=
       bet := fun p => if p = button then sbPaid else bbPaid
       lastRaise := bigBlind
       toAct := button }
-  let h : Hand :=
-    { chips, street := .preflop, button, hole, board := [], deck,
-      acted := fun _ => false, ended := none }
-  -- Before the flop, the button acts first.
-  match h.nextToAct button with
-  | some p => { h with chips := { h.chips with toAct := p } }
-  | none => h.finishStreet 4
+  { chips, street := .preflop, button, hole, board := [], deck,
+    acted := fun _ => false, ended := none }
+
+/-- Deal a new hand: shuffle, deal two cards each, post the blinds. Before the flop, the
+button acts first. `stacks` are the chips each player brings to the hand. -/
+def startHand (stacks : Player → Nat) (button : Player) (seed : Nat) : Hand :=
+  (dealHand stacks button seed).passTurn button
 
 /-- The player whose turn it is makes a move. An illegal move, or any move after the hand
 is over, is rejected with a reason, and the hand does not change. -/

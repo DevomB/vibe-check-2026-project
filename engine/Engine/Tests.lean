@@ -196,3 +196,22 @@ def randomGame : Nat → Nat → Game → Option Game
 #eval fresh.summary
 #eval (play fresh checkDown).map Hand.summary
 #eval (allInGame 200 (newGame 42)).map fun g => s!"game over after {g.handNo} hands: {g.hand.summary}"
+
+/-! ## The button moves, and every deal is valid -/
+
+/-- The button for each of the first `n` hands of a game where the button always folds. -/
+def buttons : Nat → Game → List Player
+  | 0, _ => []
+  | n + 1, g => g.hand.button :: match g.act .fold >>= Game.nextHand with
+    | .ok g' => buttons n g'
+    | .error _ => []
+
+-- The button goes to the other player every hand.
+#guard buttons 6 (newGame 3) == [0, 1, 0, 1, 0, 1]
+
+-- Every hand dealt has two cards each, five board cards and no card twice.
+#guard (List.range 500).all fun seed =>
+  let h := (play (startHand (fun _ => startingStack) 0 seed) checkDown).toOption
+  match h with
+  | some h => decide (ValidDeal (h.hole 0) (h.hole 1) h.board)
+  | none => false

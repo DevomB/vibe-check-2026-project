@@ -17,19 +17,21 @@ intent and the Lean is the bug. Theorem names and numbers (T1, T2, ...) follow `
 - **T2 `no_duplicate_cards`.** A shuffled deck holds the same 52 cards as a new deck: no
   card missing, no card twice.
 - **T3 `legal_only`.** The game rejects any illegal move and leaves the game unchanged. The
-  bot only ever picks a legal move. Only a player with chips remaining can act. The rules:
+  bot only ever picks a legal move. Only a player with chips remaining who has not bet
+  more than the other player can act (`State.MayAct`). The rules:
   - *Check*: only when there is nothing to call.
   - *Call*: only when there is something to call. If you cannot cover it, you go all-in
     for less.
   - *Fold*: always allowed. (Folding when checking is free is pointless, but not illegal.)
   - *Raise to N*: both players must have chips remaining; N must exceed both current bets,
     you must have the chips,
-    and the raise must be at least as big as the last raise. The one exception is going
+    and the raise must be at least as big as the last raise and the big blind. The one exception is going
     all-in, which may be smaller.
 - **T10 `evaluator_equals_spec`** (stretch, Tier 3). At showdown, the winner is the player with the better
   five-card hand. "Better" is defined by a short, obviously correct reference ranking (best
   of the 21 five-card hands). The fast evaluator used in the game must agree with it on
-  every input.
+  every valid deal: two cards per player, five on the board, and no duplicates (`ValidDeal`).
+  Kicker comparisons use only each player's best five cards.
 - **T9 `every_hand_ends`** (stretch). Every hand finishes in a bounded number of moves.
 
 ## What we do NOT prove
@@ -42,7 +44,7 @@ intent and the Lean is the bug. Theorem names and numbers (T1, T2, ...) follow `
 
 These follow `MVP.txt`, which is the team's agreed rule set.
 
-- Folding is always allowed.
+- Folding is allowed whenever it is the player's turn to act (`State.MayAct`).
 - Blinds are 5/10 for the whole game. Each player starts with 500 chips (1,000 in total).
 - In the initial example, player 0 is the button, posts the small blind and acts first
   before the flop; player 1 is the big blind. The button rotates between hands.
@@ -58,6 +60,16 @@ These follow `MVP.txt`, which is the team's agreed rule set.
 - `engine/Engine/Hand.lean`: hand/game transitions, legality checks, refunds and payouts.
 - `engine/Engine/Tests.lean`: scripted checks and 300 simulated random games. These are
   runnable checks, not universal proofs of T1-T3.
+- `engine/Engine/HandRankTests.lean`: known showdowns, kicker comparisons and random-deal checks.
+- `engine/Engine/Proofs.lean`: proofs about which player may receive the turn.
+
+## What is proven so far
+
+- `no_raise_against_all_in`, `all_in_player_cannot_act`, `player_ahead_cannot_act`,
+  `raise_at_least_big_blind` (`engine/Poker/Spec/Basics.lean`): facts about the rules themselves.
+- `step_turn_ok` and `startHand_turn_ok` (`engine/Engine/Proofs.lean`): after a new hand
+  or an accepted move, either the hand is over or the player to act has chips and is not
+  ahead in street contributions. These prove the turn condition, not all of T1-T3.
 
 ## Still to write
 

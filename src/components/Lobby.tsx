@@ -2,21 +2,19 @@ import { type CSSProperties, useState } from "react";
 import { PERSONALITIES } from "@/ai/bot";
 import { PlayingCard } from "./PlayingCard";
 import { OPPONENTS } from "@/lib/roster";
-import type { GameSettings } from "@/hooks/useGame";
+import { type GameSettings, TABLE } from "@/hooks/useGame";
 
-const STACKS = [500, 1000, 2500];
-const BLINDS = [
-  { small: 5, big: 10 },
-  { small: 10, big: 20 },
-  { small: 25, big: 50 },
-];
-
-/** Start screen: pick the table size, stacks and blinds. */
+/** Start screen: pick the opponent, and optionally a seed to replay a game. */
 export function Lobby({ onStart, onRules }: { onStart: (s: GameSettings) => void; onRules: () => void }) {
-  const [opponents, setOpponents] = useState(4);
-  const [stack, setStack] = useState(1000);
-  const [blinds, setBlinds] = useState(BLINDS[0]!);
+  const [opponent, setOpponent] = useState(0);
+  const [seedText, setSeedText] = useState("");
   const [fast, setFast] = useState(false);
+
+  const seedValid = /^\d{0,20}$/.test(seedText.trim());
+  const start = () => {
+    const trimmed = seedText.trim();
+    onStart({ opponent, seed: trimmed ? BigInt(trimmed) : null, fast });
+  };
 
   return (
     <div className="lobby">
@@ -26,53 +24,30 @@ export function Lobby({ onStart, onRules }: { onStart: (s: GameSettings) => void
           <PlayingCard card="Kh" size="lg" />
         </div>
         <h1>Texas Hold'em</h1>
-        <p className="lobby-sub">No-limit poker against AI players, each with their own style.</p>
+        <p className="lobby-sub">
+          Heads-up no-limit · {TABLE.startingStack} chips each · blinds {TABLE.smallBlind}/{TABLE.bigBlind}
+        </p>
       </div>
 
       <div className="lobby-card">
-        <div className="field">
-          <span className="field-label">Opponents</span>
-          <div className="segmented">
-            {[1, 2, 3, 4, 5].map((n) => (
-              <button key={n} className={n === opponents ? "on" : ""} onClick={() => setOpponents(n)}>
-                {n}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="opponent-list">
-          {OPPONENTS.slice(0, opponents).map((o) => (
-            <div key={o.name} className="opponent">
+        <div className="field-label">Your opponent</div>
+        <div className="opponent-list" role="radiogroup" aria-label="Opponent">
+          {OPPONENTS.map((o, i) => (
+            <button
+              key={o.name}
+              type="button"
+              role="radio"
+              aria-checked={i === opponent}
+              className={`opponent ${i === opponent ? "on" : ""}`}
+              onClick={() => setOpponent(i)}
+            >
               <span className="avatar avatar-sm" style={{ "--avatar": o.color } as CSSProperties}>
                 {o.name[0]}
               </span>
               <span className="opponent-name">{o.name}</span>
               <span className="opponent-style">{PERSONALITIES[o.personality].label}</span>
-            </div>
+            </button>
           ))}
-        </div>
-
-        <div className="field">
-          <span className="field-label">Starting chips</span>
-          <div className="segmented">
-            {STACKS.map((s) => (
-              <button key={s} className={s === stack ? "on" : ""} onClick={() => setStack(s)}>
-                {s.toLocaleString("en-US")}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="field">
-          <span className="field-label">Blinds</span>
-          <div className="segmented">
-            {BLINDS.map((b) => (
-              <button key={b.big} className={b === blinds ? "on" : ""} onClick={() => setBlinds(b)}>
-                {b.small}/{b.big}
-              </button>
-            ))}
-          </div>
         </div>
 
         <div className="field">
@@ -87,10 +62,22 @@ export function Lobby({ onStart, onRules }: { onStart: (s: GameSettings) => void
           </div>
         </div>
 
-        <button
-          className="btn btn-primary btn-big"
-          onClick={() => onStart({ opponents, startingStack: stack, smallBlind: blinds.small, bigBlind: blinds.big, fast })}
-        >
+        <label className="field">
+          <span className="field-label">
+            Seed <span className="muted">(optional, to replay a game)</span>
+          </span>
+          <input
+            className={`seed-input ${seedValid ? "" : "is-invalid"}`}
+            inputMode="numeric"
+            placeholder="random"
+            value={seedText}
+            onChange={(e) => setSeedText(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && seedValid && start()}
+            aria-invalid={!seedValid}
+          />
+        </label>
+
+        <button className="btn btn-primary btn-big" onClick={start} disabled={!seedValid}>
           Take a seat
         </button>
         <button className="btn btn-link" onClick={onRules}>

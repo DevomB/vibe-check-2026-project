@@ -719,22 +719,12 @@ kbd {
   border-color: rgba(233, 196, 106, 0.45);
 }
 
-.next-btn {
-  position: relative;
-  overflow: hidden;
-  min-width: 170px;
+.next-bar {
+  animation: banner-in 0.35s ease-out both;
 }
 
-.auto-bar {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  height: 3px;
-  width: 100%;
-  background: rgba(29, 21, 5, 0.55);
-  transform-origin: left;
-  animation: drain var(--auto) linear both;
-  animation-delay: var(--wait);
+.next-btn {
+  min-width: 170px;
 }
 
 /* ---------- Action bar ---------- */
@@ -949,8 +939,8 @@ kbd {
 
 .opponent-list {
   display: grid;
-  gap: 8px;
-  padding: 12px;
+  gap: 4px;
+  padding: 6px;
   border-radius: 12px;
   background: var(--bg-2);
   border: 1px solid var(--line);
@@ -960,7 +950,50 @@ kbd {
   display: flex;
   align-items: center;
   gap: 10px;
-  animation: pop-in 0.2s ease-out both;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.opponent:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.opponent.on {
+  border-color: rgba(233, 196, 106, 0.7);
+  background: rgba(233, 196, 106, 0.08);
+}
+
+.seed-input {
+  width: 150px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line-strong);
+  background: var(--bg-2);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.seed-input:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
+.seed-input.is-invalid {
+  border-color: var(--red);
+}
+
+.game-over-seed {
+  margin: 14px 0 0;
+  font-size: 12px;
 }
 
 .opponent-name {
@@ -1187,12 +1220,6 @@ kbd {
   100% {
     opacity: 0;
     transform: translateY(-34px);
-  }
-}
-
-@keyframes drain {
-  to {
-    transform: scaleX(0);
   }
 }
 
