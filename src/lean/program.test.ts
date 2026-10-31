@@ -5,7 +5,7 @@ import { LeanProcess, leanBinaryPath } from "./process";
 import type { LeanCommand, LeanState } from "./protocol";
 
 /**
- * Plays games through the real Lean game program (build it first with `lake build`).
+ * Plays games through the real Lean game program (build it first with `make lean`).
  * Checks the rules the browser relies on, and replays every hand in the TypeScript
  * prototype engine, which deals the same cards for a seed, to check both engines agree.
  */

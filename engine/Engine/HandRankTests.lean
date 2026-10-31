@@ -1,17 +1,17 @@
-import Spec
+import Poker
 import Engine.Deck
 
 /-!
 # Hand ranking tests
 
-Showdowns with a known correct answer, checked by `showdown` from `Spec/HandRank.lean`.
+Showdowns with a known correct answer, checked by `showdown` from `Poker/Spec/HandRank.lean`.
 Most of them test kickers: when two players have the same kind of hand, the next highest
 cards decide, and cards outside the best five never count. Every `#guard` runs on
 `lake build`, so a wrong answer fails the build.
 -/
 
 /-- Cards from text, for example `cards "Ah Kd"`. Rank is one of 2-9, T, J, Q, K, A; suit is
-one of c, d, h, s. An unknown letter gives a two of clubs, so a typo makes a test fail. -/
+one of c, d, h, s. Trusted test literals only: unknown ranks/suits fall back to two/clubs. -/
 def cards (s : String) : List Card :=
   (s.splitOn " ").filter (· ≠ "") |>.map fun w =>
     let r := "23456789TJQKA".toList.idxOf (w.toList.getD 0 ' ')

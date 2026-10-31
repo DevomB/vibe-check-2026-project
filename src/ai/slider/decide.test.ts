@@ -245,10 +245,40 @@ describe("the river", () => {
     expect(d.action).toEqual({ type: "raise", to: 250 });
   });
 
-  it("checks when no bet is faced, unless given the river betting rule", () => {
+  it("bets pot-sized with a value hand when no bet is faced", () => {
+    const d = decideSlider({ ...river, pot: 100, toCall: 0 });
+    expect(d.action).toEqual({ type: "raise", to: 100 });
+    expect(d.rule).toBe("river-opening");
+    expect(d.reason).toContain("value");
+  });
+
+  describe("on a board where King-Ten is best and 4-3 is worst (2c 7d Js Qh 9s)", () => {
+    const board = ["2c", "7d", "Js", "Qh", "9s"] as const;
+    const noBet = (hole: SliderView["hole"], changes: Partial<SliderView> = {}) =>
+      view({ hole, board: [...board], pot: 200, toCall: 0, raise: { min: 10, max: 400 }, ...changes });
+
+    it("bluffs with the weakest hand, but not at Bluff 0%", () => {
+      expect(decideSlider(noBet(["4d", "3c"])).action).toEqual({ type: "raise", to: 200 });
+      expect(decideSlider(noBet(["4d", "3c"])).reason).toContain("bluff");
+      expect(decideSlider(noBet(["4d", "3c"], { bluffPct: 0 })).action).toEqual({ type: "check" });
+    });
+
+    it("checks a hand outside the betting set, and checks when no bet is allowed", () => {
+      expect(decideSlider(noBet(["2d", "3c"])).action).toEqual({ type: "check" });
+      expect(decideSlider(noBet(["Kh", "Td"], { raise: null })).action).toEqual({ type: "check" });
+    });
+
+    it("keeps the bet inside the legal amounts", () => {
+      expect(decideSlider(noBet(["Kh", "Td"], { raise: { min: 10, max: 150 } })).action).toEqual({ type: "raise", to: 150 });
+    });
+  });
+
+  it("decideWithCounts checks when no river rule is given, and uses one when it is", () => {
     const noBet = { ...river, pot: 100, toCall: 0 };
-    expect(decideSlider(noBet).action).toEqual({ type: "check" });
-    expect(decideSlider(noBet, { riverOpening: () => ({ type: "raise", to: 100 }) }).action).toEqual({ type: "raise", to: 100 });
+    const counts = { win: 990, tie: 0, loss: 0 };
+    expect(decideWithCounts(noBet, counts).action).toEqual({ type: "check" });
+    const rule = () => ({ action: { type: "raise", to: 100 } as const, reason: "test" });
+    expect(decideWithCounts(noBet, counts, { riverOpening: rule }).action).toEqual({ type: "raise", to: 100 });
   });
 });
 

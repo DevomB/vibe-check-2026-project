@@ -18,6 +18,9 @@ implementation and checks before it is complete.
 - Bluff targets the designated bluff share of a defined hand set, not an
   exact observed frequency among played bets.
 - Rank candidate hands by showdown score, then fixed card order for ties.
+  Added October 31: card IDs go rank first, then suit (2c=0, ..., As=51), in
+  both the Lean deck and TypeScript. Among tied hands, the lower card IDs rank
+  higher. No earlier document said which way ties go; see MVP section 5.
 - Detailed bot reasons appear after the hand; live messages remain generic.
 - Bet/raise amounts are street totals throughout the engine, JSON and UI.
 - An explicit Next Hand action holds results for review; hand-over and
@@ -409,3 +412,34 @@ for pct in range(61):
     assert 0 <= b <= 1081 - v
     assert abs(F(b) - F(v*pct, divisor)) <= F(1, 2)
 ```
+
+## Spec-draft merge follow-up, October 31
+
+Reviewed `spec-draft` at `642107b` together with the engine added to main in
+`d4d49ec`, preserving the previously reviewed prototype fixes.
+
+- Consolidated the Lean project under `engine/`, including the new `Engine`
+  library. Updated imports, default build targets, the executable and Makefile.
+- Preserved the all-in theorem and both sets of examples. Capped short calls,
+  rejected moves by all-in players and raises that retract committed chips,
+  and kept the positive all-in comparison at a total of 1,000 chips.
+- Added runtime checks for invalid all-in actions and hands that finish during
+  blind posting. The bounded 300-hand TypeScript stress test now has the same
+  30-second budget as the existing engine stress test.
+- In an isolated checkout: `npm ci`, all 118 TypeScript tests, typechecking,
+  the production Next.js build and an HTTP homepage smoke check passed.
+- Incorporated the newer heads-up/replay, slider-bot and Lean turn-proof work
+  from main. Repeated checks on the combined candidate: all 167 TypeScript tests,
+  production build/typechecking and the 23-job Lean build passed. The replay
+  dealing-order boundary now validates card values as well as length/uniqueness.
+- `cd engine && lake build` passed, including the scripted checks and 300
+  simulated random games. The Lean executable also ran successfully.
+- `#print axioms no_raise_against_all_in` reported only `propext`. No shipped
+  Lean source contained `sorry`, `admit`, `native_decide` or new axiom declarations.
+- Audited the other three legality lemmas and both general turn proofs; each
+  reported only `propext` and `Quot.sound`.
+
+The JSON command handler, Node-to-Lean bridge, Lean slider bot, river review and
+remaining MVP proofs are still needed. The TypeScript slider module is not yet
+wired into the browser. Linux/WSL Comparator validation
+and interactive browser testing were not performed in this merge review.

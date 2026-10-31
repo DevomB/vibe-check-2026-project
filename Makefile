@@ -11,7 +11,7 @@ install: lean
 lean:
 	@command -v lake >/dev/null 2>&1 || \
 	  { curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none; }
-	lake build
+	cd engine && lake build
 
 run:
 	npm run build
@@ -26,4 +26,4 @@ test:
 check:
 	npm run typecheck
 	npm test
-	lake build
+	cd engine && lake build

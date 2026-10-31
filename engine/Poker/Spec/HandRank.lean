@@ -1,4 +1,4 @@
-import Spec.Basics
+import Poker.Spec.Basics
 
 /-!
 # Poker spec: which hand wins

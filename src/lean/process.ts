@@ -6,7 +6,7 @@ import type { LeanCommand, LeanReply } from "./protocol";
 
 /** Where `lake build` puts the game program. Override with POKER_BIN. */
 export function leanBinaryPath(): string {
-  return process.env.POKER_BIN ?? path.join(process.cwd(), ".lake", "build", "bin", "poker");
+  return process.env.POKER_BIN ?? path.join(process.cwd(), "engine", ".lake", "build", "bin", "poker");
 }
 
 /**
@@ -20,7 +20,7 @@ export class LeanProcess {
   private exited = false;
 
   constructor(binary = leanBinaryPath()) {
-    if (!existsSync(binary)) throw new Error(`Lean game program not found at ${binary}. Run "lake build" first.`);
+    if (!existsSync(binary)) throw new Error(`Lean game program not found at ${binary}. Run "make lean" (or "cd engine && lake build") first.`);
     this.child = spawn(binary, [], { stdio: ["pipe", "pipe", "pipe"] });
     createInterface({ input: this.child.stdout }).on("line", (line) => {
       const next = this.waiting.shift();

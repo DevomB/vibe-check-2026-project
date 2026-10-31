@@ -1,4 +1,4 @@
-import { type Card, type Rng, fullDeck, shuffle } from "./cards";
+import { type Card, type Rng, fullDeck, isCard, shuffle } from "./cards";
 import { type HandValue, evaluate } from "./evaluator";
 import { buildPots, splitPot } from "./pots";
 
@@ -124,7 +124,7 @@ export function startHand(
     throw new Error("Blinds must be positive safe integers with small blind <= big blind");
   }
   if (!Number.isInteger(button) || button < 0 || button >= n) throw new Error("Button out of range");
-  if (order && (order.length !== 52 || new Set(order).size !== 52)) throw new Error("A dealing order must hold all 52 cards once");
+  if (order && (order.length !== 52 || new Set(order).size !== 52 || !order.every(isCard))) throw new Error("A dealing order must hold all 52 cards once");
 
   // Cards are dealt from the end of the array.
   const deck = order ? order.slice().reverse() : shuffle(fullDeck(), rng);

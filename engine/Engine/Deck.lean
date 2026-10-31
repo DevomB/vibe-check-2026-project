@@ -1,4 +1,4 @@
-import Spec
+import Poker
 
 /-!
 # Engine: shuffling and printing cards
@@ -30,6 +30,7 @@ def shuffleAux {α : Type} : Nat → Nat → List α → List α
     (x :: xs)[i]'(Nat.mod_lt _ (Nat.succ_pos _)) :: shuffleAux fuel s' ((x :: xs).eraseIdx i)
 
 /-- Shuffle a list from a seed. -/
+-- ponytail: list removal is O(n²), fine for 52 cards; use array Fisher–Yates for larger decks.
 def shuffle {α : Type} (seed : Nat) (l : List α) : List α :=
   shuffleAux l.length seed l
 
@@ -46,6 +47,10 @@ instance : ToString Card := ⟨Card.toString⟩
 #guard (card 14 .hearts).toString == "Ah"
 #guard (card 10 .clubs).toString == "Tc"
 #guard (card 2 .spades).toString == "2s"
+
+-- A new deck runs rank first, then suit.
+#guard (fullDeck.take 5).map Card.toString == ["2c", "2d", "2h", "2s", "3c"]
+#guard (fullDeck.getLast?).map Card.toString == some "As"
 
 #guard (shuffle 42 fullDeck).length == 52
 #guard decide (shuffle 42 fullDeck).Nodup
