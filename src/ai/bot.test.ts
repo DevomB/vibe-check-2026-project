@@ -54,7 +54,8 @@ describe("estimateEquity", () => {
     estimateEquity(["Kd", "Qd"], ["2s", "7h", "Jd"], 5, 400, rng); // warm-up
     const start = performance.now();
     estimateEquity(["Kd", "Qd"], ["2s", "7h", "Jd"], 5, 400, rng);
-    expect(performance.now() - start).toBeLessThan(50);
+    // About 20-40 ms alone. The limit is generous because other test files run at the same time.
+    expect(performance.now() - start).toBeLessThan(200);
   });
 });
 

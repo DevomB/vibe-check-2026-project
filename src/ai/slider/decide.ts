@@ -1,5 +1,6 @@
 import type { Card } from "../../engine/cards";
 import type { Action } from "../../engine/game";
+import { riverRole } from "../../review/riverStrategy";
 import { type Counts, FLOP_SAMPLES, checkCards, equityAtLeast, equityPercent, riverCounts, sampledCounts, total, turnCounts } from "./counts";
 import { preflopCounts } from "./preflopTable";
 
@@ -48,10 +49,10 @@ export interface SliderDecision {
 
 export interface SliderOptions {
   /**
-   * The bot's move on the river when it faces no bet. MVP §5 picks it from the Bluff slider's
-   * river betting set, which this module does not build. Without this option the bot checks there.
+   * The bot's move, and the reason for it, on the river when it faces no bet. `decideSlider` uses
+   * `riverOpeningFromSet` unless told otherwise. Without this option `decideWithCounts` checks there.
    */
-  riverOpening?: (view: SliderView) => Action;
+  riverOpening?: (view: SliderView) => { action: Action; reason: string };
 }
 
 /** The counts for the bot's hand: preflop table, 1,000 seeded deals on the flop, exact on the turn and river. */
@@ -94,10 +95,25 @@ export function potBetTarget(view: SliderView): number {
   return view.streetBet + view.pot;
 }
 
-/** The bot's action, computing its counts first. */
+/**
+ * MVP §5, the river with no bet to face: bet pot-sized with a hand from the river betting set
+ * (a value hand or a bluff, see src/review/riverStrategy.ts), otherwise check. Also check when
+ * no bet is legal. The size is kept inside the legal amounts, as for other bets.
+ */
+export function riverOpeningFromSet(view: SliderView): { action: Action; reason: string } {
+  const role = riverRole(view.board, view.bluffPct, view.hole);
+  if (role === "check") return { action: { type: "check" }, reason: "Check: this hand is not in the river betting set." };
+  if (!view.raise) return { action: { type: "check" }, reason: `Check: a ${role} hand, but no bet is allowed.` };
+  const to = clamp(potBetTarget(view), view.raise);
+  const verb = view.streetBet > 0 ? `Raise to ${to}` : `Bet ${to}`;
+  const why = role === "value" ? "a value hand, among the strongest 30% on this board" : `a bluff, picked at Bluff ${view.bluffPct}%`;
+  return { action: { type: "raise", to }, reason: `${verb}: ${why}.` };
+}
+
+/** The bot's action, computing its counts first. On the river with no bet to face it uses `riverOpeningFromSet`. */
 export function decideSlider(view: SliderView, options: SliderOptions = {}): SliderDecision {
   checkView(view);
-  return decideWithCounts(view, countsFor(view), options);
+  return decideWithCounts(view, countsFor(view), { riverOpening: riverOpeningFromSet, ...options });
 }
 
 /**
@@ -125,8 +141,9 @@ export function decideWithCounts(view: SliderView, counts: Counts, options: Slid
   }
 
   if (view.board.length === 5) {
-    if (options.riverOpening) return decision(options.riverOpening(view), "river-opening", "River move from the river betting set.");
-    return decision({ type: "check" }, "river-opening", "Check: river bets are not built yet.");
+    if (!options.riverOpening) return decision({ type: "check" }, "river-opening", "Check: no river betting rule was given.");
+    const { action, reason } = options.riverOpening(view);
+    return decision(action, "river-opening", reason);
   }
 
   if (view.raise && equityAtLeast(counts, BET_AT_PERCENT)) {

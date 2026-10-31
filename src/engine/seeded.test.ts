@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { seededRng } from "./cards";
+import { fullDeck, seededRng } from "./cards";
 import { applyAction, startHand } from "./game";
 import { handSeed, leanOrderDeck, mixSeed, nextSeed, seededDeck } from "./seeded";
 import { createSession, dealNextHand, settleHand } from "./session";
@@ -28,9 +28,16 @@ describe("SplitMix64 (same as Engine/Deck.lean)", () => {
 describe("seededDeck", () => {
   it("starts from the Lean deck order", () => {
     const deck = leanOrderDeck();
-    expect(deck.slice(0, 3)).toEqual(["2c", "3c", "4c"]);
-    expect(deck[12]).toBe("Ac");
+    expect(deck.slice(0, 5)).toEqual(["2c", "2d", "2h", "2s", "3c"]);
+    expect(deck[12]).toBe("5c");
     expect(deck[51]).toBe("As");
+    expect(deck).toEqual(fullDeck());
+  });
+
+  it("deals the same board as the Lean engine", () => {
+    // Engine/Tests.lean checks down hand `fresh` (seed 7) and prints board [3s, 8s, 5s, Tc, Kc].
+    const order = seededDeck(7n);
+    expect([...order.slice(5, 8), order[9], order[11]]).toEqual(["3s", "8s", "5s", "Tc", "Kc"]);
   });
 
   // The same checks as the #guard lines in Engine/Deck.lean.
