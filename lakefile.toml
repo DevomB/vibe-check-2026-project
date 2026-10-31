@@ -1,9 +1,13 @@
 name = "poker"
-defaultTargets = ["poker"]
+defaultTargets = ["Engine", "poker"]
 
 # The spec: short, human-reviewed definitions. Keep it in its own library.
 [[lean_lib]]
 name = "Spec"
+
+# The game engine: the code that runs. It uses the spec's types and rules.
+[[lean_lib]]
+name = "Engine"
 
 [[lean_exe]]
 name = "poker"
