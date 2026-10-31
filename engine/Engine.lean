@@ -7,3 +7,4 @@ import Engine.Proofs
 import Engine.HandRankTests
 import Engine.Equity
 import Engine.Slider
+import Engine.SliderTests
