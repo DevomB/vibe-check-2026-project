@@ -18,6 +18,10 @@ things in Lean. If the two disagree, this file is the intent and the Lean is the
    - *Raise to N*: N must be more than the other player's bet, you must have the chips,
      and the raise must be at least as big as the last raise. The one exception is going
      all-in, which may be smaller.
+   - *No raising an all-in player*: if the other player has no chips left, you may only
+     call or fold. With two players, this also means a short all-in (an all-in smaller
+     than a full raise) never reopens the betting: the player who went all-in has nothing
+     left, so the other player cannot raise again.
 3. **Chips are conserved.** Every move, and every payout, keeps the total chips on the
    table the same. Any part of a bet the other player cannot match is given back. So at
    showdown both players have put in the same amount, and the pot is always even. The pot
@@ -36,7 +40,8 @@ things in Lean. If the two disagree, this file is the intent and the Lean is the
 
 - Folding is always allowed.
 - No odd chip: unmatched bets are refunded, so the pot is always even.
-- Blinds are 10/20 and each player starts with 1000 chips.
+- Blinds are 5/10 and each player starts with 500 chips (1,000 in total), as in `MVP.txt`.
+- You cannot raise a player who is all-in. This also covers the short all-in rule.
 
 ## Still to write
 

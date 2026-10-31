@@ -82,25 +82,36 @@ def Legal (s : State) : Action → Prop
   | .call => 0 < s.toCall
   -- Fold: always allowed (even when checking is free, though that is never a good idea).
   | .fold => True
-  -- Raise: beat the other bet, afford it, and raise by at least the last raise
+  -- Raise: the other player still has chips (you can't raise someone who is all-in),
+  -- beat the other bet, afford it, and raise by at least the last raise
   -- (unless going all-in).
+  -- With two players, the first rule also means a short all-in never reopens the
+  -- betting: whoever went all-in has no chips left, so the other player can only
+  -- call or fold.
   | .raiseTo n =>
-      s.bet (other s.toAct) < n
+      0 < s.stack (other s.toAct)
+      ∧ s.bet (other s.toAct) < n
       ∧ n - s.bet s.toAct ≤ s.stack s.toAct
       ∧ (s.bet (other s.toAct) + s.lastRaise ≤ n
          ∨ n - s.bet s.toAct = s.stack s.toAct)
 
+/-- You can never raise a player who is all-in. They can't answer the raise, so you may
+only call or fold. This is also why a short all-in doesn't reopen the betting. -/
+theorem no_raise_against_all_in (s : State) (n : Nat)
+    (h : s.stack (other s.toAct) = 0) : ¬ Legal s (.raiseTo n) := by
+  simp [Legal, h]
+
 /-! ## Examples -/
 
-/-- Start of a hand: blinds 10 and 20, stacks of 1000. Player 0 (small blind) acts first. -/
+/-- Start of a hand: blinds 5 and 10, stacks of 500. Player 0 (small blind) acts first. -/
 def exStart : State :=
-  { stack := fun p => if p = 0 then 990 else 980
+  { stack := fun p => if p = 0 then 495 else 490
     pot := 0
-    bet := fun p => if p = 0 then 10 else 20
-    lastRaise := 20
+    bet := fun p => if p = 0 then 5 else 10
+    lastRaise := 10
     toAct := 0 }
 
-example : exStart.total = 2000 := by
+example : exStart.total = 1000 := by
   simp [State.total, exStart]
 
 example : Legal exStart .call := by
@@ -114,9 +125,43 @@ example : ¬ Legal exStart .check := by
   simp [Legal, State.toCall, other, exStart]
 
 /-- Raising by less than the last raise (and not all-in) is rejected. -/
-example : ¬ Legal exStart (.raiseTo 30) := by
+example : ¬ Legal exStart (.raiseTo 15) := by
   simp [Legal, other, exStart]
 
 /-- Betting more chips than you have is rejected. -/
 example : ¬ Legal exStart (.raiseTo 5000) := by
   simp [Legal, other, exStart]
+
+/-- A short all-in. Player 0 started the hand with 800 chips and player 1 with 200. Each
+put 50 in before the flop. On the flop, player 0 bet 100. Player 1 had only 150 left and
+went all-in for 150: a raise of 50, less than a full raise of 100. Now player 0 is to act,
+with 650 chips left. -/
+def exShortAllIn : State :=
+  { stack := fun p => if p = 0 then 650 else 0
+    pot := 100
+    bet := fun p => if p = 0 then 100 else 150
+    lastRaise := 100
+    toAct := 0 }
+
+example : exShortAllIn.total = 1000 := by
+  simp [State.total, exShortAllIn]
+
+/-- Player 0 may still call the extra 50... -/
+example : Legal exShortAllIn .call := by
+  simp [Legal, State.toCall, other, exShortAllIn]
+
+/-- ...or fold... -/
+example : Legal exShortAllIn .fold := trivial
+
+/-- ...but may not re-raise, not even all-in: the short all-in did not reopen the betting. -/
+example : ¬ Legal exShortAllIn (.raiseTo 250) := by
+  simp [Legal, other, exShortAllIn]
+
+example : ¬ Legal exShortAllIn (.raiseTo 750) := by
+  simp [Legal, other, exShortAllIn]
+
+/-- The same raise is legal when the other player still has chips, so the new rule is
+what blocks it. -/
+example : Legal { exShortAllIn with stack := fun p => if p = 0 then 650 else 50 }
+    (.raiseTo 250) := by
+  simp [Legal, other, exShortAllIn]
