@@ -16,8 +16,8 @@ export const FLOP_SAMPLES = 1000;
 
 /**
  * How the turn is counted: "exact" visits every (opponent hand, river card) pair, 45,540 in all.
- * Chosen from a benchmark: about 0.4 s per decision in Node 22 (Oct 31, 2026), which fits inside
- * the bot's think time and needs no seed. Fixed, so replays do not depend on machine speed.
+ * Chosen from a benchmark: 0.4 s (warm) to 0.8 s (cold) per decision in Node 22 (Oct 31, 2026),
+ * which fits inside the bot's think time and needs no seed. Fixed, so replays do not depend on machine speed.
  */
 export const TURN_MODE = "exact";
 
