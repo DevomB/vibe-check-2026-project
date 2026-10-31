@@ -1,0 +1,31 @@
+# Lean / Lake build output and fetched dependencies
+# (keep lake-manifest.json and lean-toolchain committed)
+.lake/
+/build/
+/lake-packages/
+*.olean
+*.ilean
+*.trace
+*.hash
+
+# Python (helper scripts, differential-testing harnesses)
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Editors
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local secrets and settings
+.env
+.env.*
+.claude/settings.local.json
