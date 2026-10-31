@@ -83,6 +83,10 @@ Check each README for the supported subset, maturity and pinned Lean version (id
 - **Agents and agent tooling**: Gauss 2 (Math Inc), Aristotle (Harmonic), Axiom's AXLE, Astrio's Forall, lean4-skills (Claude Code / Codex plugin), lean-lsp-mcp, the Lean REPL.
 - **Worked examples**: cedar-spec (model, proofs, differential testing against production Rust), SampCert.
 
+## 10. Git
+
+- Once a branch is merged into main, delete the branch it was merged from, both locally and on GitHub (`git branch -d <branch>` and `git push origin --delete <branch>`). If a worktree uses the branch, remove the worktree first.
+
 ## Appendix: snippets
 
 Tested on Lean v4.30 with core only. `#spec_surface` lists definitions from the current file; in a multi-file project, change the filter to keep names from your own modules (for example by module name prefix).
