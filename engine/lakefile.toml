@@ -22,3 +22,8 @@ root = "EquityBench"
 [[lean_lib]]
 name = "Checks"
 roots = ["Checks.Challenge", "Checks.Solution"]
+
+# Differential test driver for tests/diff/run.ts (MVP section 7). Not part of the game.
+[[lean_exe]]
+name = "difftest"
+root = "DiffTest"
