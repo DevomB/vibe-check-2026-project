@@ -7,6 +7,8 @@ interface Props {
   legal: LegalActions | null;
   /** Shown while it is not the human's turn, e.g. "Dex is thinking…". */
   waiting: string | null;
+  /** The bot's latest move, in generic words ("Bot bets 60"). */
+  botMessage?: string | null;
   handStrength: string;
   onAct: (action: Action) => void;
 }
@@ -18,7 +20,7 @@ const PRESETS = [
 ];
 
 /** Fold / check-call / bet-raise controls for the human, with sizing presets and keyboard shortcuts. */
-export function ActionBar({ hand, legal, waiting, handStrength, onAct }: Props) {
+export function ActionBar({ hand, legal, waiting, botMessage = null, handStrength, onAct }: Props) {
   const raise = legal?.raise ?? null;
   const [raiseTo, setRaiseTo] = useState(raise?.min ?? 0);
 
@@ -59,6 +61,7 @@ export function ActionBar({ hand, legal, waiting, handStrength, onAct }: Props) 
       <div className="action-info">
         <span className="strength-label">Your hand</span>
         <span className="strength-value">{handStrength || "—"}</span>
+        {botMessage && <span className="bot-message">{botMessage}</span>}
         {!legal && <span className="waiting">{waiting}</span>}
       </div>
 

@@ -50,10 +50,11 @@ interface BarProps {
   delay: number;
   gameOver: boolean;
   onNextHand: () => void;
+  onReview: () => void;
 }
 
 /** Replaces the action bar between hands. The result stays until the human clicks Next hand; nothing advances on its own. */
-export function NextHandBar({ game, delay, gameOver, onNextHand }: BarProps) {
+export function NextHandBar({ game, delay, gameOver, onNextHand, onReview }: BarProps) {
   const winners = winnersOf(game);
   const youWon = winners.some((w) => w.name === "You");
 
@@ -64,13 +65,16 @@ export function NextHandBar({ game, delay, gameOver, onNextHand }: BarProps) {
         <span className="strength-label">{youWon ? "Nice hand" : "Hand over"}</span>
         <span className="strength-value">{headline}</span>
       </div>
-      {!gameOver && (
-        <div className="action-buttons">
+      <div className="action-buttons">
+        <button className="btn btn-ghost next-btn" onClick={onReview}>
+          Review <kbd>R</kbd>
+        </button>
+        {!gameOver && (
           <button className="btn btn-primary next-btn" onClick={onNextHand}>
             Next hand <kbd>Space</kbd>
           </button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
