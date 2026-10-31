@@ -86,6 +86,9 @@ describe("seededDeck", () => {
     const dup = seededDeck(1n);
     dup[1] = dup[0]!;
     expect(() => startHand(seats, 0, config, () => 0, dup)).toThrow();
+    const invalid = seededDeck(1n);
+    invalid[0] = "1c" as typeof invalid[number];
+    expect(() => startHand(seats, 0, config, () => 0, invalid)).toThrow();
   });
 });
 

@@ -80,9 +80,9 @@ inductive Action where
   | call
   | raiseTo (n : Nat)
 
-/-- How many more chips the player to act must add to match the other player's bet. -/
+/-- Chips actually paid to call, capped at the acting player's remaining stack. -/
 def State.toCall (s : State) : Nat :=
-  s.bet (other s.toAct) - s.bet s.toAct
+  min (s.bet (other s.toAct) - s.bet s.toAct) (s.stack s.toAct)
 
 /-- The smallest amount a raise must add on top of the other player's bet: the last raise,
 but never less than the big blind. -/
@@ -166,7 +166,7 @@ example : exStart.total = 1000 := by
 
 example : Legal exStart .call := by decide
 
-example : Legal exStart (.raiseTo 40) := by decide
+example : Legal exStart (.raiseTo 20) := by decide
 
 /-- Checking when there is a bet to call is rejected. -/
 example : ¬ Legal exStart .check := by decide
@@ -202,10 +202,27 @@ example : ¬ Legal exShortAllIn (.raiseTo 250) := by decide
 
 example : ¬ Legal exShortAllIn (.raiseTo 750) := by decide
 
-/-- The same raise is legal when the other player still has chips, so the new rule is
-what blocks it. -/
-example : Legal { exShortAllIn with stack := fun p => if p = 0 then 650 else 50 }
+/-- The same raise is legal when the other player still has chips. Transfer 50 chips
+between stacks so this comparison still has 1,000 chips in total. -/
+example : Legal { exShortAllIn with stack := fun p => if p = 0 then 600 else 50 }
     (.raiseTo 250) := by decide
+
+/-- With only three chips left, a call pays three rather than the full five-chip gap. -/
+example : State.toCall { exStart with stack := fun _ => 3 } = 3 := by decide
+
+/-- An all-in player has no action left, even if their bet is already matched. -/
+example (a : Action) : ¬ Legal { exStart with stack := fun _ => 0, bet := fun _ => 500 } a := by
+  simp [Legal, State.MayAct]
+
+/-- Raising into the only opponent's all-in cannot create a side pot heads-up. -/
+example : ¬ Legal
+    { exStart with stack := fun p => if p = 0 then 895 else 0
+                   bet := fun p => if p = 0 then 5 else 100
+                   lastRaise := 90 }
+    (.raiseTo 200) := by decide
+
+/-- Natural subtraction must not let a raise retract chips already committed. -/
+example : ¬ Legal { exStart with bet := fun p => if p = 0 then 30 else 10 } (.raiseTo 20) := by decide
 
 /-! ## The player to act must be allowed to act
 

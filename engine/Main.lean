@@ -1,4 +1,4 @@
-import Spec
+import Engine
 
 /-- Placeholder. The real game goes here. -/
 def main : IO Unit :=

@@ -87,6 +87,17 @@ def checkDown : List Action := [.call, .check, .check, .check, .check, .check, .
 #guard rejected fresh [.call, .call]         -- calling when there is nothing to call
 #guard rejected fresh [.fold, .call]         -- any move after the hand is over
 
+-- The runtime must enforce the hardened spec, not just its normal turn-selection path.
+#guard rejected { fresh with chips := { fresh.chips with
+    stack := fun _ => 0
+    bet := fun _ => 500 } } [.fold]
+#guard rejected { fresh with chips := { fresh.chips with
+    bet := fun p => if p = 0 then 30 else 10 } } [.raiseTo 20]
+
+-- Posting a short blind may finish a hand immediately; no extra action is needed.
+#guard let h := startHand (fun p => if p = 0 then 5 else 995) 0 7
+  h.ended.isSome && h.board.length == 5 && h.chips.total == 1000
+
 -- A rejected move leaves the hand exactly as it was.
 #guard match step fresh .check with
   | .error _ => true

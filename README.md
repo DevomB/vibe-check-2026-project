@@ -8,6 +8,7 @@ work status, checkpoints, and engine/web JSON messages. Use it when older
 research or a local prototype describes a different product.
 
 - [RULES.md](RULES.md): judging criteria and the required `make install && make run` entry point.
+- [SPEC.md](SPEC.md): the engine's correctness definitions and proof targets.
 - [CLAUDE.md](CLAUDE.md): toolchain, human-owned specifications, build discipline, and proof checks.
 - [Lean skill](.agents/skills/vibecheck-lean/SKILL.md): the existing setup and verification workflow for Claude Code or Codex.
 - [MVP review and decision log](docs/MVP_REVIEW.md): findings, confirmed choices and remaining gaps.
@@ -26,16 +27,23 @@ Done or present:
 - Published TypeScript/Next.js prototype source for cards, shuffle, evaluator,
   betting, bot and UI (`69c4e46`). It remains active development and is ready
   for teammates to pull; it is not the Lean implementation.
-- Prototype checks: `npm test -- --reporter=dot` passed 70 tests in 5 files on
-  October 31 at 2:08 PM Pacific. This checks that snapshot of TypeScript code.
-- A published Makefile for the prototype. Lean integration and a fresh-clone
-  end-to-end run remain unverified by this review.
+- Prototype corrections and 167 tests across 9 files, covering
+  validation, chip accounting, all-ins and hand progression.
+- Heads-up 500-chip games, fixed 5/10 blinds, explicit Next Hand and seeded replays.
+- A TypeScript slider-bot module with preflop data, sampled flop counts and exact
+  turn/river counts. The browser still uses the earlier personality bot.
+- Lean project under `engine/`, pinned to Lean 4.35.0: card/deck definitions,
+  reference hand ranking, seeded shuffle, betting, payouts and hand/game transitions.
+- Lean examples, known-showdown checks and 300 simulated random games, plus proofs
+  that new hands and accepted moves give the turn only to a player who may act.
+  The remaining MVP theorem proofs still need completion and final checks.
+- Root Makefile targets build the Lean project through `cd engine && lake build`.
+  The browser still uses the TypeScript prototype; the JSON bridge is not implemented.
 
 ## Still needed
 
-- Lean project skeleton, pinned toolchain and dependencies, and human-reviewed
-  specifications and theorem statements.
-- Lean cards, shuffle, evaluator, state machine, bot, equity data and river review.
+- Remaining human-reviewed theorem statements and proofs for the agreed MVP properties.
+- Lean Risk/Bluff bot, equity counts and data, and river review.
 - Node-to-Lean bridge and UI integration, including hand transitions and review history.
 - Differential checks, Tier 1 proofs, axiom audit and Linux/WSL Comparator checks.
 - Fresh-clone `make install && make run`, rehearsed demo hands and accurate proof claims.
@@ -46,8 +54,8 @@ shipping game engine remains Lean.
 
 Before parallel implementation:
 
-1. Pin the selected Lean 4.35.0 and matching dependencies; commit `lean-toolchain`
-   and `lake-manifest.json`. MVP section 15 lists the remaining decisions.
+1. Work from `engine/` for Lean commands; `engine/lean-toolchain` and
+   `engine/lake-manifest.json` are committed. MVP section 15 lists the remaining decisions.
 2. Agree shared card/action/state types and the JSON messages in MVP section 13.
    Bet/raise amounts and their bounds are street totals; call amounts are
    additional chips paid. Keep those units consistent across the bridge and UI.
