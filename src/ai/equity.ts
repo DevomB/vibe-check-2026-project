@@ -1,4 +1,4 @@
-import { type Card, type Rng, fullDeck } from "../engine/cards";
+import { type Card, type Rng, fullDeck, isCard } from "../engine/cards";
 import { evaluate } from "../engine/evaluator";
 
 /**
@@ -7,10 +7,14 @@ import { evaluate } from "../engine/evaluator";
  * Ties count as a fractional share. Returns a number from 0 to 1.
  */
 export function estimateEquity(hole: Card[], board: Card[], opponents: number, iterations: number, rng: Rng): number {
-  if (opponents <= 0) return 1;
-  if (iterations <= 0) throw new Error("iterations must be positive");
+  if (!Number.isSafeInteger(opponents) || opponents < 0) throw new Error("opponents must be a non-negative safe integer");
+  if (!Number.isSafeInteger(iterations) || iterations <= 0) throw new Error("iterations must be a positive safe integer");
 
   const known = new Set<Card>([...hole, ...board]);
+  if (hole.length !== 2 || board.length > 5 || known.size !== hole.length + board.length || ![...known].every(isCard)) {
+    throw new Error("Expected two hole cards and up to five board cards, all distinct and valid");
+  }
+  if (opponents === 0) return 1;
   const pool = fullDeck().filter((c) => !known.has(c));
   const missingBoard = 5 - board.length;
   const needed = opponents * 2 + missingBoard;

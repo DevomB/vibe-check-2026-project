@@ -119,7 +119,7 @@ export function Table({ game }: { game: Game }) {
           ) : null;
         })}
 
-        <div className="dealer-button" style={ovalPoint(buttonSeat + 0.32, n, 0.7)} title="Dealer button">
+        <div className="dealer-button" style={ovalPoint(buttonSeat + (n * 22) / 360, n, 0.7)} title="Dealer button">
           D
         </div>
       </div>

@@ -41,6 +41,7 @@ export function ActionBar({ hand, legal, waiting, handStrength, onAct }: Props) 
   useEffect(() => {
     if (!legal) return;
     const onKey = (e: KeyboardEvent) => {
+      if (e.repeat) return;
       if (e.target instanceof HTMLInputElement && e.target.type === "number") return;
       const key = e.key.toLowerCase();
       if (key === "f" && legal.call > 0) onAct({ type: "fold" });

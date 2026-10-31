@@ -1,4 +1,4 @@
-import type { Rng } from "./cards";
+import type { Card, Rng } from "./cards";
 import { type HandConfig, type HandState, startHand } from "./game";
 
 /** A seat at the table that lasts across hands. */
@@ -24,7 +24,10 @@ export interface DealtHand {
 }
 
 export function createSession(seats: Seat[], config: HandConfig): Session {
-  return { seats: seats.map((s) => ({ ...s })), button: -1, handNumber: 0, config };
+  if (seats.some((s) => !Number.isSafeInteger(s.stack) || s.stack < 0) || !Number.isSafeInteger(seats.reduce((sum, s) => sum + s.stack, 0))) {
+    throw new Error("Session stacks and their total must be non-negative safe integers");
+  }
+  return { seats: seats.map((s) => ({ ...s })), button: -1, handNumber: 0, config: { ...config } };
 }
 
 /** Seats that still have chips. */
@@ -32,8 +35,9 @@ export function activeSeats(session: Session): number[] {
   return session.seats.flatMap((s, i) => (s.stack > 0 ? [i] : []));
 }
 
-/** Moves the button to the next seat with chips and deals a hand to everyone with chips. */
-export function dealNextHand(session: Session, rng: Rng): { session: Session; dealt: DealtHand } {
+/** Moves the button to the next seat with chips and deals a hand to everyone with chips.
+ * `order`, if given, is the deck in dealing order (see `startHand`). */
+export function dealNextHand(session: Session, rng: Rng, order?: readonly Card[]): { session: Session; dealt: DealtHand } {
   const active = activeSeats(session);
   if (active.length < 2) throw new Error("Need at least two players with chips");
   const n = session.seats.length;
@@ -46,6 +50,7 @@ export function dealNextHand(session: Session, rng: Rng): { session: Session; de
     active.indexOf(button),
     session.config,
     rng,
+    order,
   );
   return {
     session: { ...session, button, handNumber: session.handNumber + 1 },
