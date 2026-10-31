@@ -21,3 +21,4 @@ root = "EquityBench"
 # Not a default target: the Challenge file is all `sorry` on purpose.
 [[lean_lib]]
 name = "Checks"
+roots = ["Checks.Challenge", "Checks.Solution"]

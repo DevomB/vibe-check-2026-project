@@ -1,0 +1,10 @@
+{
+  "challenge_module": "Checks.Challenge",
+  "solution_module": "Checks.Solution",
+  "theorem_names": [
+    "accepted_move_is_legal",
+    "illegal_move_rejected",
+    "player_to_act_may_act"
+  ],
+  "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"]
+}
