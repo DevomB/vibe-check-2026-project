@@ -8,3 +8,4 @@ import Engine.HandRankTests
 import Engine.Equity
 import Engine.Slider
 import Engine.SliderTests
+import Engine.EquityTests
