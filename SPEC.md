@@ -17,12 +17,13 @@ intent and the Lean is the bug. Theorem names and numbers (T1, T2, ...) follow `
 - **T2 `no_duplicate_cards`.** A shuffled deck holds the same 52 cards as a new deck: no
   card missing, no card twice.
 - **T3 `legal_only`.** The game rejects any illegal move and leaves the game unchanged. The
-  bot only ever picks a legal move. The rules:
+  bot only ever picks a legal move. Only a player with chips remaining can act. The rules:
   - *Check*: only when there is nothing to call.
   - *Call*: only when there is something to call. If you cannot cover it, you go all-in
     for less.
   - *Fold*: always allowed. (Folding when checking is free is pointless, but not illegal.)
-  - *Raise to N*: N must be more than the other player's bet, you must have the chips,
+  - *Raise to N*: both players must have chips remaining; N must exceed both current bets,
+    you must have the chips,
     and the raise must be at least as big as the last raise. The one exception is going
     all-in, which may be smaller.
 - **T10 `evaluator_equals_spec`.** At showdown, the winner is the player with the better
@@ -43,11 +44,11 @@ These follow `MVP.txt`, which is the team's agreed rule set.
 
 - Folding is always allowed.
 - Blinds are 5/10 for the whole game. Each player starts with 500 chips (1,000 in total).
-- Player 0 is the button. They post the small blind and act first before the flop.
-  Player 1 is the big blind.
+- In the initial example, player 0 is the button, posts the small blind and acts first
+  before the flop; player 1 is the big blind. The button rotates between hands.
 - An odd chip on a split pot goes to the big blind.
-- The rule about all-ins smaller than a full raise is handled elsewhere in the team, and is
-  not part of this spec for now.
+- Heads-up, no raise is available once the opponent is all-in. A short call pays only
+  the caller's remaining stack. A raise never retracts chips already committed.
 
 ## Where things are
 
@@ -57,4 +58,6 @@ These follow `MVP.txt`, which is the team's agreed rule set.
 ## Still to write
 
 - The engine's step function (apply a move to the state) and the payout function.
+- Street/hand lifecycle and turn progression; `State` currently describes a betting turn,
+  not a finished hand. The runtime must reject malformed card sets before hand ranking.
 - The Lean statements of T1, T2, T3 and T10, so each can be proven.
