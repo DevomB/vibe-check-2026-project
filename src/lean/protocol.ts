@@ -28,6 +28,11 @@ export interface LeanPlayer {
   allIn: boolean;
   /** A short, generic note of the last move, like "bet 60". */
   lastAction: string | null;
+  /**
+   * The name of this player's best hand, like "Two Pair". For the human, once the flop is
+   * out; for the bot, only when its cards are shown at a showdown. Otherwise null.
+   */
+  handName: string | null;
 }
 
 export interface LeanLegal {
