@@ -1,10 +1,17 @@
-VIBECHECK 2026 POKER PROJECT: MVP SPEC (v2, Saturday Oct 31)
+VIBECHECK 2026 POKER PROJECT: MVP SPEC (v3, Saturday Oct 31)
 
-CHANGED FROM v1
-- Sliders are now plain numbers. Risk goes 0 to 100. Bluff is a real percentage, 0% to 60%.
-- Blinds stay 5/10 the whole game. No doubling.
-- No Proofs screen in the MVP. It moved to the stretch ladder.
-- Added a setup checklist (section 1), the 5-minute pitch (section 14), and "reading the other player" ideas to the stretch ladder.
+CHANGED FROM v2 (decisions confirmed during the MVP review)
+- Removed personal task allocations. Section 11 now records what exists and what still needs doing.
+- TypeScript is a prototype; Lean remains the shipping game engine.
+- Risk uses actual win, tie and loss payoffs. A guaranteed profitable split must not be treated as half a loss.
+- Bluff targets a share of a defined hand set, not a guaranteed frequency in played games. Rank hands by showdown score, with a fixed card order for ties.
+- Review compares call/fold only, in response to the bot's opening river bets. Raises stay ungraded.
+- Detailed bot reasons appear after the hand; live messages stay generic.
+- Bet/raise amounts are street totals. Hands wait for Next Hand, with separate hand/game status. Choose a fixed turn-equity mode from a compiled benchmark.
+- Value hands use floor(30%); bluff hands round their target count half upward. Pot sizing has explicit legal bounds and fallback. Tier 1 remains mandatory; pitch optional proofs only when completed.
+- Lean 4.35.0 with standard axioms only; Lean drives bot actions and street transitions. The required demo is one local active game, not a hosted multi-user service.
+
+This file defines the current product. Research notes provide background; older research recommendations do not override this spec. Findings and decisions are recorded in docs/MVP_REVIEW.md; section 15 lists the remaining open decisions.
 
 ONE LINE
 Build your opponent. Play it. Get a game review where every verdict is proven.
@@ -16,8 +23,8 @@ WHY THIS WINS (the two judging axes)
 
 
 1. SETUP CHECKLIST (everyone, before 2:30 PM)
-- Node 22 or newer, and npm. Check with "node -v" and "npm -v". (Vishal: confirm yours.)
-- Lean through elan, plus the Lean 4 extension in VS Code.
+- Node 22 or newer, and npm. Check with "node -v" and "npm -v".
+- Lean 4.35.0 through elan, plus the Lean 4 extension in VS Code. The project must pin leanprover/lean4:v4.35.0 and matching dependencies.
 - git, and your own clone of github.com/DevomB/vibe-check-2026-project.
 - make. On Windows: "winget install ezwinports.make".
 - Claude Code. The API key lives only in your own terminal, never in a file in the repo.
@@ -25,21 +32,21 @@ WHY THIS WINS (the two judging axes)
 
 2. WHAT THE USER SEES
 - Setup screen: two sliders, Risk (0 to 100) and Bluff (0% to 60%), and a Start button.
-- Table screen: your two cards, the board, the pot, both stacks, and your legal actions (fold, check, call, bet or raise with an amount). Each bot action shows a one-line reason.
+- Table screen: your two cards, the board, the pot, both stacks, and your legal actions (fold, check, call, bet or raise with an amount). Live bot messages stay generic; show detailed reasons only after the hand.
 - Review screen: each graded decision with its label (Best, Good, Inaccuracy, Mistake, Blunder), what each option was worth, and the equity you had vs the equity you needed.
 
 
 3. THE SLIDERS, IN PLAIN WORDS
-RISK, 0 to 100: how much better odds the bot needs before it puts chips in.
-- Risk 0: calls whenever calling makes money on average. Facing a pot-sized bet, it calls with 33% or better.
-- Risk 50: facing the same bet, it needs 50%.
-- Risk 100: it needs 60%.
-- Theorem: turning Risk up can never make the bot play more hands.
+RISK, 0 to 100: how heavily the bot weighs a lost chip when deciding whether to call.
+- Risk 0: calls whenever calling has non-negative average chip gain.
+- With no possible ties, a pot-sized bet requires 1/3 win probability at Risk 0, 1/2 at Risk 50, and 3/5 at Risk 100.
+- Ties use the chips actually won or lost on a split; a guaranteed profitable split is worth calling at every Risk setting.
+- Theorem: for the same decision state and win/tie/loss counts, if the bot calls or raises at a higher Risk, it also continues at every lower Risk. This is a comparison at one decision, not a claim about entire games following different actions.
 
-BLUFF, 0% to 60%: the share of the bot's final-round bets that are bluffs.
-- 0% never bluffs. 33% is the balanced, game-theory amount for a pot-sized bet. 60% bluffs constantly.
+BLUFF, 0% to 60%: the target share of designated bluff hands in the bot's board-only river betting set.
+- 0% selects no bluff hands. About 33% is a reference from an idealized pot-sized, polarized call/fold game; it does not make this bot a balanced Hold'em strategy. 60% selects more bluff hands.
 - It stops at 60% because the bot always bets its strong hands too; past about 70% it would run out of weak hands to bluff with.
-- Theorem: if the slider says X%, exactly X% of its final-round bets are bluffs (rounded to the nearest hand).
+- Theorem: the number of bluff hands in that defined betting set matches the X% target, rounded to a whole hand. Actual dealt and played bets can have a different share because of blockers, earlier actions and sampling variation.
 
 Why not raw 0-to-100 for Bluff too: a real percentage is the thing we prove, so the number on the slider and the number in the theorem are the same number.
 
@@ -48,51 +55,65 @@ Why not raw 0-to-100 for Bluff too: a real percentage is the thing we prove, so 
 - 2 players. 500 chips each, 1,000 total, no rebuys. Chips are whole numbers.
 - One 52-card deck, shuffled every hand by a seeded generator, so any game can be replayed.
 - Blinds 5/10 for the whole game. Heads-up rule: the button posts the small blind, acts first preflop and last after the flop.
-- Streets: preflop, flop, turn, river, showdown. Standard No-Limit: the minimum bet is the big blind; the minimum raise is the size of the last raise; you can always go all-in for less, and an all-in short of a full raise does not reopen the betting.
+- Streets: preflop, flop, turn, river, showdown. Standard No-Limit: the minimum bet is the big blind; the minimum raise increment is the last full bet or raise increment; you can always go all-in for less, and an all-in short of a full raise does not reopen the betting or reset that increment.
+- Every bet/raise amount is the player's TOTAL contribution on the current street, including chips already committed on that street. UI bounds and JSON use the same units. A call amount is the additional chips paid to call.
 - Showdown: best five of seven cards. Split pots split evenly; an odd chip goes to the big blind (the player left of the button).
 - The game ends when one player has all 1,000 chips.
+- After a hand ends, hold its result and review until the human clicks Next Hand. Distinguish a finished hand from a finished game; do not advance after game-over.
 
 
 5. THE BOT (exact, for the people coding it)
 Inputs: its two cards, the board, the pot, the amount to call, both stacks, the two sliders.
 
 Equity = its chance to win against a random hand, ties counting half:
-- Preflop: a fixed table of 169 starting-hand equities, generated once offline by seeded Monte Carlo (exact preflop equity takes minutes per hand). Trusted data, listed in the README.
+- Preflop: a fixed table of 169 starting-hand win/tie/loss count records, generated once offline by seeded Monte Carlo (exact preflop equity takes minutes per hand). Equity alone is insufficient for the loss-weight utility. Trusted data, listed in the README with its seed, sample count and generator command.
 - Flop: Monte Carlo, 1,000 samples from the seeded generator. An estimate, labeled as one.
-- Turn and river: exact, by enumerating every possible opponent hand. If the turn is too slow, it falls back to Monte Carlo.
+- River: exact, by enumerating every possible opponent hand.
+- Turn: exact enumeration must include each possible opponent hand AND each possible river card (45,540 outcomes). Benchmark the compiled Lean implementation and choose a fixed exact-or-Monte-Carlo mode before the demo. Record that mode in replay metadata; do not change modes according to per-request machine timing. River remains exact.
 
-Facing a bet (call C chips to win a pot of P, where P already includes the bet):
-- Raises to pot if equity is 75% or more.
-- Otherwise calls when: equity x P x 100 >= (100 + 2 x Risk) x (1 - equity) x C. At Risk 0 this is exactly pot odds.
+Facing a bet (call C chips to win a contestable pot of P, where P includes the matched opponent bet; return any uncallable excess before using P):
+- If equity is 75% or more and a raise is legal, raises to the pot-sized target clamped to the legal min/max street totals. If a raise is unavailable, continue to the call/fold utility rule below.
+- Otherwise let w, t and l be the win, tie and loss counts from the same enumeration, sample set or preflop table. Calls when:
+    100 x (2 x w x P + t x (P - C)) >= 2 x (100 + 2 x Risk) x l x C.
+  This uses utility u(g) = g for g >= 0 and u(g) = (1 + Risk/50) * g for g < 0. A call wins P, loses C, or gains (P-C)/2 on a split. At Risk 0 this is ordinary chip EV. Counts from sampling remain estimates.
 - Otherwise folds.
 
-No bet to face, preflop to turn:
-- Bets pot if equity is 65% or more. Otherwise checks.
+Pot-sized raise target: the player's existing street contribution + C + (P + C). For example, a pot of 100 before an opponent bets 50 gives P=150, C=50 and a raise TO 250 if the player had nothing in on that street. Clamp the target to the legal min/max; a short all-in is permitted only when the legal bounds allow it.
 
-The river:
-- Over every hand the bot could hold on this board, it bets the strongest 30% for value.
-- Then it adds the weakest hands as bluffs, exactly enough that bluffs make up Bluff% of its bets (rounded to the nearest hand).
+No bet to face, preflop to turn:
+- If equity is 65% or more and betting/raising is legal, bets pot: target = existing street contribution + P, clamped to the legal min/max. Otherwise checks.
+
+The river, when no bet is being faced (facing a bet still uses the rule above):
+- Consider every unordered two-card hand compatible with the board, without using the human's hidden cards. Rank by best-five-of-seven showdown score; break tied scores by the ascending pair of card IDs, with ranks 2..A and suits c,d,h,s.
+- For N candidate hands, take the highest-ranked V = floor(30*N/100) hands for value. The fixed card-order tie break is for strategy selection ONLY; tied showdown scores still split the pot.
+- For b = bluff_pct, take the lowest-ranked B remaining hands as designated bluffs, where B is V*b/(100-b) rounded to the nearest integer, halves upward. Equivalently, B = floor((2*V*b + (100-b)) / (2*(100-b))). Value and bluff sets are disjoint.
 - Its actual hand decides: value hand, bet; bluff hand, bet; anything else, check.
+- Opening river bets use the same pot-sized target and legal clamping as other opening bets; if no bet is legal, check. These are strategy labels; on a board where everyone ties, a designated bluff hand does not have lower showdown strength.
 
 All math is in whole numbers. Equities are counts (wins, ties, total), and every inequality is cross-multiplied, so no proof ever touches a decimal.
 
 
 6. GAME REVIEW (MVP)
-- Grades your river call/fold decisions when the bot bets.
+- Grades your river call/fold decisions in response to the bot's opening bet from its river betting set. Responses to raises, and raises you make, stay ungraded. "Best" means best among call and fold only.
 - The bot's possible hands = every hand its river rule bets with on that board (value plus bluffs), minus any hand blocked by your cards. The MVP does not narrow this by the earlier betting; that is a stretch.
-- What calling and folding were each worth is computed exactly over those hands, in big blinds.
-- Label by how much the decision cost compared to the best option: Best = nothing, Good = under 0.5 big blinds, Inaccuracy = under 2, Mistake = under 5, Blunder = 5 or more.
+- What calling and folding were each worth is computed exactly with equal weight over those hands, in big blinds. This is exact under the stated board-only range model; ignoring earlier actions makes it an approximation of the bot's actual conditional range.
+- Fold is worth 0 from the decision onward; earlier contributions are sunk. Compare ordinary chip EV, not the bot's Risk-weighted utility.
+- Label by EV lost compared to the better of call/fold: Best = 0, Good = (0, 0.5) big blinds, Inaccuracy = [0.5, 2), Mistake = [2, 5), Blunder = [5, infinity). Choose the label before rounding for display.
 - Every other decision shows "not graded yet".
 
 
 7. WHAT IS LEAN AND WHAT IS NOT
 - Lean 4 (engine/): cards, deck, shuffle, hand evaluator, game state machine, equity, bot, review, and every proof. All pure functions, so we prove theorems directly about the code that runs. No translation tools.
+- The local TypeScript game is a rapid prototype and possible test reference. Its tests do not establish correctness of a later Lean implementation. The shipping UI must use the Lean engine.
 - Lean libraries: core Lean plus Batteries. No Mathlib in the MVP, so builds stay fast. JSON through Lean's built-in Lean.Json.
+- Pin leanprover/lean4:v4.35.0 and matching dependency revisions; commit lake-manifest.json. Only propext, Classical.choice and Quot.sound are permitted proof axioms. No native_decide in shipped proofs.
 - The Lean program is a command-line binary: one JSON request per line on stdin, one JSON response per line on stdout.
-- Web (web/): a small Node server that starts the Lean binary and relays messages, plus the browser UI. NO GAME LOGIC IN JAVASCRIPT.
+- Web (final folder layout to be agreed; the local prototype is under src/): a small Node server that starts the Lean binary and relays messages, plus the browser UI. NO GAME LOGIC IN JAVASCRIPT.
+- Required deployment: one local active game in one browser, started with make install && make run. Public hosting and concurrent games are outside the MVP.
+- After new_game, a valid act, or next_hand, Lean runs the bot and automatic street transitions until the next human decision or hand end, then returns one state response. JavaScript does not decide bot actions. Read-only review and rejected commands do not advance play or consume shuffle randomness.
 - Tests (tests/): differential tests against our npm library poker-calculations, PINNED TO EXACTLY 4.0.3.
-  - NEVER USE ANY VERSION BELOW 4.0.0. Versions 2.2.0 through 3.2.0 have an evaluator bug that made every equity number wrong.
-  - 4.0.3 passed 48 of 48 checks on Oct 31, matching an independent full enumeration exactly.
+  - Do not use versions below 4.0.0: versions 2.2.0 through 3.2.0 were reported to have an evaluator bug that can skew equity results.
+  - A previous local check reported 48 of 48 checks passing for 4.0.3 on Oct 31, matching an independent full enumeration. The replayable harness, cases and results still need to be included in the handoff before teammates rely on this as reproduced evidence.
   - Compare hand ranks on 100,000 random deals, exact equity on flop, turn and river spots, a few dozen preflop matchups, and Monte Carlo results within 4 standard errors.
   - Library gotchas: it silently accepts duplicate cards, so the harness deals distinct cards itself; cards go in as "Ah" (capital rank; lowercase "ah" throws); rank hands with evaluateHandStrength; never ask it for exact preflop equity (minutes per call).
 - Makefile: "make install" builds the Lean engine and installs the web dependencies; "make run" starts the server and opens the browser. Must work on a fresh clone.
@@ -103,12 +124,12 @@ Tier 1 (must ship):
 - T1 chips_conserved: after every action, your stack + the bot's stack + the pot = 1,000. Chips are never created or destroyed.
 - T2 no_duplicate_cards: the shuffled deck is a rearrangement of the 52 cards, so no card is ever dealt twice.
 - T3 legal_only: the engine rejects any illegal action and leaves the game unchanged, and the bot only ever picks a legal action.
-- T4 risk_monotone: if the bot continues (calls or raises) at some Risk setting, it also continues at every lower setting. Turning Risk up can never make it play more hands. (This is Pratt's comparative risk aversion for our utility; the fully general version is a stretch.)
-- T5 review_sound: a decision is labeled Best only if no other legal action was worth more, and labels only get worse as the cost grows.
+- T4 risk_monotone: for the same valid decision state, outcome counts and other settings, if the bot continues (calls or raises) at some Risk, it also continues at every lower Risk. This covers our exact loss-weight utility; it is not a statement about how many hands different full-game trajectories play.
+- T5 review_sound: for a graded call/fold decision, Best means zero chip EV lost against the better of those two actions under the declared range model, and labels only get worse as the cost grows. It makes no claim about raising.
 
 Tier 2 (should ship):
-- T6 enumeration_exact: the exact equity count visits every possible opponent hand exactly once.
-- T7 bluff_frequency: if Bluff is set to X%, exactly X% of the bot's river bets are bluffs, rounded to the nearest hand.
+- T6 enumeration_exact: the exact equity count visits every valid outcome exactly once: opponent hands on the river; opponent-hand/river-card pairs on the turn.
+- T7 bluff_frequency: the designated bluff count in the board-only river betting set matches the X% target rounded to a whole hand, using the same set as the actual bot. It does not promise an observed frequency across played games.
 - T8 no_hindsight: a review verdict never depends on the bot's actual hidden cards, only on what you could know plus the bot's rules. The review grades decisions, not luck.
 
 Tier 3 (stretch):
@@ -122,40 +143,52 @@ Proof rules (from the organizers' CLAUDE.md):
 - One lake build at a time per checkout.
 
 
-9. NOT IN THE MVP (do not start any of these before Checkpoint B)
+9. NOT IN THE MVP (do not start these until Checkpoint B works and Tier 1 proofs/checks pass)
 A Proofs screen. Blind increases. 3+ players and side pots. Kuhn/Leduc mode. Reading the other player, either direction. Grading preflop, flop, or turn decisions. Accuracy % and the luck graph. The general Pratt theorem. Any LLM. Proving the shuffle is uniform. Mobile layout.
 
 
-10. STRETCH LADDER (in this order, after Checkpoint B)
+10. STRETCH LADDER (in this order, after the section 9 gate)
 - S1 Proofs screen: every theorem in plain English, with its Lean name.
 - S2 The bot's one-line reason is proven to be exactly the condition that produced its action.
 - S3 Aggression slider (bet sizes), with a theorem that raising it never makes the bot bet smaller.
 - S4 Accuracy % and a luck-vs-skill graph, with a proof that skill + luck = the actual result.
 - S5 Pratt's theorem in full generality (needs Mathlib's Jensen inequality), applied to the bot.
-- S6 Kuhn poker mode with a proven unbeatable strategy.
+- S6 Kuhn poker mode with a proven unexploitable strategy.
 - S7 3-player table with side pots, and T1 extended to side pots.
 - S8 T10, the evaluator equivalence proof.
 - S9 Mystery bot (you read the bot): the sliders are hidden, you play, then you guess its Risk and Bluff, and the review tells you how close you were. Cheap on top of the MVP.
 - S10 The bot reads you: it tracks how often you fold and bluffs more only when its own numbers say it pays. Provable: it never bluffs unless its estimate says the bluff is profitable. Not provable: that its read on you is accurate.
 
 
-11. WHO DOES WHAT (proposed, swap if something fits better)
-- Devom: Lean lead. Writes the spec files and theorem statements first; proves T4, T5, T8.
-- Aarav: Lean. Game state machine (betting, streets, showdown); proves T1, T3.
-- Vishal: cards, shuffle, evaluator, equity, differential tests; proves T2, T6, T7.
-- Om: web UI, Node bridge, Makefile, demo polish.
-Everyone runs Claude Code in their own clone and owns their own files. Commit small, "git pull --rebase" before every push, never force-push. Never commit the API key.
+11. WHAT EXISTS AND WHAT STILL NEEDS DOING (no personal task allocations)
+DONE / PRESENT:
+- MVP scope, organizer rules, Lean agent guidance, and published research notes, index and synthesis.
+- Published TypeScript/Next.js prototype source: cards, shuffle, evaluator, betting engine, bot and table UI (commit 69c4e46). It is still active development, not the Lean engine.
+- Prototype tests: 5 files, 70 tests passed with "npm test -- --reporter=dot" on Oct 31 at 2:08 PM Pacific. This is test evidence for that local snapshot, not formal verification.
+- A prototype Makefile is published with the app. The Lean build and bridge are not integrated into it yet; a fresh-clone end-to-end run has not been established by this review.
+- Product decisions confirmed above: Lean 4.35.0 shipping engine and standard axioms; actual-outcome Risk utility; hand-set Bluff target; deterministic ranking/rounding; opening-bet call/fold review only; detailed reasons after the hand; street-total amounts and legal pot sizing/fallback; explicit Next Hand and separate statuses; Lean-driven bot scheduling; fixed benchmark-selected turn mode; one local game; Tier 1 mandatory, optional proof claims only once completed.
+
+STILL NEEDED:
+- Agree the remaining shared types, replay details, response/error details and performance budgets in section 15 and the MVP review.
+- Lean project skeleton, pinned toolchain/dependencies, human-reviewed specs and theorem statements.
+- Lean cards, shuffle, evaluator, game state machine, bot, equity counts, preflop data and river review.
+- Node-to-Lean bridge and UI integration using the agreed messages, including hand transitions and stored decision snapshots for review.
+- Runnable Lean/reference tests, Tier 1 proofs, Tier 2 proofs as capacity permits, axiom checks and Comparator configuration.
+- Linux/WSL checking, fresh-clone "make install && make run", reproducible demo hands and final claim review.
+
+Working together: use separate clones and coordinate before editing the same files. Commit small, "git pull --rebase" before every push, never force-push. Never commit the API key. Tasks are deliberately unassigned while the team gets its footing.
 
 
 12. TIMELINE (we leave at 10 PM tonight; it ends Sunday 4:30 PM)
-- Now to 2:30 PM: Devom's research session runs. Everyone else: the setup checklist, the Lean project skeleton, the Makefile, the web skeleton, and agreement on the JSON messages below. Pick the Lean version by 2:30.
+- Now to 2:30 PM: finish setup, establish the Lean project skeleton and agree the shared types and JSON messages. Commit the agreed Lean 4.35.0 pin and matching dependencies. Research is available as background.
 - 2:30 to 5:30 PM: cards, deck, shuffle, T2; the state machine with T1 and T3 stated; the evaluator; the web table drawing a hand through the Node bridge.
-- CHECKPOINT A, 5:30 PM: play a full hand in the browser against a bot that always calls.
+- CHECKPOINT A, 5:30 PM: play a full hand in the browser through the Node-to-Lean bridge against a bot that always calls. A TypeScript-only hand does not establish Lean integration.
 - 5:30 to 9:30 PM: the real bot with both sliders, exact river equity, the river review, Tier 1 proofs.
 - CHECKPOINT B, 9:30 PM: a full game in the browser against the slider bot, the review grading river decisions, Tier 1 proved or every remaining sorry listed.
+- A list of remaining Tier 1 holes is a progress report, not permission to start stretch work. Tier 1 is mandatory; T6-T8 stay Tier 2 and are presented as proven only if their proofs/checks actually pass.
 - Sunday, arrival to 12 PM: finish Tier 1 and Tier 2, polish, then the stretch ladder.
 - 12 PM: FEATURE FREEZE.
-- 12 to 2 PM: zero sorry, axiom audit, README (every theorem, plus everything we trust: the preflop table, the Lean compiler, Node), Comparator on a Linux or Mac laptop, "make install && make run" on a fresh clone.
+- 12 to 2 PM: zero sorry, axiom audit, README (every theorem, plus everything we trust: the preflop table, the Lean compiler, Node), sandboxed Comparator on Linux/WSL, "make install && make run" on a fresh clone. Prove a small Comparator example early; do not leave initial setup until this window.
 - 2 to 4 PM: rehearse the pitch, submit.
 - 4:30 PM: done.
 
@@ -165,37 +198,44 @@ Requests, one per line:
   {"cmd":"new_game","seed":42,"risk":50,"bluff_pct":33}
   {"cmd":"act","action":"call"}                              (action: fold, check, call, bet, raise)
   {"cmd":"act","action":"raise","amount":120}
+  {"cmd":"next_hand"}
   {"cmd":"review","hand":3}
+Responses below span lines for readability; each actual response is one JSON line.
 State response:
-  {"hand":3,"street":"turn","pot":60,"to_call":60,"over":false,
+  {"hand":3,"street":"turn","pot":120,"to_call":60,"status":"playing",
    "board":["2c","7d","Js","Qh"],
-   "you":{"cards":["Ah","Kd"],"stack":430},
-   "bot":{"stack":510,"last_action":"bet 60","reason":"equity 71%, value bet"},
-   "legal":[{"action":"fold"},{"action":"call","amount":60},{"action":"raise","min":120,"max":430}]}
+   "you":{"cards":["Ah","Kd"],"stack":470},
+   "bot":{"stack":410,"last_action":"bet 60","reason":"bet"},
+   "legal":[{"action":"fold"},{"action":"call","amount":60},{"action":"raise","min":120,"max":470}]}
 Review response:
-  {"hand":3,"decisions":[{"street":"river","your_action":"call","label":"Blunder",
+  {"hand":3,"decisions":[{"street":"river","your_action":"call","label":"Mistake",
    "worth_bb":{"call":-4.1,"fold":0},"equity_had":0.12,"equity_needed":0.33}]}
 Error response:
   {"error":"illegal action","state":{ ...the unchanged state... }}
 Cards: rank (2-9, T, J, Q, K, A) + suit (c, d, h, s). Sliders travel as whole numbers (risk 0-100, bluff_pct 0-60). Decimals in responses are for display only; the engine computes exact fractions.
+Status: "playing", "hand_over", or "game_over". Only "hand_over" accepts next_hand. A finished hand retains its result and review until that command; game_over ends the match. Bet/raise amount and min/max are street totals, while call amount is additional chips to pay.
 
 
 14. THE 5-MINUTE PITCH
-0:00 The hook (30 seconds): "When a poker app says the deck is fair, or that you made a mistake, you have to take its word for it. In ours, every one of those claims is checked by a proof."
+Only present a claim below as proven once its actual Lean theorem and final checks pass.
+0:00 The hook (30 seconds): "Build your opponent, play it, and review your river calls and folds. Our Lean proofs check properties of the game and the review's stated model."
 0:30 Build your opponent (1 minute): set Risk to 100 and Bluff to 0%. Bet big at it: it folds everything but strong hands.
 1:30 Change its personality (1 minute): Risk 0, Bluff 60%. Now it fires bluffs on the river.
-2:30 The game review (1 minute): make a bad river call, open the review. "Blunder. You needed 33% and had 12% against every hand this bot could have held."
+2:30 The game review (1 minute): use a rehearsed hand with a bad river call and open the review. Quote the actual equity and threshold from the declared board-only range model.
 3:30 What is proven (1 minute), in plain words:
   - Chips can never be created or destroyed.
   - No card is ever dealt twice.
   - Every move is legal.
-  - Turning the Risk slider up can never make the bot play more hands.
-  - The Bluff slider is exact: 33% means 33% of its final bets are bluffs.
-  - The review grades your decisions, never your luck.
+  - At the same decision, raising Risk cannot turn a fold into a call or raise.
+  - The Bluff slider controls the designated bluff share of the defined hand set, rounded to whole hands.
+  - The review compares call and fold using the recorded player view and its stated range model.
 4:30 The close (30 seconds): what we would build next (reading the other player, the Proofs screen), and thanks.
 
 
 15. OPEN DECISIONS (default in brackets)
-- Lean version [whatever Comparator needs; settle by 2:30 PM from the research].
-- Web framework [Om's call: plain HTML/JS, or Vite + React].
-- Who runs the final Comparator check [whoever has Linux or a Mac].
+- Lean version: DECIDED, leanprover/lean4:v4.35.0 with matching dependencies and only the three standard axioms. The project pin and checker run still need to be implemented.
+- Web framework and final folder layout [local prototype is Next.js under src/; final integration still needs agreement].
+- Linux/WSL environment for final Comparator checks [validate a small example before the final audit window].
+- Benchmark budget and chosen turn mode, preflop count-data generation, and replay rules [not settled].
+- Protocol details beyond agreed Next Hand/status/scheduling: review history, detailed post-hand reasons, refresh/restart behavior and error responses [not settled].
+- Final proof-coverage evidence [Tier 1 mandatory; optional properties appear as proven in the pitch only after their own checks pass].
