@@ -1,4 +1,6 @@
 import Engine.Deck
+import Engine.PreflopData
+import Engine.StartingHands
 import Engine.Hand
 import Engine.Tests
 import Engine.Proofs
@@ -7,3 +9,4 @@ import Engine.Bot
 import Engine.BotTests
 import Engine.Equity
 import Engine.Slider
+import Engine.SliderTests
