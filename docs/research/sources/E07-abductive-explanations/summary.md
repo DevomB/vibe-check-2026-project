@@ -1,5 +1,7 @@
 # Summary: E07: Abduction-Based Explanations for Machine Learning Models (Ignatiev, Narodytska, Marques-Silva) + our live-review assessment
 
+**Source:** Ignatiev, Narodytska, Marques-Silva. "Abduction-Based Explanations for Machine Learning Models." AAAI 2019. https://arxiv.org/abs/1811.10656. DOI 10.1609/aaai.v33i01.33011511
+
 TL;DR: An "abductive explanation" of a decision is a set of input facts that is enough to force the decision (any input agreeing on those facts gets the same output), and from which no fact can be dropped (subset-minimal). The paper computes these with a linear number of solver calls over a logical encoding of the model.
 - This is exactly the right definition for our live review: soundness = "the listed facts force the action"; minimality = "drop any listed fact and some input changes the action".
 - Our bot is a small rule-based function, so we can prove these properties in Lean directly instead of calling a solver.

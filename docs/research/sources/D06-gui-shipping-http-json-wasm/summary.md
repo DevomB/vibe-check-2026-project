@@ -1,5 +1,7 @@
 # Summary: D06: Shipping a Lean program with a web GUI (`make install && make run`)
 
+**Source:** Std.Http API docs: https://lean-lang.org/doc/api/Std/Http.html. Lean.Json: https://lean-lang.org/doc/api/Lean/Data/Json/Basic.html
+
 **TL;DR.** Core Lean v4.35 ships `Std.Http.Server`. One Lean binary can serve a static HTML/JS page plus a JSON API (using `Lean.Json`). Fallback: JSON over stdin/stdout behind a small Python server, which the Kuhn prototype already uses.
 
 - Lean to WebAssembly has no maintained path; Lean2Wasm is stuck at v4.7.0.

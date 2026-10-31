@@ -1,5 +1,7 @@
 # Summary: D07: Performance of compiled Lean for enumeration; `decide` vs `native_decide`; exact `Rat`
 
+**Source:** Ullrich, de Moura. "Counting Immutable Beans: Reference Counting Optimized for Purely Functional Programming." IFL 2019. https://arxiv.org/abs/1908.05647. Lean reference manual: https://lean-lang.org/doc/reference/latest/Basic-Types/Natural-Numbers/
+
 **TL;DR.** Prove general theorems instead of evaluating huge cases in the kernel. Use exact `Rat` (it is in core) for EV. Benchmark preflop equity early.
 
 - A preflop all-in has 1,712,304 boards, so about 3.4 million hand evaluations per spot. That needs a fast `UInt64` bitmask evaluator; `UInt64` values get boxed inside `Array`.

@@ -1,5 +1,7 @@
 # Summary: D02: Comparator, `lake check`, `lake comparator`
 
+**Source:** leanprover/comparator. https://github.com/leanprover/comparator. Lean v4.35.0 release notes: https://lean-lang.org/doc/reference/latest/releases/v4.35.0/
+
 **TL;DR.** `lake comparator` checks a solution against a trusted file of theorem statements. `lake check` replays the build through the kernel and rejects any axiom beyond the standard three. Both run in a Linux-only bubblewrap sandbox.
 
 - `comparator.json` names `challenge_module`, `solution_module`, `theorem_names` and `permitted_axioms`.

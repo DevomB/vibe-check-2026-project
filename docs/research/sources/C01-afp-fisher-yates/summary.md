@@ -1,5 +1,7 @@
 # Summary: C01: Fisher–Yates shuffle (Isabelle AFP entry, Manuel Eberl)
 
+**Source:** M. Eberl. "Fisher-Yates shuffle." Archive of Formal Proofs, 2016 (BSD). https://www.isa-afp.org/entries/Fisher_Yates.html
+
 TL;DR: A machine-checked Isabelle/HOL proof that Fisher–Yates (forward and backward) gives every ordering of a list the same probability. BSD license, maintained up to Isabelle2026.
 - The spec shape to copy: "the output distribution equals the uniform distribution over all orderings of the input" (`fisher_yates xs = shuffle xs`).
 - Key invariant: after step i, the first i cards are fixed and the rest are a uniform shuffle.

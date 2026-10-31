@@ -1,5 +1,7 @@
 # Summary: D01: Which Lean toolchain to pin (v4.35.0) and matching dependency tags
 
+**Source:** Lean 4 v4.35.0 release. https://github.com/leanprover/lean4/releases/tag/v4.35.0. Release notes: https://lean-lang.org/doc/reference/latest/releases/v4.35.0/
+
 **TL;DR.** Lean v4.53 does not exist; the "4.53" in CLAUDE.md is a typo for 4.35. Pin `leanprover/lean4:v4.35.0` (stable, released 2026-10-12), which the repo already does.
 
 - Mathlib, Batteries, plausible, repl and iris-lean all have a `v4.35.0` tag.

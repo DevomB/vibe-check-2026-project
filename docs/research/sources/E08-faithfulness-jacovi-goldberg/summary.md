@@ -1,5 +1,7 @@
 # Summary: E08: Jacovi and Goldberg, "Towards Faithfully Interpretable NLP Systems" (ACL 2020)
 
+**Source:** Jacovi, Goldberg. "Towards Faithfully Interpretable NLP Systems: How should we define and evaluate faithfulness?" ACL 2020. https://arxiv.org/abs/2004.03685
+
 TL;DR: An opinion paper that separates "plausibility" (does the explanation convince people?) from "faithfulness" (does it reflect the model's real reasoning?). It warns that generated text explanations can be plausible with no faithfulness guarantee, that "inherently interpretable" is a claim to be checked, and that user-study success does not show faithfulness.
 - Gives us the vocabulary for the live-review pitch: our explanations are faithful by proof, not just plausible.
 - Directly supports our design choice: LLM-written commentary is plausible-only; proved explanation records are faithful.

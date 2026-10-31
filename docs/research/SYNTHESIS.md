@@ -1,6 +1,6 @@
 # Synthesis
 
-Written by the research lead after reading all 43 summaries, and the notes where needed.
+Written by the research lead after reading all 40 summaries, and the notes where needed.
 Source ids (A01, E09, ...) point to [INDEX.md](INDEX.md). Hour estimates assume the
 teammate who is strong in Lean. They are rough, and most come from the source agents.
 

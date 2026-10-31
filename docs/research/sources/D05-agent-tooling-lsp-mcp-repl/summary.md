@@ -1,5 +1,7 @@
 # Summary: D05: Agent tooling: lean-lsp-mcp and the Lean REPL
 
+**Source:** lean-lsp-mcp: https://github.com/oOo0oOo/lean-lsp-mcp. Lean REPL: https://github.com/leanprover-community/repl
+
 **TL;DR.** lean-lsp-mcp gives a coding agent goal states and diagnostics without a rebuild. The Lean REPL is an alternative.
 
 - Setup: `claude mcp add lean-lsp -s project uvx lean-lsp-mcp`; run `lake build` first.

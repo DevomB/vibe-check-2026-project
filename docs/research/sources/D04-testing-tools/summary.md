@@ -1,5 +1,7 @@
 # Summary: D04: Testing tools: plausible, Specimen, LSpec
 
+**Source:** plausible: https://github.com/leanprover-community/plausible. Specimen: https://reservoir.lean-lang.org/@strata-org/specimen. LSpec: https://github.com/argumentcomputer/LSpec
+
 **TL;DR.** Use plausible for property-based testing before proving. Skip LSpec and Specimen.
 
 - plausible has a `v4.35.0` tag. Random actions are rarely legal, so write a generator for legal action sequences.

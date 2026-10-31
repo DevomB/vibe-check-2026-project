@@ -1,10 +1,10 @@
 # Source index
 
-43 source folders: A 8, B 7, C 8, D 7, E 10. Each folder has a `summary.md` (short) and a
-`notes.md` (full extraction, with every URL fetched on 2026-10-31). Some folders bundle
-several closely related items; the notes list each one. Items the agents could not open
-are marked UNVERIFIED in the notes and are not counted here. Free full texts are listed in
-[PAPERS.md](PAPERS.md).
+40 source folders: A 8, B 7, C 8, D 7, E 10. Each folder has a `summary.md` (short, with
+the citation and a link to the original) and a `notes.md` (full extraction, with every URL
+fetched on 2026-10-31). Some folders bundle several closely related items; the notes list
+each one. Items the agents could not open are marked UNVERIFIED in the notes and are not
+counted here. The papers themselves are not stored in the repo; use the citation links.
 
 Verdicts: **use** = we build on it; **maybe** = background or a stretch goal; **ignore** = related work only.
 

@@ -1,5 +1,7 @@
 # Summary: B01: Pratt (1964), "Risk Aversion in the Small and in the Large"
 
+**Source:** J. W. Pratt. "Risk Aversion in the Small and in the Large." Econometrica 32(1/2), 1964, pp. 122-136. https://doi.org/10.2307/1913738. Open restatement: Kimball, NBER w2848, https://www.nber.org/papers/w2848.pdf
+
 
 TL;DR: Pratt's classic paper (Econometrica 32, 1964, pp. 122-136; peer-reviewed; abstract only seen, full text paywalled) defines the risk premium and the measure r(x) = -u''/u'. It shows that a higher r everywhere means a concave increasing transform of utility and a bigger risk premium for every gamble. Theorem wording verified through Kimball's open NBER paper w2848; the full list of equivalent conditions and the strict form are **unsure**.
 

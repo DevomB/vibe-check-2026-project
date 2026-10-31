@@ -1,5 +1,7 @@
 # Summary: B07: Davis, Waugh and Bowling (2019), "Solving Large Extensive-Form Games with Strategy Constraints" (risk in imperfect-information games)
 
+**Source:** Davis, Waugh, Bowling. "Solving Large Extensive-Form Games with Strategy Constraints." AAAI 2019. https://arxiv.org/abs/1809.07893
+
 
 TL;DR: The closest game-solving paper I found on risk in imperfect-information games. It extends CFR (counterfactual regret minimization, the standard poker-solving algorithm) to **Constrained CFR**, which finds the best strategy subject to any convex constraints, such as "probability of a bad event at most b". It keeps CFR's O(1/sqrt(T)) convergence rate. Risk is handled as a **hard constraint**, not as a utility. Experiments: a security game with a risk bound, and opponent modeling in Leduc Hold'em.
 

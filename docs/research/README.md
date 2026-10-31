@@ -47,5 +47,4 @@ If time ran short, groups B, C and E had priority.
 - [INDEX.md](INDEX.md): one row per source.
 - [SYNTHESIS.md](SYNTHESIS.md): ranked verification targets, novelty, MVP cut, model-vs-code check, parked ideas.
 - [OPEN_QUESTIONS.md](OPEN_QUESTIONS.md): decisions for the team or the organizers.
-- [PAPERS.md](PAPERS.md): free full-text links; `sh docs/research/fetch_papers.sh` downloads them to the git-ignored `papers/` folder.
-- `sources/<id>-<slug>/notes.md` and `summary.md`: per-source extraction.
+- `sources/<id>-<slug>/summary.md`: short summary with the citation and link; `notes.md`: the full extraction. Papers are not stored; use the links.

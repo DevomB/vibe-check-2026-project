@@ -1,5 +1,7 @@
 # Summary: B02: Mathlib, Jensen's inequality and convexity (official library docs)
 
+**Source:** Mathlib4 documentation, Mathlib.Analysis.Convex.Jensen. https://leanprover-community.github.io/mathlib4_docs/Mathlib/Analysis/Convex/Jensen.html
+
 
 TL;DR: Mathlib (official docs, current master as served on 2026-10-31) has the finite Jensen inequality for concave and convex functions, strict versions, equality cases, and integral versions. The scalar type only needs to be an ordered field (`[Field 𝕜] [LinearOrder 𝕜] [IsStrictOrderedRing 𝕜]`), and `ℚ` has these instances. So Jensen works over `Rat`, which is what our bot will compute with.
 

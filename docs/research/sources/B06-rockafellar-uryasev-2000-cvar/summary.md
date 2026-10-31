@@ -1,5 +1,7 @@
 # Summary: B06: Rockafellar and Uryasev (2000), "Optimization of Conditional Value-at-Risk"
 
+**Source:** Rockafellar, Uryasev. "Optimization of Conditional Value-at-Risk." The Journal of Risk 2(3), 2000, pp. 21-41. https://doi.org/10.21314/JOR.2000.038
+
 
 TL;DR: The standard paper on CVaR (Journal of Risk 2(3), 2000, pp. 21-41; peer-reviewed; I read the authors' own preprint copy dated September 5, 1999). CVaR at level a is the average loss in the worst (1 - a) share of cases. Their Theorem 1: CVaR equals the minimum over t of F(t) = t + E[(loss - t)+] / (1 - a), and the smallest minimizer is VaR. For finite lotteries this is exact rational arithmetic.
 

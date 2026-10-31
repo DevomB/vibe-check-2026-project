@@ -1,5 +1,7 @@
 # Summary: E02: Lichess Accuracy (win% from centipawns, per-move and game accuracy)
 
+**Source:** Lichess. "Accuracy." https://lichess.org/page/accuracy. Code: https://github.com/lichess-org/lila/blob/master/modules/analyse/src/main/AccuracyPercent.scala (AGPL)
+
 TL;DR: Lichess publishes its full accuracy formula and code. Win% comes from a logistic curve on centipawns; per-move accuracy is an exponential of the win% drop; game accuracy averages a volatility-weighted mean and a harmonic mean.
 - Win% = 50 + 50 * (2 / (1 + exp(-0.00368208 * centipawns)) - 1).
 - Move accuracy (code) = clamp(103.1668100711649 * exp(-0.04354415386753951 * winDiff) - 3.166924740191411 + 1, 0, 100); exactly 100 when win% does not drop.

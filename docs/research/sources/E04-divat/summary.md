@@ -1,5 +1,7 @@
 # Summary: E04: DIVAT (Billings and Kan, "A Tool for the Direct Assessment of Poker Decisions")
 
+**Source:** Billings, Kan. "A Tool for the Direct Assessment of Poker Decisions." University of Alberta TR06-07, 2006 (ICGA Journal version unverified). https://doi.org/10.7939/R3PC2TC4D
+
 TL;DR: DIVAT judges each betting round of limit hold'em in hindsight (both players' cards known) by comparing the money actually put in to a "baseline" sequence that two honest bet-for-value players would have used. The per-round "DIVAT Difference" sums to a low-variance skill score. Unbiasedness of the roll-out version was proved by Zinkevich et al. 2006 (on paper).
 - Skill = (equity difference between actual betting and baseline betting). Luck is what is left.
 - Uses hindsight knowledge of all cards. Fine for long-run measurement, but per-decision verdicts that use the opponent's hidden cards would break our "no hidden cards" rule.

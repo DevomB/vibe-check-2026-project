@@ -1,5 +1,7 @@
 # Summary: D03: Program-verification tools: core `vcgen` (Std.WP / Std.Do), Velvet, iris-lean, Veil
 
+**Source:** Lean reference manual, "The vcgen tactic". https://lean-lang.org/doc/reference/4.35.0/The--vcgen--tactic/. Velvet: https://github.com/verse-lab/velvet. Veil: https://github.com/verse-lab/veil. iris-lean: https://github.com/leanprover-community/iris-lean
+
 **TL;DR.** Core `vcgen`, Velvet, iris-lean and Veil are built for imperative or concurrent code. Our engine is pure functions, so ordinary Lean proofs are enough.
 
 - `vcgen` (core v4.35) is experimental; at most try it on one loop as a stretch.

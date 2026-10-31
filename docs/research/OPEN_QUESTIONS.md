@@ -49,7 +49,3 @@ options and what the research suggests. Source ids point to [INDEX.md](INDEX.md)
     our app against our own bot, but say so in the demo.
 15. **Scope after the MVP.** The stretch ladder in SYNTHESIS puts luck/skill and live review before
     side pots. Agree on it, or move 3-6 players up if the demo needs a full table.
-16. **Papers in the repo.** Free full texts download locally with `sh docs/research/fetch_papers.sh`,
-    into a git-ignored folder ([PAPERS.md](PAPERS.md)). Most are under publisher or default arXiv
-    copyright, so this public repo keeps links only. If you want PDFs committed, we can commit only
-    those under an open license (such as CC BY), after checking each one.

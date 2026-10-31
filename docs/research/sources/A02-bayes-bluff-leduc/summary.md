@@ -1,5 +1,7 @@
 # Summary: A02: Bayes' Bluff (Southey et al., UAI 2005): opponent modelling and the rules of Leduc hold'em
 
+**Source:** Southey, Bowling, Larson, Piccione, Burch, Billings, Rayner. "Bayes' Bluff: Opponent Modelling in Poker." UAI 2005. https://arxiv.org/abs/1207.1411. Leduc code: OpenSpiel (Apache-2.0), https://github.com/google-deepmind/open_spiel/blob/master/open_spiel/games/leduc_poker/leduc_poker.cc
+
 
 TL;DR: Southey et al. (UAI 2005) model an unknown poker opponent with Bayesian updating and introduce Leduc hold'em, a small poker game used everywhere since. Full text read on arXiv.
 
