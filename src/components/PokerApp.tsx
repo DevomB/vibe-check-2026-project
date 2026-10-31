@@ -9,12 +9,11 @@ import { RulesModal } from "./RulesModal";
 import { NextHandBar } from "./ResultBanner";
 import { Table, resultDelay } from "./Table";
 import { chips, describeStartingHand } from "@/lib/format";
-import { type GameSettings, HUMAN_SEAT, gameStatus, useGame } from "@/hooks/useGame";
+import { HUMAN_SEAT, TABLE, gameStatus, useGame } from "@/hooks/useGame";
 
 export function PokerApp() {
   const { game, start, humanAct, nextHand, quit } = useGame();
   const [showRules, setShowRules] = useState(false);
-  const [lastSettings, setLastSettings] = useState<GameSettings | null>(null);
   const status = game ? gameStatus(game) : null;
 
   useEffect(() => {
@@ -29,19 +28,14 @@ export function PokerApp() {
     return () => window.removeEventListener("keydown", onKey);
   }, [status, nextHand]);
 
-  const begin = (settings: GameSettings) => {
-    setLastSettings(settings);
-    start(settings);
-  };
-
   const rulesModal = showRules && (
-    <RulesModal onClose={() => setShowRules(false)} smallBlind={lastSettings?.smallBlind ?? 5} bigBlind={lastSettings?.bigBlind ?? 10} />
+    <RulesModal onClose={() => setShowRules(false)} smallBlind={TABLE.smallBlind} bigBlind={TABLE.bigBlind} />
   );
 
   if (!game) {
     return (
       <div className="app app-lobby">
-        <Lobby onStart={begin} onRules={() => setShowRules(true)} />
+        <Lobby onStart={start} onRules={() => setShowRules(true)} />
         {rulesModal}
       </div>
     );
@@ -71,10 +65,13 @@ export function PokerApp() {
             Hand <b>#{game.session.handNumber}</b>
           </span>
           <span>
-            Blinds <b>{game.settings.smallBlind}/{game.settings.bigBlind}</b>
+            Blinds <b>{TABLE.smallBlind}/{TABLE.bigBlind}</b>
           </span>
           <span>
             Your chips <b>{chips(you?.stack ?? game.session.seats[HUMAN_SEAT]!.stack)}</b>
+          </span>
+          <span title="Enter this seed in the lobby to replay the same cards">
+            Seed <b>{game.seed.toString()}</b>
           </span>
         </div>
         <div className="topbar-actions">
@@ -109,7 +106,9 @@ export function PokerApp() {
           delay={resultDelay(game) + 1.2}
           won={game.session.seats[HUMAN_SEAT]!.stack > 0}
           stats={game.stats}
-          onAgain={() => start(game.settings)}
+          seed={game.seed}
+          onAgain={() => start({ ...game.settings, seed: null })}
+          onReplay={() => start({ ...game.settings, seed: game.seed })}
           onLobby={quit}
         />
       )}

@@ -103,14 +103,26 @@ const NEXT_STREET: Record<Exclude<Street, "river" | "showdown">, { street: Stree
   turn: { street: "river", cards: 1 },
 };
 
-/** Deals a new hand. `seats` are in table order and must all have chips; `button` indexes into them. */
-export function startHand(seats: readonly SeatInput[], button: number, config: HandConfig, rng: Rng): HandState {
+/**
+ * Deals a new hand. `seats` are in table order and must all have chips; `button` indexes into them.
+ * `order`, if given, is the whole deck in dealing order (first card dealt first), e.g. from
+ * `seededDeck`; otherwise the deck is shuffled with `rng`.
+ */
+export function startHand(
+  seats: readonly SeatInput[],
+  button: number,
+  config: HandConfig,
+  rng: Rng,
+  order?: readonly Card[],
+): HandState {
   const n = seats.length;
   if (n < 2) throw new Error("A hand needs at least two players");
   if (seats.some((s) => s.stack <= 0)) throw new Error("Every seat dealt in must have chips");
   if (button < 0 || button >= n) throw new Error("Button out of range");
+  if (order && (order.length !== 52 || new Set(order).size !== 52)) throw new Error("A dealing order must hold all 52 cards once");
 
-  const deck = shuffle(fullDeck(), rng);
+  // Cards are dealt from the end of the array.
+  const deck = order ? order.slice().reverse() : shuffle(fullDeck(), rng);
   const players: PlayerState[] = seats.map((s) => ({
     id: s.id,
     name: s.name,

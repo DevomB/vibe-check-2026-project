@@ -9,16 +9,24 @@ import {
   createSession,
   cryptoRng,
   dealNextHand,
+  handSeed,
+  mixSeed,
+  randomGameSeed,
+  seededDeck,
+  seededRng,
   settleHand,
 } from "@/engine";
 import { cardText, chips } from "@/lib/format";
 import { HUMAN_COLOR, OPPONENTS, type Opponent } from "@/lib/roster";
 
+/** Heads-up table rules, fixed for the whole game (MVP section 4). */
+export const TABLE = { startingStack: 500, smallBlind: 5, bigBlind: 10 } as const;
+
 export interface GameSettings {
-  opponents: number;
-  startingStack: number;
-  smallBlind: number;
-  bigBlind: number;
+  /** Index into OPPONENTS of the AI player. */
+  opponent: number;
+  /** Game seed to replay; null deals a new random game. */
+  seed: bigint | null;
   fast: boolean;
 }
 
@@ -37,6 +45,8 @@ export interface Stats {
 
 export interface Game {
   settings: GameSettings;
+  /** Every hand's cards follow from this seed, as in the Lean engine. */
+  seed: bigint;
   /** Indexed by session seat; seat 0 is the human. */
   players: Player[];
   session: Session;
@@ -130,8 +140,15 @@ function settleIfOver(game: Game): Game {
   };
 }
 
+/** Random numbers for one bot decision, fixed by the game seed, hand and move number, so a replay with the same human moves plays out the same. */
+function decisionRng(game: Game): () => number {
+  const salt = handSeed(game.seed, game.session.handNumber) ^ BigInt(game.dealt.hand.events.length);
+  return seededRng(Number(mixSeed(salt) & 0xffffffffn));
+}
+
 function startNextHand(game: Omit<Game, "dealt" | "boardBefore">): Game {
-  const { session, dealt } = dealNextHand(game.session, cryptoRng);
+  const order = seededDeck(handSeed(game.seed, game.session.handNumber + 1));
+  const { session, dealt } = dealNextHand(game.session, cryptoRng, order);
   const header = `Hand #${session.handNumber}`;
   const lines = describeEvents(dealt.hand.events, namesFor(game, dealt), 0);
   // A hand can end while being dealt, when the blinds put everyone all-in.
@@ -165,16 +182,17 @@ export function useGame() {
   gameRef.current = game;
 
   const start = useCallback((settings: GameSettings) => {
-    const opponents = OPPONENTS.slice(0, settings.opponents);
+    const opponent = OPPONENTS[settings.opponent] ?? OPPONENTS[0]!;
     const players: Player[] = [
       { name: "You", color: HUMAN_COLOR, opponent: null },
-      ...opponents.map((o) => ({ name: o.name, color: o.color, opponent: o })),
+      { name: opponent.name, color: opponent.color, opponent },
     ];
     const session = createSession(
-      players.map((p, i) => ({ id: String(i), name: p.name, stack: settings.startingStack })),
-      { smallBlind: settings.smallBlind, bigBlind: settings.bigBlind },
+      players.map((p, i) => ({ id: String(i), name: p.name, stack: TABLE.startingStack })),
+      { smallBlind: TABLE.smallBlind, bigBlind: TABLE.bigBlind },
     );
-    setGame(startNextHand({ settings, players, session, log: [], stats: { handsPlayed: 0, handsWon: 0, biggestPot: 0 } }));
+    const seed = settings.seed ?? randomGameSeed();
+    setGame(startNextHand({ settings, seed, players, session, log: [], stats: { handsPlayed: 0, handsWon: 0, biggestPot: 0 } }));
   }, []);
 
   const humanAct = useCallback((action: Action) => {
@@ -213,7 +231,7 @@ export function useGame() {
     const timer = window.setTimeout(() => {
       const current = gameRef.current;
       if (!current || current.dealt.hand !== hand) return;
-      const action = chooseAction(hand, hand.toAct!, PERSONALITIES[opponent.personality], cryptoRng);
+      const action = chooseAction(hand, hand.toAct!, PERSONALITIES[opponent.personality], decisionRng(current));
       setGame(act(current, action));
     }, delay);
     return () => window.clearTimeout(timer);
