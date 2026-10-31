@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { type Action, type DealtHand, type HandState, type LegalActions, type Session, evaluate, randomGameSeed } from "@/engine";
+import { type Action, type DealtHand, type HandState, type LegalActions, type Session, randomGameSeed } from "@/engine";
 import type { LeanCommand, LeanEvent, LeanReply, LeanReview, LeanState } from "@/lean/protocol";
 import { cardText, chips } from "@/lib/format";
 import { BOT, HUMAN_COLOR } from "@/lib/roster";
@@ -8,8 +8,8 @@ import { BOT, HUMAN_COLOR } from "@/lib/roster";
  * Runs a game against the Lean game program. Every rule decision (dealing, which moves are
  * legal, the bot's moves, who wins, the review grades) is made in Lean and arrives through `/api/game`.
  * This file only sends the human's clicks and turns Lean's replies into what the table
- * components draw. The TypeScript engine is used only for its types and to name the
- * hands at showdown ("Two Pair, Kings and Fives"), which is display only.
+ * components draw. The TypeScript engine is used only for its types; hand names and the
+ * winning five cards come from Lean too (`handName`, `bestCards`).
  */
 
 /** Heads-up table rules, fixed for the whole game. They are set in Lean (Spec/Basics.lean). */
@@ -120,8 +120,8 @@ function toHandState(s: LeanState, names: string[]): HandState {
       },
     ],
     winnings: [...s.result.winnings],
-    // Hand names for display only; Lean already decided the winner.
-    hands: s.players.map((p) => (showdown && p.cards ? evaluate([...p.cards, ...s.board]) : null)),
+    // Hand names and best cards come from Lean (game.lean.players); none are computed here.
+    hands: s.players.map(() => null),
   };
   return {
     config: { smallBlind: TABLE.smallBlind, bigBlind: TABLE.bigBlind },

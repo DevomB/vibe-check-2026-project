@@ -28,6 +28,11 @@ export interface LeanPlayer {
   allIn: boolean;
   /** A short, generic note of the last move, like "bet 60". */
   lastAction: string | null;
+  /** The name of the best five-card hand, like "Two Pair, Kings and Fives". For the human
+   * whenever the board has 3+ cards; for the bot only when its cards are shown. */
+  handName: string | null;
+  /** The five cards making that hand; null exactly when handName is. */
+  bestCards: Card[] | null;
 }
 
 export interface LeanLegal {

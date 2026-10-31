@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { evaluate } from "@/engine";
 import { ActionBar } from "./ActionBar";
 import { GameOver } from "./GameOver";
 import { Lobby } from "./Lobby";
@@ -69,8 +68,7 @@ export function PokerApp() {
 
   let strength = "";
   if (you) {
-    const shown = hand.result?.hands[youIndex];
-    strength = shown ? shown.name : hand.board.length >= 3 ? evaluate([...you.hole, ...hand.board]).name : describeStartingHand(you.hole);
+    strength = game.lean.players[HUMAN_SEAT]!.handName ?? describeStartingHand(you.hole);
   }
 
   return (

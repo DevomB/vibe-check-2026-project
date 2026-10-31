@@ -42,14 +42,14 @@ export function Table({ game, botThinking = false }: { game: Game; botThinking?:
   const delays = boardDelays(game.boardBefore, hand.board.length);
   const revealDelay = result ? resultDelay(game) : 0;
 
-  // Highlight the five cards of the best winning hand at showdown.
+  // Highlight the five cards of the winning hand at showdown, as Lean reports them. A split
+  // pot's winners hold equal hands, so the first winner's cards are enough.
   let winningCards: Set<Card> | null = null;
   if (result?.showdown) {
-    const top = result.winnings
-      .map((amount, i) => ({ amount, hand: result.hands[i] }))
-      .filter((w) => w.amount > 0 && w.hand)
-      .sort((a, b) => b.hand!.score - a.hand!.score)[0];
-    if (top?.hand) winningCards = new Set(top.hand.best);
+    const best = result.winnings
+      .map((amount, i) => (amount > 0 ? game.lean.players[seatOf[i]!]!.bestCards : null))
+      .find((cards) => cards !== null);
+    if (best) winningCards = new Set(best);
   }
 
   const collected = hand.players.reduce((sum, p) => sum + p.totalBet - p.streetBet, 0);
