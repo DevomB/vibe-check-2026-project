@@ -29,3 +29,8 @@ desktop.ini
 .env
 .env.*
 .claude/settings.local.json
+
+# Node / Vite
+node_modules/
+dist/
+*.tsbuildinfo
