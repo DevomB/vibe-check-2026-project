@@ -34,7 +34,8 @@ export function resultDelay(game: Game): number {
   return Math.max(0, ...delays) + 0.3;
 }
 
-export function Table({ game }: { game: Game }) {
+/** `botThinking`: the bot's reply is being held back, so show the bot as the one to act. */
+export function Table({ game, botThinking = false }: { game: Game; botThinking?: boolean }) {
   const { hand, seatOf } = game.dealt;
   const n = game.players.length;
   const result = hand.result;
@@ -100,7 +101,7 @@ export function Table({ game }: { game: Game }) {
               state={state}
               stack={game.session.seats[seat]!.stack}
               isHuman={isHuman}
-              isTurn={index >= 0 && hand.toAct === index}
+              isTurn={index >= 0 && (botThinking ? !isHuman : hand.toAct === index)}
               reveal={reveal}
               revealDelay={isHuman ? 0 : revealDelay}
               winAmount={index >= 0 ? (result?.winnings[index] ?? 0) : 0}
