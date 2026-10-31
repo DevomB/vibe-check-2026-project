@@ -1,4 +1,4 @@
-import { type Card, type Suit, rankOf, suitOf } from "./cards";
+import { type Card, type Suit, isCard, rankOf, suitOf } from "./cards";
 
 export const HandCategory = {
   HighCard: 0,
@@ -64,6 +64,7 @@ function findStraight(sorted: Card[]): Card[] | null {
 /** Evaluates the best five-card hand from 5 to 7 cards. */
 export function evaluate(cards: readonly Card[]): HandValue {
   if (cards.length < 5 || cards.length > 7) throw new Error(`evaluate needs 5-7 cards, got ${cards.length}`);
+  if (!cards.every(isCard) || new Set(cards).size !== cards.length) throw new Error("evaluate needs distinct valid cards");
   const sorted = cards.slice().sort((a, b) => rankOf(b) - rankOf(a));
 
   const bySuit = new Map<Suit, Card[]>();

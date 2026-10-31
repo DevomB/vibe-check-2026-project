@@ -31,7 +31,7 @@ export interface PlayerState {
   allIn: boolean;
   /** Acted since the street began or since the last full raise. */
   hasActed: boolean;
-  /** False once a short all-in raise reaches a player who had already acted: they may only call or fold. */
+  /** A short all-in closes raising until the player faces a cumulative full raise. */
   mayRaise: boolean;
   /** Short label of the player's latest move this street, for display ("Check", "Raise to 60", ...). */
   lastAction: string | null;
@@ -106,9 +106,14 @@ const NEXT_STREET: Record<Exclude<Street, "river" | "showdown">, { street: Stree
 /** Deals a new hand. `seats` are in table order and must all have chips; `button` indexes into them. */
 export function startHand(seats: readonly SeatInput[], button: number, config: HandConfig, rng: Rng): HandState {
   const n = seats.length;
-  if (n < 2) throw new Error("A hand needs at least two players");
-  if (seats.some((s) => s.stack <= 0)) throw new Error("Every seat dealt in must have chips");
-  if (button < 0 || button >= n) throw new Error("Button out of range");
+  if (n < 2 || 2 * n + 8 > 52) throw new Error("A hand needs 2-22 players to leave enough cards for the board and burns");
+  if (seats.some((s) => !Number.isSafeInteger(s.stack) || s.stack <= 0) || !Number.isSafeInteger(seats.reduce((sum, s) => sum + s.stack, 0))) {
+    throw new Error("Stacks and their total must be positive safe integers");
+  }
+  if (!Number.isSafeInteger(config.smallBlind) || !Number.isSafeInteger(config.bigBlind) || config.smallBlind <= 0 || config.bigBlind < config.smallBlind) {
+    throw new Error("Blinds must be positive safe integers with small blind <= big blind");
+  }
+  if (!Number.isInteger(button) || button < 0 || button >= n) throw new Error("Button out of range");
 
   const deck = shuffle(fullDeck(), rng);
   const players: PlayerState[] = seats.map((s) => ({
@@ -134,7 +139,7 @@ export function startHand(seats: readonly SeatInput[], button: number, config: H
   const bigBlindSeat = (smallBlindSeat + 1) % n;
 
   const state: HandState = {
-    config,
+    config: { ...config },
     players,
     button,
     smallBlindSeat,
@@ -151,7 +156,8 @@ export function startHand(seats: readonly SeatInput[], button: number, config: H
 
   postBlind(state, smallBlindSeat, config.smallBlind, "small");
   postBlind(state, bigBlindSeat, config.bigBlind, "big");
-  state.currentBet = Math.max(...players.map((p) => p.streetBet));
+  // A short big blind does not reduce the bring-in when at least two players can still bet.
+  state.currentBet = Math.max(...players.map((p) => p.streetBet), players.filter(canStillBet).length > 1 ? config.bigBlind : 0);
 
   state.toAct = findNextToAct(state, bigBlindSeat);
   if (state.toAct === null) finishStreet(state);
@@ -203,7 +209,7 @@ export function legalActions(state: HandState): LegalActions {
   const p = state.players[state.toAct]!;
   const toCall = Math.min(state.currentBet - p.streetBet, p.stack);
   const opponentCanRespond = state.players.some((q, j) => j !== state.toAct && canStillBet(q));
-  const canRaise = p.mayRaise && opponentCanRespond && p.stack > state.currentBet - p.streetBet;
+  const canRaise = (p.mayRaise || state.currentBet - p.streetBet >= state.minRaise) && opponentCanRespond && p.stack > state.currentBet - p.streetBet;
   const max = p.streetBet + p.stack;
   return {
     fold: true,
@@ -216,6 +222,7 @@ export function legalActions(state: HandState): LegalActions {
 /** Applies the current player's action and returns the new state. Throws IllegalActionError if not allowed. */
 export function applyAction(state: HandState, action: Action): HandState {
   if (state.toAct === null) throw new IllegalActionError("The hand is over");
+  if (!action || typeof action !== "object") throw new IllegalActionError("Invalid action");
   const s = structuredClone(state);
   const seat = s.toAct!;
   const p = s.players[seat]!;
@@ -267,6 +274,8 @@ export function applyAction(state: HandState, action: Action): HandState {
       p.lastAction = p.allIn ? "All-in" : wasBet ? `Bet ${to}` : `Raise to ${to}`;
       break;
     }
+    default:
+      throw new IllegalActionError("Unknown action");
   }
 
   p.hasActed = true;
@@ -369,7 +378,7 @@ function showdown(s: HandState) {
   s.result = { showdown: true, pots: potResults, winnings, hands };
 }
 
-/** All chips in the middle: earlier streets plus bets on this one. */
+/** Chips still in the middle; paid-out contributions remain in the hand history, not the pot. */
 export function potTotal(state: HandState): number {
-  return state.players.reduce((sum, p) => sum + p.totalBet, 0);
+  return state.result ? 0 : state.players.reduce((sum, p) => sum + p.totalBet, 0);
 }

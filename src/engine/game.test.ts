@@ -74,8 +74,15 @@ describe("starting a hand", () => {
     const s = deal([1000, 1000, 7], 0);
     expect(s.players[2]!.streetBet).toBe(7);
     expect(s.players[2]!.allIn).toBe(true);
-    expect(s.currentBet).toBe(7);
+    expect(s.currentBet).toBe(10);
     expect(s.toAct).toBe(0);
+    expect(legalActions(s).call).toBe(10);
+    expect(legalActions(s).raise!.min).toBe(20);
+  });
+
+  it("heads-up only calls the amount a short all-in big blind actually posted", () => {
+    const s = deal([1000, 7]);
+    expect(legalActions(s)).toEqual({ fold: true, check: false, call: 2, raise: null });
   });
 
   it("if both blinds are all-in heads-up, the board runs out at once", () => {
@@ -92,6 +99,35 @@ describe("starting a hand", () => {
     expect(() => deal([1000])).toThrow();
     expect(() => deal([1000, 0])).toThrow();
     expect(() => deal([1000, 1000], 2)).toThrow();
+  });
+
+  it.each([NaN, Infinity, -1, 0, 0.5, Number.MAX_SAFE_INTEGER + 1])("rejects invalid stack %s", (stack) => {
+    expect(() => deal([1000, stack])).toThrow();
+  });
+
+  it.each([NaN, 0.5])("rejects non-integer button %s", (button) => {
+    expect(() => deal([1000, 1000], button)).toThrow();
+  });
+
+  it("rejects setups that overflow chip arithmetic or exhaust the deck", () => {
+    expect(() => deal([Number.MAX_SAFE_INTEGER, 1])).toThrow();
+    expect(() => deal(Array(23).fill(1000))).toThrow();
+  });
+
+  it.each([
+    { smallBlind: 0, bigBlind: 10 },
+    { smallBlind: 5, bigBlind: NaN },
+    { smallBlind: 5, bigBlind: 2 },
+    { smallBlind: 0.5, bigBlind: 1 },
+  ])("rejects invalid blinds %j", (blinds) => {
+    expect(() => startHand([{ id: "a", name: "A", stack: 100 }, { id: "b", name: "B", stack: 100 }], 0, blinds, seededRng(1))).toThrow();
+  });
+
+  it("keeps its blind configuration independent from the caller", () => {
+    const blinds = { ...config };
+    const s = startHand([{ id: "a", name: "A", stack: 100 }, { id: "b", name: "B", stack: 100 }], 0, blinds, seededRng(1));
+    blinds.bigBlind = 1000;
+    expect(s.config.bigBlind).toBe(10);
   });
 });
 
@@ -158,6 +194,14 @@ describe("betting", () => {
     s = act(s, call);
     expect(s.toAct).toBe(3);
     expect(legalActions(s).raise).toBeNull(); // UTG already acted
+  });
+
+  it("cumulative short all-ins reopen betting once a full raise is faced", () => {
+    const s = act(deal([150, 200, 1000, 1000]), raise(100), raise(150), raise(200), call);
+    expect(s.toAct).toBe(3);
+    expect(s.minRaise).toBe(90);
+    expect(legalActions(s).raise).toEqual({ min: 290, max: 1000 });
+    expect(() => act(s, raise(290))).not.toThrow();
   });
 
   it("a full raise after a short all-in reopens the betting", () => {
@@ -258,11 +302,24 @@ describe("ending a hand", () => {
     const before = totalChips(s);
     s = act(s, raise(50), raise(200), call);
     expect(totalChips(s)).toBe(before);
-    expect(potTotal(s)).toBe(450);
+    expect(potTotal(s)).toBe(0);
+    expect(s.result!.pots.reduce((sum, pot) => sum + pot.amount, 0)).toBe(450);
   });
 });
 
 describe("illegal actions", () => {
+  it.each([null, undefined, "call"])("rejects malformed action %j without changing the hand", (action) => {
+    const s = deal([1000, 1000]);
+    const before = structuredClone(s);
+    expect(() => applyAction(s, action as unknown as Action)).toThrow(IllegalActionError);
+    expect(s).toEqual(before);
+  });
+  it("rejects an unknown runtime action without advancing or changing the hand", () => {
+    const s = deal([1000, 1000]);
+    const before = structuredClone(s);
+    expect(() => applyAction(s, { type: "dance" } as unknown as Action)).toThrow(IllegalActionError);
+    expect(s).toEqual(before);
+  });
   it("cannot check facing a bet", () => {
     expect(() => act(deal([1000, 1000, 1000]), check)).toThrow(IllegalActionError);
   });

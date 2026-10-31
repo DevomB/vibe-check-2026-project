@@ -18,8 +18,9 @@ export function PokerApp() {
   const status = game ? gameStatus(game) : null;
 
   useEffect(() => {
-    if (status !== "handOver") return;
+    if (status !== "handOver" || showRules) return;
     const onKey = (e: KeyboardEvent) => {
+      if (e.repeat || (e.target instanceof HTMLElement && e.target.closest("button, input, textarea, select, [contenteditable]"))) return;
       if (e.key === " " || e.key === "Enter") {
         e.preventDefault();
         nextHand();
@@ -27,7 +28,7 @@ export function PokerApp() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [status, nextHand]);
+  }, [status, showRules, nextHand]);
 
   const begin = (settings: GameSettings) => {
     setLastSettings(settings);
@@ -91,11 +92,11 @@ export function PokerApp() {
         <div className="play-column">
           <Table game={game} />
           {hand.result ? (
-            <NextHandBar game={game} delay={resultDelay(game)} gameOver={status === "gameOver"} onNextHand={nextHand} />
+            <NextHandBar game={game} gameOver={status === "gameOver"} onNextHand={nextHand} />
           ) : (
             <ActionBar
               hand={hand}
-              legal={yourTurn ? legalActions(hand) : null}
+              legal={yourTurn && !showRules ? legalActions(hand) : null}
               waiting={you?.folded ? "You folded — watching the rest" : actor ? `${actor.name} is thinking…` : ""}
               handStrength={strength}
               onAct={humanAct}

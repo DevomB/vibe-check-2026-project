@@ -1,4 +1,3 @@
-import { type CSSProperties, useEffect } from "react";
 import { chips } from "@/lib/format";
 import type { Game } from "@/hooks/useGame";
 
@@ -44,23 +43,14 @@ export function ResultBadge({ game, delay }: { game: Game; delay: number }) {
 
 interface BarProps {
   game: Game;
-  /** Seconds before the result is shown (an all-in run-out may still be dealing). */
-  delay: number;
   gameOver: boolean;
   onNextHand: () => void;
 }
 
-/** Replaces the action bar between hands: the result, and a "Next hand" button that fires on its own after a few seconds. */
-export function NextHandBar({ game, delay, gameOver, onNextHand }: BarProps) {
-  const autoSeconds = game.settings.fast ? 3 : 5;
+/** Holds the finished hand until the human explicitly starts the next one. */
+export function NextHandBar({ game, gameOver, onNextHand }: BarProps) {
   const winners = winnersOf(game);
   const youWon = winners.some((w) => w.name === "You");
-
-  useEffect(() => {
-    if (gameOver) return;
-    const timer = window.setTimeout(onNextHand, (delay + autoSeconds) * 1000);
-    return () => window.clearTimeout(timer);
-  }, [delay, autoSeconds, gameOver, onNextHand]);
 
   const headline = winners.map((w) => `${winText(w)} ${chips(w.amount)}`).join(" · ");
   return (
@@ -74,10 +64,8 @@ export function NextHandBar({ game, delay, gameOver, onNextHand }: BarProps) {
           <button
             className="btn btn-primary next-btn"
             onClick={onNextHand}
-            style={{ "--auto": `${autoSeconds}s`, "--wait": `${delay}s` } as CSSProperties}
           >
             Next hand <kbd>Space</kbd>
-            <span className="auto-bar" />
           </button>
         </div>
       )}
