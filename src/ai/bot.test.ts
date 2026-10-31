@@ -8,6 +8,24 @@ const KEYS = Object.keys(PERSONALITIES) as PersonalityKey[];
 const CONFIG = { smallBlind: 5, bigBlind: 10 };
 
 describe("estimateEquity", () => {
+  const unusedRng = () => { throw new Error("randomness consumed"); };
+
+  it.each([NaN, Infinity, 0, -1, 0.5])("rejects invalid sample count %s before drawing", (iterations) => {
+    expect(() => estimateEquity(["As", "Ah"], [], 1, iterations, unusedRng)).toThrow(/iterations/);
+  });
+
+  it.each([NaN, Infinity, -1, 0.5])("rejects invalid opponent count %s before drawing", (opponents) => {
+    expect(() => estimateEquity(["As", "Ah"], [], opponents, 1, unusedRng)).toThrow(/opponents/);
+  });
+
+  it.each([
+    [["As"], []],
+    [["As", "As"], []],
+    [["As", "Ah"], ["As", "2c", "3d"]],
+    [["As", "Ah"], ["2c", "3d", "4h", "5s", "6c", "7d"]],
+  ])("rejects invalid known cards before drawing", (hole, board) => {
+    expect(() => estimateEquity(hole as Card[], board as Card[], 1, 1, unusedRng)).toThrow(/cards|hole|board/);
+  });
   it("gives pocket aces about 85% against one random hand", () => {
     const eq = estimateEquity(["As", "Ah"], [], 1, 20000, seededRng(1));
     expect(eq).toBeGreaterThan(0.82);
@@ -45,6 +63,15 @@ function sumStacks(state: HandState) {
 }
 
 describe("chooseAction", () => {
+  it("does not count an uncallable overbet as money a short stack can win", () => {
+    const state = applyAction(startHand(
+      [{ id: "a", name: "A", stack: 1000 }, { id: "b", name: "B", stack: 100 }],
+      0, CONFIG, seededRng(1),
+    ), { type: "raise", to: 1000 });
+    state.players[1]!.hole = ["7c", "2d"];
+    const action = chooseAction(state, 1, { label: "Neutral", looseness: 0, aggression: 0, bluff: 0 }, seededRng(7), { iterations: 2000 });
+    expect(action).toEqual({ type: "fold" });
+  });
   it("plays hundreds of full hands with only legal actions and no lost chips", () => {
     const rng = seededRng(42);
     for (let h = 0; h < 300; h++) {

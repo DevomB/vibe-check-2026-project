@@ -42,6 +42,12 @@ function checkInvariants(s: HandState, chipsInHand: number) {
 }
 
 describe("random play", () => {
+  it.each([NaN, Infinity, -1, 0.5, Number.MAX_SAFE_INTEGER])("rejects invalid session totals before filtering busted seats: %s", (stack) => {
+    expect(() => createSession(
+      [{ id: "a", name: "A", stack: 100 }, { id: "b", name: "B", stack }],
+      { smallBlind: 5, bigBlind: 10 },
+    )).toThrow();
+  });
   it("keeps every rule invariant across thousands of hands", () => {
     const rng = seededRng(2026);
     let hands = 0;

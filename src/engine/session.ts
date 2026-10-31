@@ -24,7 +24,10 @@ export interface DealtHand {
 }
 
 export function createSession(seats: Seat[], config: HandConfig): Session {
-  return { seats: seats.map((s) => ({ ...s })), button: -1, handNumber: 0, config };
+  if (seats.some((s) => !Number.isSafeInteger(s.stack) || s.stack < 0) || !Number.isSafeInteger(seats.reduce((sum, s) => sum + s.stack, 0))) {
+    throw new Error("Session stacks and their total must be non-negative safe integers");
+  }
+  return { seats: seats.map((s) => ({ ...s })), button: -1, handNumber: 0, config: { ...config } };
 }
 
 /** Seats that still have chips. */

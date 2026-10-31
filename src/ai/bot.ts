@@ -66,7 +66,8 @@ export function chooseAction(state: HandState, seat: number, personality: Person
   const equity = estimateEquity(me.hole, state.board, opponents, iterations, rng);
   const strength = equity * (opponents + 1);
 
-  const pot = potTotal(state);
+  // An all-in caller cannot win the portion of another player's overbet they cannot match.
+  const pot = state.players.reduce((sum, p) => sum + Math.min(p.totalBet, me.totalBet + legal.call), 0);
   const potOdds = legal.call > 0 ? legal.call / (pot + legal.call) : 0;
   const valueThreshold = VALUE_STRENGTH - personality.aggression * AGGRESSION_DISCOUNT;
   const bluffing = opponents <= MAX_BLUFF_OPPONENTS && rng() < personality.bluff * MAX_BLUFF_CHANCE;

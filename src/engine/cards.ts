@@ -21,8 +21,8 @@ export function fullDeck(): Card[] {
   return RANKS.flatMap((r) => SUITS.map((s) => `${r}${s}` as Card));
 }
 
-export function isCard(value: string): value is Card {
-  return value.length === 2 && value[0]! in RANK_VALUE && (SUITS as readonly string[]).includes(value[1]!);
+export function isCard(value: unknown): value is Card {
+  return typeof value === "string" && value.length === 2 && value[0]! in RANK_VALUE && (SUITS as readonly string[]).includes(value[1]!);
 }
 
 /** A random number generator returning floats in [0, 1). */

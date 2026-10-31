@@ -1,10 +1,17 @@
 import { describe, expect, it } from "vitest";
-import type { Card } from "./cards";
+import { type Card, isCard } from "./cards";
 import { HandCategory, compareHands, evaluate } from "./evaluator";
 
 const h = (s: string) => evaluate(s.split(" ") as Card[]);
 
 describe("evaluate", () => {
+  it.each(["As As Kd Qh Jc", "1s 2d 3h 4c 5s"])("rejects impossible cards: %s", (cards) => {
+    expect(() => h(cards)).toThrow();
+  });
+
+  it.each([null, undefined, 23, {}, "", "10s", "as"])("rejects non-card value %j", (value) => {
+    expect(isCard(value as string)).toBe(false);
+  });
   it.each([
     ["As Ks Qs Js Ts 2d 3c", HandCategory.StraightFlush, "Royal Flush"],
     ["9h 8h 7h 6h 5h Ad Ac", HandCategory.StraightFlush, "Straight Flush, Nine high"],
