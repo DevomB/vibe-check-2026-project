@@ -15,4 +15,8 @@ export const OPPONENTS: Opponent[] = [
   { name: "Ivy", personality: "rock", color: "#f0a23a" },
 ];
 
+/** Opponents the Lean engine can play. Its only bot checks or calls every time, which is
+ * the "station" personality. */
+export const PLAYABLE_OPPONENTS: Opponent[] = OPPONENTS.filter((o) => o.personality === "station");
+
 export const HUMAN_COLOR = "#e9c46a";

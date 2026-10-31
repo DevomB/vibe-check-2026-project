@@ -1,7 +1,7 @@
 import { type CSSProperties, useState } from "react";
 import { PERSONALITIES } from "@/ai/bot";
 import { PlayingCard } from "./PlayingCard";
-import { OPPONENTS } from "@/lib/roster";
+import { PLAYABLE_OPPONENTS } from "@/lib/roster";
 import { type GameSettings, TABLE } from "@/hooks/useGame";
 
 /** Start screen: pick the opponent, and optionally a seed to replay a game. */
@@ -32,7 +32,7 @@ export function Lobby({ onStart, onRules }: { onStart: (s: GameSettings) => void
       <div className="lobby-card">
         <div className="field-label">Your opponent</div>
         <div className="opponent-list" role="radiogroup" aria-label="Opponent">
-          {OPPONENTS.map((o, i) => (
+          {PLAYABLE_OPPONENTS.map((o, i) => (
             <button
               key={o.name}
               type="button"

@@ -25,6 +25,8 @@ export function Seat({ player, state, stack, isHuman, isTurn, reveal, revealDela
   const out = state === null;
   const folded = state?.folded ?? false;
   const status = out ? "Out" : state.allIn ? "All-in" : state.lastAction;
+  // Cards the engine hasn't revealed (the bot's, before a showdown) are drawn face down.
+  const cards: (Card | null)[] = out ? [] : state.hole.length > 0 ? state.hole : [null, null];
   const classes = [
     "seat",
     isHuman ? "seat-human" : "",
@@ -37,15 +39,15 @@ export function Seat({ player, state, stack, isHuman, isTurn, reveal, revealDela
   return (
     <div className={classes.filter(Boolean).join(" ")} style={style}>
       <div className="seat-cards">
-        {state?.hole.map((card, i) => (
+        {cards.map((card, i) => (
           <PlayingCard
             key={`${card}-${i}`}
             card={card}
             faceDown={!reveal}
             size={isHuman ? "lg" : "sm"}
             delay={reveal && !isHuman ? revealDelay : i * 0.08}
-            highlight={winningCards?.has(card)}
-            dim={folded || (winningCards !== null && !winningCards.has(card))}
+            highlight={card !== null && winningCards?.has(card)}
+            dim={folded || (winningCards !== null && (card === null || !winningCards.has(card)))}
           />
         ))}
       </div>

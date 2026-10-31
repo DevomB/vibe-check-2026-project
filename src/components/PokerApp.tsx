@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { evaluate, legalActions } from "@/engine";
+import { evaluate } from "@/engine";
 import { ActionBar } from "./ActionBar";
 import { GameOver } from "./GameOver";
 import { Lobby } from "./Lobby";
@@ -12,7 +12,7 @@ import { chips, describeStartingHand } from "@/lib/format";
 import { HUMAN_SEAT, TABLE, gameStatus, useGame } from "@/hooks/useGame";
 
 export function PokerApp() {
-  const { game, start, humanAct, nextHand, quit } = useGame();
+  const { game, error, start, humanAct, nextHand, quit } = useGame();
   const [showRules, setShowRules] = useState(false);
   const status = game ? gameStatus(game) : null;
 
@@ -33,10 +33,17 @@ export function PokerApp() {
     <RulesModal onClose={() => setShowRules(false)} smallBlind={TABLE.smallBlind} bigBlind={TABLE.bigBlind} />
   );
 
+  const errorBanner = error && (
+    <div className="engine-error" role="alert">
+      {error}
+    </div>
+  );
+
   if (!game) {
     return (
       <div className="app app-lobby">
         <Lobby onStart={start} onRules={() => setShowRules(true)} />
+        {errorBanner}
         {rulesModal}
       </div>
     );
@@ -93,12 +100,13 @@ export function PokerApp() {
           ) : (
             <ActionBar
               hand={hand}
-              legal={yourTurn && !showRules ? legalActions(hand) : null}
+              legal={yourTurn && !showRules ? game.legal : null}
               waiting={you?.folded ? "You folded — watching the rest" : actor ? `${actor.name} is thinking…` : ""}
               handStrength={strength}
               onAct={humanAct}
             />
           )}
+          {errorBanner}
         </div>
       </main>
 
