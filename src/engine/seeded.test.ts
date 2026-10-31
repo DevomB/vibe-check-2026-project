@@ -35,7 +35,7 @@ describe("seededDeck", () => {
   });
 
   it("deals the same board as the Lean engine", () => {
-    // Engine/Tests.lean checks down hand `fresh` (seed 7) and prints board [3s, 8s, 5s, Tc, Kc].
+    // engine/Engine/Tests.lean checks down hand `fresh` (seed 7) and prints board [3s, 8s, 5s, Tc, Kc].
     const order = seededDeck(7n);
     expect([...order.slice(5, 8), order[9], order[11]]).toEqual(["3s", "8s", "5s", "Tc", "Kc"]);
   });

@@ -25,7 +25,7 @@ export function handSeed(gameSeed: bigint, handNumber: number): bigint {
   return nextSeed(gameSeed + BigInt(handNumber) * 1000003n);
 }
 
-/** A new deck in the Lean engine's order (`fullDeck` in Spec/Basics.lean): rank first, then suit: 2c, 2d, 2h, 2s, 3c, ..., As. */
+/** A new deck in the Lean engine's order (`fullDeck` in engine/Poker/Spec/Basics.lean): rank first, then suit: 2c, 2d, 2h, 2s, 3c, ..., As. */
 export function leanOrderDeck(): Card[] {
   return [..."23456789TJQKA"].flatMap((rank) => (["c", "d", "h", "s"] as const).map((suit) => `${rank}${suit}` as Card));
 }
