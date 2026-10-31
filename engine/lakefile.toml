@@ -11,3 +11,8 @@ name = "Engine"
 [[lean_exe]]
 name = "poker"
 root = "Main"
+
+# Times the equity counts on the compiled engine and checks them against the TypeScript reference.
+[[lean_exe]]
+name = "equity-bench"
+root = "EquityBench"

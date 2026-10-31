@@ -50,9 +50,6 @@ def raiseAtPercent : Nat := 75
 least this, in percent. -/
 def betAtPercent : Nat := 65
 
-/-- Random deals counted on the flop, for the reason text. -/
-def flopSamples : Nat := 1000
-
 /-! ## Win chance and the call rule -/
 
 /-- True when the win chance, with ties counting half, is at least `percent`%. -/
