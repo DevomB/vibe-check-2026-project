@@ -2,16 +2,21 @@ import type { Card } from "@/engine";
 
 /**
  * Messages between the browser and the Lean game program (`Main.lean`), passed through
- * the bridge at `/api/game`. Player 0 is the human, player 1 is the bot.
+ * the bridge at `/api/game`. Player 0 is the human, player 1 is the bot. Lean plays the
+ * bot's moves itself: every reply is a state where the human is to act or the hand is over.
  */
 
+/** The bot's two settings. Risk is 0-100, Bluff is a whole percentage, 0-60. */
+export const RISK_MAX = 100;
+export const BLUFF_PCT_MAX = 60;
+
 export type LeanCommand =
-  | { cmd: "new_game"; seed: string }
+  | { cmd: "new_game"; seed: string; risk: number; bluff_pct: number }
   | { cmd: "act"; action: "fold" | "check" | "call" }
   | { cmd: "act"; action: "raise"; amount: number }
-  | { cmd: "bot" }
   | { cmd: "next_hand" }
-  | { cmd: "state" };
+  | { cmd: "state" }
+  | { cmd: "review"; hand: number };
 
 export interface LeanPlayer {
   stack: number;
@@ -21,6 +26,7 @@ export interface LeanPlayer {
   cards: Card[] | null;
   folded: boolean;
   allIn: boolean;
+  /** A short, generic note of the last move, like "bet 60". */
   lastAction: string | null;
 }
 
@@ -55,8 +61,39 @@ export interface LeanState {
   /** The human's moves; null when it is not the human's turn. */
   legal: LeanLegal | null;
   result: { showdown: boolean; outcome: "player0" | "player1" | "tie" | "fold"; winnings: [number, number] } | null;
-  /** What happened since the previous reply. */
+  /** What happened since the previous reply, in order, including each bot move. */
   events: LeanEvent[];
+  /** The bot's settings for this game. */
+  sliders: { risk: number; bluffPct: number };
+  /** The bot's reason for each of its moves this hand. Null until the hand is over. */
+  botReasons: string[] | null;
 }
 
-export type LeanReply = { ok: true; state: LeanState } | { error: string; state: LeanState | null };
+/** The labels of a graded decision, best first. */
+export type ReviewLabel = "Best" | "Good" | "Inaccuracy" | "Mistake" | "Blunder";
+
+/**
+ * One of the human's moves in a hand (MVP §13). Only a call or fold facing the bot's
+ * opening river bet is graded; for every other move the label and numbers are null,
+ * and the screen shows "not graded yet".
+ */
+export interface ReviewDecision {
+  street: "preflop" | "flop" | "turn" | "river";
+  your_action: "fold" | "check" | "call" | "bet" | "raise";
+  label: ReviewLabel | null;
+  /** What calling and folding were each worth from this point, in big blinds. */
+  worth_bb: { call: number; fold: number } | null;
+  /** The human's chance to win against the bot's possible hands, 0 to 1. */
+  equity_had: number | null;
+  /** The chance needed for a call to break even, 0 to 1. */
+  equity_needed: number | null;
+}
+
+export interface LeanReview {
+  hand: number;
+  decisions: ReviewDecision[];
+}
+
+export type LeanReply =
+  | { ok: true; state: LeanState; review?: LeanReview }
+  | { error: string; state: LeanState | null };
