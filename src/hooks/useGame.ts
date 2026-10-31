@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { type Action, type DealtHand, type HandState, type LegalActions, type Session, evaluate, randomGameSeed } from "@/engine";
-import type { LeanCommand, LeanEvent, LeanReply, LeanReview, LeanReviewReply, LeanState } from "@/lean/protocol";
+import type { LeanCommand, LeanEvent, LeanReply, LeanReview, LeanState } from "@/lean/protocol";
 import { cardText, chips } from "@/lib/format";
 import { BOT, HUMAN_COLOR } from "@/lib/roster";
 
@@ -69,9 +69,6 @@ declare global {
 
 export const HUMAN_SEAT = 0;
 const BOT_SEAT = 1;
-/** Slider limits; Lean rejects values outside them. */
-export const RISK_MAX = 100;
-export const BLUFF_MAX = 60;
 /** Oldest lines are dropped beyond this, so a very long session can't grow without bound. */
 const LOG_LIMIT = 5000;
 
@@ -318,11 +315,13 @@ export function useGame() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ cmd: "review", hand } satisfies LeanCommand),
       });
-      const reply = (await response.json()) as LeanReviewReply;
+      const reply = (await response.json()) as LeanReply;
       if (gen !== generation.current || gameRef.current?.lean.hand !== hand) return;
-      if ("ok" in reply) {
+      if ("ok" in reply && reply.review) {
         setError(null);
         setReview(reply.review);
+      } else if ("ok" in reply) {
+        setError("The game engine sent no review.");
       } else {
         setError(reply.error);
       }

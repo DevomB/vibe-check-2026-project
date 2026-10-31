@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { PlayingCard } from "./PlayingCard";
-import { BLUFF_MAX, type GameSettings, RISK_MAX, TABLE } from "@/hooks/useGame";
+import { type GameSettings, TABLE } from "@/hooks/useGame";
+import { BLUFF_PCT_MAX, RISK_MAX } from "@/lean/protocol";
 
 interface SliderProps {
   label: string;
@@ -82,7 +83,7 @@ export function Lobby({
         <BotSlider
           label="Bluff"
           value={bluffPct}
-          max={BLUFF_MAX}
+          max={BLUFF_PCT_MAX}
           shown={`${bluffPct}%`}
           help="How many of the bot's river bets are bluffs with weak hands. At 0% it never bluffs on the river; at 60% it bluffs often."
           onChange={setBluffPct}
