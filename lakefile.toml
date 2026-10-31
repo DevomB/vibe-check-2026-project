@@ -1,0 +1,10 @@
+name = "poker"
+defaultTargets = ["poker"]
+
+# The spec: short, human-reviewed definitions. Keep it in its own library.
+[[lean_lib]]
+name = "Spec"
+
+[[lean_exe]]
+name = "poker"
+root = "Main"
