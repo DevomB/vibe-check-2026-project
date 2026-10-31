@@ -2,16 +2,18 @@ import { existsSync } from "node:fs";
 import { afterAll, describe, expect, it } from "vitest";
 import { type Action, type HandState, applyAction, handSeed, seededDeck, startHand } from "@/engine";
 import { LeanProcess, leanBinaryPath } from "./process";
-import type { LeanCommand, LeanState } from "./protocol";
+import type { LeanCommand, LeanEvent, LeanReply, LeanState } from "./protocol";
 
 /**
  * Plays games through the real Lean game program (build it first with `make lean`).
- * Checks the rules the browser relies on, and replays every hand in the TypeScript
- * prototype engine, which deals the same cards for a seed, to check both engines agree.
+ * Checks the rules the browser relies on, and replays every hand, with the bot moves Lean
+ * reports, in the TypeScript prototype engine, which deals the same cards for a seed, to
+ * check both engines agree.
  */
 
 const TOTAL_CHIPS = 1000;
 const config = { smallBlind: 5, bigBlind: 10 };
+const LABELS = ["Best", "Good", "Inaccuracy", "Mistake", "Blunder"];
 
 /** Small seeded generator for picking test moves. */
 function picker(seed: number) {
@@ -43,56 +45,78 @@ function toTsAction(c: LeanCommand): Action {
   return c.action === "raise" ? { type: "raise", to: c.amount } : { type: c.action };
 }
 
-/** The bot's move as the TypeScript engine sees it: check if nothing is owed, else call. */
-function botTsAction(h: HandState): Action {
-  const p = h.players[h.toAct!]!;
-  return h.currentBet - p.streetBet === 0 ? { type: "check" } : { type: "call" };
+/** Apply the moves Lean reports (the human's and the bot's) to the TypeScript engine. */
+function replayEvents(h: HandState, events: LeanEvent[]): HandState {
+  for (const e of events) {
+    if (e.type !== "action") continue;
+    expect(e.player).toBe(h.toAct);
+    h = applyAction(h, e.action === "raise" ? { type: "raise", to: e.to! } : { type: e.action });
+  }
+  return h;
 }
+
+const botMoveCount = (events: LeanEvent[]) => events.filter((e) => e.type === "action" && e.player === 1).length;
 
 describe.skipIf(!existsSync(leanBinaryPath()))("Lean game program", () => {
   const lean = new LeanProcess();
   afterAll(() => lean.close());
 
-  async function send(c: LeanCommand): Promise<LeanState> {
+  async function call(c: LeanCommand): Promise<Extract<LeanReply, { ok: true }>> {
     const reply = await lean.send(c);
     if (!("ok" in reply)) throw new Error(`Lean rejected ${JSON.stringify(c)}: ${reply.error}`);
-    return reply.state;
+    return reply;
   }
+  const send = async (c: LeanCommand): Promise<LeanState> => (await call(c)).state;
+  const newGame = (seed: string, risk = 50, bluff_pct = 33) => send({ cmd: "new_game", seed, risk, bluff_pct });
 
   it("rejects bad commands and leaves the game unchanged", async () => {
-    const start = await send({ cmd: "new_game", seed: "42" });
+    const start = await newGame("42");
     for (const bad of [
-      { cmd: "act", action: "check" },
+      { cmd: "act", action: start.legal!.check ? "call" : "check" },
       { cmd: "act", action: "raise", amount: 15 },
       { cmd: "act", action: "raise", amount: 501 },
       { cmd: "bot" },
+      { cmd: "next_hand" },
+      { cmd: "new_game", seed: "1", risk: 101, bluff_pct: 33 },
+      { cmd: "new_game", seed: "1", risk: 50, bluff_pct: 61 },
+      { cmd: "review", hand: start.hand + 1 },
     ] as LeanCommand[]) {
       const reply = await lean.send(bad);
-      expect("error" in reply).toBe(true);
+      expect("error" in reply, JSON.stringify(bad)).toBe(true);
       expect({ ...reply.state, events: [] }).toEqual({ ...start, events: [] });
     }
   });
 
-  it("keeps the bot's cards hidden until a showdown", async () => {
-    const s = await send({ cmd: "new_game", seed: "7" });
+  it("stores the sliders and accepts both ends of each range", async () => {
+    for (const [risk, bluff_pct] of [[0, 0], [100, 60], [37, 12]] as const) {
+      const s = await newGame("5", risk, bluff_pct);
+      expect(s.sliders).toEqual({ risk, bluffPct: bluff_pct });
+    }
+  });
+
+  it("keeps the bot's cards and reasons hidden until the hand is over", async () => {
+    const s = await newGame("7");
     expect(s.players[0].cards).toHaveLength(2);
     expect(s.players[1].cards).toBeNull();
+    expect(s.botReasons).toBeNull();
     const folded = await send({ cmd: "act", action: "fold" });
     expect(folded.result?.outcome).toBe("fold");
     expect(folded.players[1].cards).toBeNull();
+    expect(folded.botReasons).toHaveLength(botMoveCount(s.events));
   });
 
-  it("plays 40 random games by the rules, and agrees with the TypeScript engine", { timeout: 60_000 }, async () => {
+  it("plays 40 random games by the rules, and agrees with the TypeScript engine", { timeout: 120_000 }, async () => {
     let hands = 0;
     for (let game = 0; game < 40; game++) {
       const pick = picker(game + 1);
       const seed = BigInt(1000 + game);
-      let s = await send({ cmd: "new_game", seed: seed.toString() });
+      let s = await newGame(seed.toString(), (game * 37) % 101, (game * 13) % 61);
       // Stacks at the start of each hand: what the previous hand ended with.
       let startStacks = [500, 500];
 
       for (let handGuard = 0; handGuard < 400; handGuard++) {
-        // Replay this hand in the TypeScript engine from the same stacks, button and cards.
+        // Replay this hand in the TypeScript engine from the same stacks, button and cards,
+        // including any bot moves Lean made before the human's first turn.
         let ts = startHand(
           startStacks.map((stack, i) => ({ id: String(i), name: String(i), stack })),
           s.button,
@@ -101,37 +125,54 @@ describe.skipIf(!existsSync(leanBinaryPath()))("Lean game program", () => {
           seededDeck(handSeed(seed, s.hand)),
         );
         expect(s.players[0].cards).toEqual(ts.players[0]!.hole);
+        ts = replayEvents(ts, s.events);
+        let botMoves = botMoveCount(s.events);
         hands++;
 
         for (let moveGuard = 0; s.status === "playing" && moveGuard < 500; moveGuard++) {
           // Rules the screen relies on, after every reply.
           const chips = s.pot + s.players.reduce((sum, p) => sum + p.stack + p.bet, 0);
           expect(chips).toBe(TOTAL_CHIPS);
-          expect(s.toAct).toBe(ts.toAct);
-          expect(s.legal !== null).toBe(s.toAct === 0);
+          // Lean has played the bot, so a reply in a live hand always waits for the human.
+          expect(s.toAct).toBe(0);
+          expect(ts.toAct).toBe(0);
+          expect(s.legal).not.toBeNull();
           expect(s.players[1].cards).toBeNull();
-
-          let command: LeanCommand;
-          let tsAction: Action;
-          if (s.toAct === 0) {
-            command = humanMove(s, pick);
-            tsAction = toTsAction(command);
-          } else {
-            command = { cmd: "bot" };
-            tsAction = botTsAction(ts);
-          }
-          s = await send(command);
-          ts = applyAction(ts, tsAction);
+          expect(s.botReasons).toBeNull();
           expect(s.board).toEqual(ts.board);
+
+          const command = humanMove(s, pick);
+          s = await send(command);
+          expect(s.events[0]).toMatchObject({ type: "action", player: 0, action: toTsAction(command).type });
+          ts = replayEvents(ts, s.events);
+          botMoves += botMoveCount(s.events);
         }
 
         // The hand is over: both engines paid out the same way.
         expect(s.status).not.toBe("playing");
         expect(ts.result).not.toBeNull();
+        expect(s.board).toEqual(ts.board);
         expect(s.players.map((p) => p.stack)).toEqual(ts.players.map((p) => p.stack));
         expect(s.result!.winnings).toEqual(ts.result!.winnings);
         expect(s.players.reduce((sum, p) => sum + p.stack, 0)).toBe(TOTAL_CHIPS);
         if (s.result!.showdown) expect(s.players[1].cards).toEqual(ts.players[1]!.hole);
+        expect(s.botReasons).toHaveLength(botMoves);
+
+        // The review changes nothing, and grades only river calls and folds.
+        const { state: after, review } = await call({ cmd: "review", hand: s.hand });
+        expect({ ...after, events: [] }).toEqual({ ...s, events: [] });
+        expect(review?.hand).toBe(s.hand);
+        for (const d of review!.decisions) {
+          if (d.label === null) continue;
+          expect(LABELS).toContain(d.label);
+          expect(d.street).toBe("river");
+          expect(["call", "fold"]).toContain(d.your_action);
+          expect(d.worth_bb!.fold).toBe(0);
+          expect(d.equity_had!).toBeGreaterThanOrEqual(0);
+          expect(d.equity_had!).toBeLessThanOrEqual(1);
+          const mine = d.your_action === "call" ? d.worth_bb!.call : d.worth_bb!.fold;
+          if (d.label === "Best") expect(mine).toBe(Math.max(d.worth_bb!.call, d.worth_bb!.fold));
+        }
 
         if (s.status === "gameOver") break;
         startStacks = s.players.map((p) => p.stack);
