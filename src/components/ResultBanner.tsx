@@ -12,7 +12,12 @@ function winnersOf(game: Game): Winner[] {
   const result = hand.result;
   if (!result) return [];
   return result.winnings
-    .map((amount, i) => ({ amount, name: game.players[seatOf[i]!]!.name, hand: result.hands[i]?.name ?? null }))
+    .map((amount, i) => ({
+      amount,
+      name: game.players[seatOf[i]!]!.name,
+      // Lean names the hand; after a fold the winner's cards are not part of the result.
+      hand: result.showdown ? game.lean.players[seatOf[i]!]!.handName : null,
+    }))
     .filter((w) => w.amount > 0)
     .sort((a, b) => b.amount - a.amount);
 }

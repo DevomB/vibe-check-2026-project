@@ -29,10 +29,13 @@ export interface LeanPlayer {
   /** A short, generic note of the last move, like "bet 60". */
   lastAction: string | null;
   /**
-   * The name of this player's best hand, like "Two Pair". For the human, once the flop is
-   * out; for the bot, only when its cards are shown at a showdown. Otherwise null.
+   * The name of this player's best five-card hand, like "Two Pair, Kings and Fives". For
+   * the human, once the board has 3 or more cards; for the bot, only when its cards are
+   * shown at a showdown. Otherwise null.
    */
   handName: string | null;
+  /** The five cards making that hand; null exactly when handName is. */
+  bestCards: Card[] | null;
 }
 
 export interface LeanLegal {
