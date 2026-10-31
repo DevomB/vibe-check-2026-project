@@ -1,4 +1,5 @@
 import Engine.Proofs.Reachable
+import Engine.Proofs.RiskSpec
 
 /-!
 # The main theorems, as agreed by the team (the Comparator "challenge")
@@ -55,3 +56,28 @@ theorem illegal_move_rejected (h : Hand) (a : Action) (hnot : h.ended = none)
 is is allowed to act: they have chips and have not bet more than the other player. -/
 theorem player_to_act_may_act (g : Game) (hg : g.Reachable) (hnot : g.hand.ended = none) :
     g.hand.chips.MayAct := sorry
+
+/-! ## Risk: the bot follows its Risk setting (see `Engine/Proofs/RiskSpec.lean`) -/
+
+/-- The bot's call rule calls exactly when the call, weighted by Risk, is worth at least as
+much as folding. -/
+theorem callPays_iff_takes (c : Counts) (pot toCall risk : Nat) (h : toCall ≤ pot) :
+    callPays c pot toCall risk = true ↔ (callGamble c pot toCall).Takes risk := sorry
+
+/-- If the bot calls, the call is worth it at the bot's Risk. -/
+theorem bot_calls_only_when_worth_it (v : View) (c : Counts) (h : v.toCall ≤ v.pot)
+    (hcall : (decideView v c).action = .call) :
+    (callGamble c v.pot v.toCall).Takes v.sliders.risk := sorry
+
+/-- If the bot folds, the call is not worth it at the bot's Risk. -/
+theorem bot_folds_only_when_not_worth_it (v : View) (c : Counts) (h : v.toCall ≤ v.pot)
+    (hfold : (decideView v c).action = .fold) :
+    ¬ (callGamble c v.pot v.toCall).Takes v.sliders.risk := sorry
+
+/-- For any gamble, if a bot with more Risk takes it, a bot with less Risk takes it too. -/
+theorem more_risk_takes_fewer_gambles (g : Gamble) {r₁ r₂ : Nat} (hr : r₁ ≤ r₂)
+    (h : g.Takes r₂) : g.Takes r₁ := sorry
+
+/-- A gamble that can never lose is taken at every Risk. -/
+theorem no_loss_always_taken (g : Gamble) (risk : Nat) (h : ∀ o ∈ g, 0 ≤ o.2) :
+    g.Takes risk := sorry

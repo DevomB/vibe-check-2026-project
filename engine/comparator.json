@@ -4,7 +4,12 @@
   "theorem_names": [
     "accepted_move_is_legal",
     "illegal_move_rejected",
-    "player_to_act_may_act"
+    "player_to_act_may_act",
+    "callPays_iff_takes",
+    "bot_calls_only_when_worth_it",
+    "bot_folds_only_when_not_worth_it",
+    "more_risk_takes_fewer_gambles",
+    "no_loss_always_taken"
   ],
   "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"]
 }
