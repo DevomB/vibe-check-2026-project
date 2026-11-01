@@ -67,6 +67,75 @@ always-call bot** (Checkpoint A). Then add the Risk/Bluff bot, exact river
 call/fold review, and Tier 1 proofs (Checkpoint B). MVP section 9 lists
 what to defer until then.
 
+## What we trust
+
+A Lean proof shows that the code does what the theorem says. It does not show that the
+theorem says the right thing, and it says nothing about code outside the proof. This
+section lists everything a reader must still trust.
+
+**How the proofs are checked.** On every push that changes Lean files, GitHub runs
+[`.github/workflows/lean-proofs.yml`](.github/workflows/lean-proofs.yml) on a fresh Linux
+machine:
+
+1. `checks/audit.sh`: builds the engine and fails if any `sorry`, `admit`,
+   `native_decide`, `maxHeartbeats 0` or new `axiom` appears, or if a main theorem uses
+   an axiom other than the three below.
+2. `lake comparator`: checks that each theorem listed in
+   [`engine/comparator.json`](engine/comparator.json) proves exactly the statement in
+   [`engine/Checks/Challenge.lean`](engine/Checks/Challenge.lean), the file of statements
+   the team agreed on.
+3. `lake check`: Lean's kernel checks the whole engine again.
+
+Run the audit yourself with `checks/audit.sh`. Comparator and `lake check` need Linux.
+
+**We trust these tools:**
+
+- **Lean 4.35.0**: its kernel (the part that checks proofs) and its compiler (the part
+  that turns the engine into the `poker` program the web app runs).
+- **Three standard axioms**: `propext`, `Quot.sound` and `Classical.choice`. Every Lean
+  project that uses ordinary logic relies on them. We use no other axiom and no
+  `native_decide`.
+- **GitHub Actions and bubblewrap**: the Linux machine and sandbox that run the checks.
+
+**We trust these definitions.** A theorem means only what its definitions mean, so a
+reader must check that each of these says the right thing. Each one is short and has a
+plain-English docstring and examples.
+
+- Rules of the game, in [`engine/Poker/Spec/`](engine/Poker/Spec/): `State.total` (where
+  chips can be), `Legal` (which moves are allowed), `State.MayAct` (who may act),
+  `fullDeck` and `FairDeck` (what a fair deck is), and the hand ranking.
+- Which hands and games can happen, in
+  [`Engine/Proofs/Reachable.lean`](engine/Engine/Proofs/Reachable.lean):
+  `Hand.Reachable`, `Game.Reachable`, `Hand.dealtCards`.
+- What Risk means, in [`Engine/Proofs/RiskSpec.lean`](engine/Engine/Proofs/RiskSpec.lean):
+  `riskWeight` (a lost chip counts 1 + Risk/50 times), `Gamble.Takes`, `callGamble`.
+- What the bot and equity counts must do, in `Engine/Proofs/BotSpec.lean` and
+  `Engine/Proofs/EquitySpec.lean`.
+
+The engine code itself (`step`, `startHand`, `shuffle`, the bot) is not trusted: the
+theorems are about that code directly, not about a copy of it.
+
+**We trust this data, without proof:**
+
+- **The preflop table**, [`data/preflop.json`](data/preflop.json): win, tie and loss
+  counts for each starting hand, estimated from 50,000 random deals per hand with seed
+  20261031. Rebuild it with the command stored in the file
+  (`npx --yes tsx@4.20.6 scripts/gen-preflop.ts`). These are estimates, not exact counts.
+- **Flop counts** are estimated from 1,000 seeded random deals. Turn and river counts are
+  exact (theorem T6).
+
+**Not covered by any proof:**
+
+- **The web app**: the Next.js pages, the browser code, Node, and the bridge that passes
+  JSON between the browser and the Lean `poker` program (`src/lean/`,
+  `src/app/api/game/`). If the bridge sent a different move than the player clicked, no
+  theorem would catch it. The engine still rejects any illegal move it receives (T3).
+- **Turning the engine's state into JSON** (`engine/Main.lean`) and back.
+- **Whole games**: the bot theorems are about one decision at a time. They do not say
+  how often a bot wins.
+
+**Functions without a body (`opaque`)**: none.
+
 ## Working together
 
 Use separate clones and a branch per task. Commit small changes; coordinate

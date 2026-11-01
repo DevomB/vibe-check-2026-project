@@ -16,3 +16,14 @@ root = "Main"
 [[lean_exe]]
 name = "equity-bench"
 root = "EquityBench"
+
+# The main theorem statements (Challenge) and their proofs (Solution), for `lake comparator`.
+# Not a default target: the Challenge file is all `sorry` on purpose.
+[[lean_lib]]
+name = "Checks"
+roots = ["Checks.Challenge", "Checks.Solution"]
+
+# Differential test driver for tests/diff/run.ts (MVP section 7). Not part of the game.
+[[lean_exe]]
+name = "difftest"
+root = "DiffTest"

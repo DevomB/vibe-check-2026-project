@@ -1,0 +1,75 @@
+{
+ "library": "poker-calculations@4.0.3",
+ "seed": 20261031,
+ "ranOn": "2026-10-31",
+ "platform": "win32 x64, Node v22.20.0",
+ "passed": true,
+ "checks": [
+  {
+   "name": "ranking: random deals",
+   "cases": 100000,
+   "failed": 0,
+   "firstFailures": []
+  },
+  {
+   "name": "ranking: deals from lowRanks",
+   "cases": 2000,
+   "failed": 0,
+   "firstFailures": []
+  },
+  {
+   "name": "ranking: deals from highRanks",
+   "cases": 2000,
+   "failed": 0,
+   "firstFailures": []
+  },
+  {
+   "name": "ranking: deals from hearts",
+   "cases": 2000,
+   "failed": 0,
+   "firstFailures": []
+  },
+  {
+   "name": "exact vs known hand: flop",
+   "cases": 30,
+   "failed": 0,
+   "firstFailures": []
+  },
+  {
+   "name": "exact vs known hand: turn",
+   "cases": 30,
+   "failed": 0,
+   "firstFailures": []
+  },
+  {
+   "name": "exact vs known hand: river",
+   "cases": 30,
+   "failed": 0,
+   "firstFailures": []
+  },
+  {
+   "name": "exact vs random hand (countsFor): turn, 45540 outcomes",
+   "cases": 20,
+   "failed": 0,
+   "firstFailures": []
+  },
+  {
+   "name": "exact vs random hand (countsFor): river, 990 outcomes",
+   "cases": 60,
+   "failed": 0,
+   "firstFailures": []
+  },
+  {
+   "name": "estimate vs exact (countsFor): flop, 1000 deals, within 4 SE",
+   "cases": 12,
+   "failed": 0,
+   "firstFailures": []
+  },
+  {
+   "name": "estimate vs estimate (countsFor): preflop table against 100000 library deals, within 4 SE",
+   "cases": 36,
+   "failed": 0,
+   "firstFailures": []
+  }
+ ]
+}

@@ -1,4 +1,5 @@
 import Engine.Equity
+import Engine.River
 
 /-!
 # Engine: the slider bot (MVP §5)
@@ -14,7 +15,7 @@ cards, the board and the chips. It never sees the other player's cards.
 - No bet to face, before the river: bet pot-sized if its win chance is at least 65% and a
   bet is legal. Otherwise check.
 - No bet to face, on the river: bet pot-sized if its hand is in the river betting set
-  (`riverBets`). Otherwise check.
+  (`riverRole`, `Engine/River.lean`). Otherwise check.
 
 All math is in whole numbers. Bet and raise sizes are kept inside the legal amounts.
 -/
@@ -81,11 +82,6 @@ example : callPays ⟨1, 0, 2⟩ 200 100 1 = false := by decide
 example : callPays ⟨1, 0, 1⟩ 200 100 50 = true := by decide
 example : callPays ⟨1, 0, 1⟩ 200 100 51 = false := by decide
 
-/-- Placeholder for Aarav's `riverBets` (`Engine/River.lean`): is this hand in the river
-betting set at this Bluff setting? Swap in the real one when it lands. Until then the bot
-always checks the river when it faces no bet. -/
-def riverBetsStub (_bluffPct : Nat) (_board _hole : List Card) : Bool := false
-
 /-! ## What the bot sees -/
 
 /-- What the bot looks at, as in `SliderView` in `decide.ts`. -/
@@ -148,16 +144,23 @@ def chanceText (v : View) (c : Counts) : String :=
 def betVerb (v : View) (to : Nat) : String :=
   if v.streetBet > 0 then s!"Raise to {to}" else s!"Bet {to}"
 
-/-- The river with no bet to face: bet pot-sized with a hand from the river betting set,
-otherwise check. Also check when no bet is legal. -/
+/-- Bet pot-sized with a hand from the river betting set, kept inside the legal sizes. Check
+if no bet is legal. `role` is "value" or "bluff"; `why` says why the hand is in the set. -/
+def riverBetOrCheck (v : View) (role why : String) : BotChoice :=
+  match v.raise with
+  | some (lo, hi) =>
+    let to := clampTo v.potBetTarget lo hi
+    ⟨.raiseTo to, s!"{betVerb v to}: {why}."⟩
+  | none => ⟨.check, s!"Check: a {role} hand, but no bet is allowed."⟩
+
+/-- The river with no bet to face, as `riverOpeningFromSet` in `decide.ts`: bet pot-sized
+with a hand from the river betting set (`riverRole`, a value hand or a bluff), otherwise
+check. -/
 def riverOpening (v : View) : BotChoice :=
-  if riverBetsStub v.sliders.bluffPct v.board v.hole then
-    match v.raise with
-    | some (lo, hi) =>
-      let to := clampTo v.potBetTarget lo hi
-      ⟨.raiseTo to, s!"{betVerb v to}: this hand is in the river betting set at Bluff {v.sliders.bluffPct}%."⟩
-    | none => ⟨.check, "Check: this hand is in the river betting set, but no bet is allowed."⟩
-  else ⟨.check, "Check: this hand is not in the river betting set."⟩
+  match riverRole v.sliders.bluffPct v.board v.hole with
+  | .value => riverBetOrCheck v "value" "a value hand, among the strongest 30% on this board"
+  | .bluff => riverBetOrCheck v "bluff" s!"a bluff, picked at Bluff {v.sliders.bluffPct}%"
+  | .check => ⟨.check, "Check: this hand is not in the river betting set."⟩
 
 /-- The bot's move for given counts, as `decideWithCounts` in `decide.ts` (MVP §5). -/
 def decideView (v : View) (c : Counts) : BotChoice :=
@@ -222,14 +225,23 @@ def exFlopView : View :=
 -- No bet to face: bet the pot with 70% wins, check with 60%.
 #guard (decideView { exFlopView with pot := 100, toCall := 0, raise := some (10, 400) } ⟨70, 0, 30⟩).action.text == "raise 100"
 #guard (decideView { exFlopView with pot := 100, toCall := 0, raise := some (10, 400) } ⟨60, 0, 40⟩).action.text == "check"
-/-- The river with no bet to face: the river betting set decides (a placeholder that checks
-for now). -/
-def exRiverView : View :=
+/-- The river with no bet to face, on a board of A K 2 5 7 with 100 in the pot. The river
+betting set decides. -/
+def exRiverView (hole : List Card) : View :=
   { exFlopView with
+    hole
     board := [⟨12, .spades⟩, ⟨11, .diamonds⟩, ⟨0, .clubs⟩, ⟨3, .hearts⟩, ⟨5, .hearts⟩]
     pot := 100, toCall := 0, raise := some (10, 400) }
 
-#guard (decideView exRiverView ⟨99, 0, 1⟩).action.text == "check"
+-- Two aces are a value hand: bet the pot.
+#guard (decideView (exRiverView [⟨12, .clubs⟩, ⟨12, .hearts⟩]) ⟨99, 0, 1⟩).reason ==
+  "Bet 100: a value hand, among the strongest 30% on this board."
+-- Eight-six is picked as a bluff at Bluff 33%.
+#guard (decideView (exRiverView [⟨6, .clubs⟩, ⟨4, .diamonds⟩]) ⟨0, 0, 1⟩).reason ==
+  "Bet 100: a bluff, picked at Bluff 33%."
+-- A pair of sevens is in neither set: check, whatever the counts say.
+#guard (decideView (exRiverView [⟨5, .clubs⟩, ⟨1, .diamonds⟩]) ⟨99, 0, 1⟩).reason ==
+  "Check: this hand is not in the river betting set."
 
 -- The start of a hand: the small blind owes 5, so the pot to win is 15 and a pot-sized
 -- raise goes to 5 + 5 + 20 = 30. A raise may go from 20 to 500.
