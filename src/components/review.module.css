@@ -697,10 +697,34 @@
   accent-color: var(--gold);
 }
 
+/* Rock, Ideal and Maniac under the slider, as on the setup screen. */
+.explorerMarks {
+  position: relative;
+  height: 16px;
+  margin: -6px 8px 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.explorerMarks span {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.explorerMarks span:first-child {
+  transform: none;
+}
+
+.explorerMarks span:last-child {
+  transform: translateX(-100%);
+}
+
 .explorerMarker {
   position: relative;
   height: 30px;
-  margin: -6px 8px 0;
+  margin: -2px 8px 0;
 }
 
 .explorerMarker span {

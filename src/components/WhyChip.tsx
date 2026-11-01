@@ -1,5 +1,5 @@
 import { useId, useState } from "react";
-import { CITATIONS, type CitationKey } from "@/lib/citationsStub";
+import { CITATIONS, type CitationKey } from "@/lib/citations";
 import styles from "./review.module.css";
 
 /** Each idea's heading in the "Why?" panel. */

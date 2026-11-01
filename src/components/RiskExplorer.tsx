@@ -1,6 +1,7 @@
 import { useState } from "react";
-import type { LeanRiskExplorerEntry } from "@/lean/protocol";
+import { type LeanRiskExplorerEntry, RISK_MAX } from "@/lean/protocol";
 import type { GuaranteeId } from "@/lib/guarantees";
+import { RISK_MARKS } from "./Lobby";
 import styles from "./review.module.css";
 
 interface Props {
@@ -90,8 +91,15 @@ export function RiskExplorer({ entries, selected, onSelect, onShowProof }: Props
             At Risk <b>{risk}</b>, the bot would: <b>{atRisk}</b>
             {risk === entry.risk && <span className="muted"> (its real setting)</span>}
           </span>
-          <input type="range" min={0} max={100} step={1} value={risk} aria-label="Risk" onChange={(e) => setRisk(Number(e.target.value))} />
+          <input type="range" min={0} max={RISK_MAX} step={1} value={risk} aria-label="Risk" onChange={(e) => setRisk(Number(e.target.value))} />
         </label>
+        <div className={styles.explorerMarks} aria-hidden="true">
+          {RISK_MARKS.map((m) => (
+            <span key={m.at} style={{ left: `${(m.at / RISK_MAX) * 100}%` }}>
+              {m.label}
+            </span>
+          ))}
+        </div>
         <div className={styles.explorerMarker} aria-hidden="true">
           <span className={styles.markerTip} style={{ left: `${entry.risk}%` }}>
             ▲

@@ -241,7 +241,7 @@ export function ReviewModal({ review, game = null, peeked = false, hideSliderInf
                       Its reason: <q>{botReason}</q>
                     </p>
                   ) : hideSliderInfo ? (
-                    <p className="muted">The bot&apos;s reasons stay hidden until you guess its settings.</p>
+                    <p className="muted">The bot&apos;s reasons stay hidden until you guess its Risk.</p>
                   ) : null}
                 </>
               ) : gradedCount > 0 ? (
@@ -313,7 +313,7 @@ export function ReviewModal({ review, game = null, peeked = false, hideSliderInf
 
         <section className={styles.section}>
           {hideSliderInfo ? (
-            <p className="muted">The bot&apos;s reasons, the hands it bets and the Risk explorer stay hidden until its settings are revealed.</p>
+            <p className="muted">The bot&apos;s reasons, the hands it bets and the Risk explorer stay hidden until its Risk is revealed.</p>
           ) : (
             <>
               <h3>Why the bot played this way</h3>
