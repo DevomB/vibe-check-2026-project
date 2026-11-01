@@ -26,7 +26,13 @@
     "chips_always_1000",
     "shuffle_same_cards",
     "shuffle_fair",
-    "no_card_dealt_twice"
+    "no_card_dealt_twice",
+    "review_worth",
+    "review_best_iff",
+    "review_label_monotone",
+    "review_call_best_iff_equity",
+    "no_hindsight",
+    "bot_hand_in_review"
   ],
   "permitted_axioms": [
     "propext",

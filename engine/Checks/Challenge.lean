@@ -3,6 +3,7 @@ import Engine.Proofs.RiskSpec
 import Engine.Proofs.BotSpec
 import Engine.Proofs.EquitySpec
 import Engine.Proofs.BluffSpec
+import Engine.Proofs.ReviewSpec
 
 /-!
 # The main theorems, as agreed by the team (the Comparator "challenge")
@@ -162,3 +163,42 @@ theorem bot_bets_its_set (bluffPct : Nat) (board : List Card) (a b : Card) :
     riverBets bluffPct board [a, b] = true ↔
       ∃ h ∈ (riverBettingSet bluffPct board).value ++ (riverBettingSet bluffPct board).bluffs,
         h.cards = (a, b) ∨ h.cards = (b, a) := sorry
+
+/-! ## T5 and T8: the river review (see `Engine/Proofs/ReviewSpec.lean`) -/
+
+/-- When the bot can hold at least one hand, the review's worth of calling is the spec's
+total for calling over twice the number of hands, in big blinds. Folding is worth 0. -/
+theorem review_worth (spot : RiverSpot) (choice : RiverChoice) (hn : spot.botHands ≠ []) :
+    (reviewRiver spot choice).worthCall =
+      ⟨spot.total .call, 2 * spot.botHands.length * bigBlind⟩ ∧
+    (reviewRiver spot choice).worthFold.num = spot.total .fold := sorry
+
+/-- T5: the review labels a call or fold Best exactly when it was worth at least as much as
+the other choice. -/
+theorem review_best_iff (spot : RiverSpot) (choice : RiverChoice) :
+    (reviewRiver spot choice).label = .best ↔ spot.total choice.other ≤ spot.total choice :=
+  sorry
+
+/-- T5: a decision that lost fewer big blinds never gets a worse label. -/
+theorem review_label_monotone (s₁ s₂ : RiverSpot) (c₁ c₂ : RiverChoice)
+    (hle : (reviewRiver s₁ c₁).lost.LE (reviewRiver s₂ c₂).lost) :
+    (reviewRiver s₁ c₁).label.rank ≤ (reviewRiver s₂ c₂).label.rank := sorry
+
+/-- Calling is Best exactly when the equity the human had is at least the equity needed. -/
+theorem review_call_best_iff_equity (spot : RiverSpot) (hn : spot.botHands ≠ [])
+    (hcost : 0 < spot.cost) :
+    (reviewRiver spot .call).label = .best ↔
+      (reviewRiver spot .call).equityNeeded.LE (reviewRiver spot .call).equityHad := sorry
+
+/-- T8: two hands that look the same to the human get the same review, whatever cards the
+bot really holds. -/
+theorem no_hindsight (h₁ h₂ : Hand) (bluffPct : Nat) (choice : RiverChoice)
+    (hsame : SameForHuman h₁ h₂) :
+    reviewRiver (riverSpotOf h₁ bluffPct) choice =
+      reviewRiver (riverSpotOf h₂ bluffPct) choice := sorry
+
+/-- The bot's real hand is one of the hands the review considers. -/
+theorem bot_hand_in_review (spot : RiverSpot) (botCards : List Card)
+    (hbets : riverBets spot.bluffPct spot.board botCards = true)
+    (hapart : ∀ c ∈ botCards, c ∉ spot.hole) :
+    ∃ h ∈ spot.botHands, h.isHole botCards = true := sorry

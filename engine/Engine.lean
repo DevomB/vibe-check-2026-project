@@ -10,11 +10,12 @@ import Engine.BotTests
 import Engine.Equity
 import Engine.River
 import Engine.RiverTests
+import Engine.Review
+import Engine.ReviewTests
 import Engine.Slider
 import Engine.SliderTests
 import Engine.SliderRiverTests
 import Engine.EquityTests
-import Engine.ReviewPlaceholder
 import Engine.HandName
 import Engine.Session
 import Engine.Protocol
@@ -28,3 +29,5 @@ import Engine.Proofs.EquityExact
 import Engine.Proofs.BluffFrequency
 import Engine.Proofs.Chips
 import Engine.Proofs.Deck
+import Engine.Proofs.ReviewSpec
+import Engine.Proofs.Review
