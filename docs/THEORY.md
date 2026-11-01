@@ -44,7 +44,7 @@ for every value `ofRisk` can produce. The theorems about the map itself are in s
 ### 1.1 The twelve theorems of the one-slider change, in plain words
 
 All twelve are registered in `engine/Checks/Challenge.lean` and `engine/comparator.json`
-(61 names in all, with the three merged from `sunday/review-fixes`), so Comparator checks
+(79 names in all after the river-game theorems of section 7), so Comparator checks
 each statement. Seven are in `engine/Engine/Proofs/OneSlider.lean`, three in
 `engine/Engine/Proofs/Explain.lean`, two in `engine/Engine/Proofs/OneSliderRiver.lean`.
 
@@ -312,6 +312,87 @@ The README's "What we trust" section is the list of record. The items that bear 
 - Whole games and "the bot playing well": the bot theorems are about one decision at a time.
   Matching the textbook bluff ratio inside a board-only river set is not a proof of good play.
 - The market-making reading in section 4 is an explanation, not a theorem.
+
+## 7. Equilibrium: what is proved, what is measured, what is not claimed
+
+The definitions are in `engine/Engine/Proofs/RiverGameSpec.lean` and the ten theorems in
+`engine/Engine/Proofs/RiverGame.lean`; all are registered in `engine/Checks/Challenge.lean` and
+`engine/comparator.json` and checked by Comparator and the kernel like every other theorem.
+
+### The setting, copied from A03
+
+One final betting decision on the river. The bot has bet; the human can only call or fold. The
+human's hand is a **bluff-catcher**: it beats every bluff in the bot's set and loses to every
+value hand (`Polarized mine value bluffs`). Payoffs are chips, so the caller is risk neutral. The
+bet is the effective bet, and there is no rake. These are A03's five conditions (section 2.2),
+and the bot's river set is the board-only set of section 2.2, so "the bot's hands" below means
+that set, not a guess at a real opponent's range.
+
+Two definitions make the facts about numbers the review already uses:
+
+- `callTotal value bluffs mine prize cost` is the review's own `choiceTotal` (section 2.1)
+  summed over the value hands and the bluffs, in half-chips: what calling wins, added up over
+  every hand the bot could hold, when a call pays `cost` to win `prize`.
+- `bluffGain hands calls pot bet` is what one bluff gains over checking when the caller calls
+  with `calls` of its `hands` hands: it wins the pot when the caller folds and loses the bet
+  when called, so `(hands − calls) × pot − calls × bet`. Here `pot` is the pot before the bet,
+  so the caller's prize in `callTotal` is `pot + bet`. This is the model's bettor side; no
+  engine function computes it, because the engine never models how often the human calls.
+
+### What is proved
+
+- `polarized_call_total`. Against a bluff-catcher, calling adds up to
+  `2 × (bluffs × prize − value × cost)` half-chips. Every value hand costs the call, every
+  bluff pays the prize.
+- `caller_indifferent_iff`. That total is zero exactly when `bluffs × prize = value × cost`.
+- `pot_bet_indifferent_iff`. For a pot-sized bet, where the prize is twice the cost, that is
+  exactly when the bluffs are half the value hands: one third of the betting set. This is the
+  textbook 1/3 of section 2.2, now as a theorem about the review's own arithmetic.
+- `ideal_bluff_catcher_total`. Against the Risk 50 set (324 value hands, 160 bluffs) and a
+  pot-sized bet of `b` chips, a bluff-catcher's total is `−8 × b` half-chips: `−4 × b` chips
+  spread over 484 hands, under 1% of the bet per hand. Exact indifference would need 162
+  bluffs; the rounding rule gives 160, so Risk 50 is within two hands of it.
+- `maniac_bluff_catcher_total`. Against the Risk 100 set (486 bluffs), the total is
+  `+1296 × b` half-chips: calling gains 0.8 bets per call, the figure in section 5.
+- `rock_bluff_catcher_total`. Against the Risk 0 set (no bluffs), the total is `−648 × b`
+  half-chips: every call loses the bet, and folding is right.
+- The three real-set theorems are instantiated on a real board (A K 2 5 7, a pair of sevens as
+  the bluff-catcher) by a compiled `#guard`, not by a kernel-checked example: the kernel's
+  `decide` would have to rank 1,081 hands. The small-range theorems have kernel examples.
+- The three totals are over the whole betting set (484, 810 and 324 hands), before the hands
+  your cards block are removed. The review's grade removes them (`RiverSpot.botHands`), so at a
+  real table the total differs by the blocked hands: at Risk 50 it sits within a few hands of
+  indifference either way, depending on which hands you block.
+- `more_bluffs_more_call_total`. Adding bluffs to the set never lowers the caller's total.
+- `bettor_indifferent_iff`. A bluff breaks even exactly when `calls × (pot + bet) = hands × pot`:
+  the caller defends `pot / (pot + bet)` of its hands, the minimum defence frequency of
+  section 2.3, one half against a pot-sized bet.
+- `defend_more_bluff_loses`, `defend_less_bluff_gains`. If the caller defends more often than
+  that, every bluff loses chips; if less often, every bluff gains.
+
+### What is measured, not proved
+
+The three totals above are facts about the set sizes the engine really uses (324, 160, 486, 0),
+proved by computing them, over the whole set and before blocked hands are removed. The ratios they come from are measured, not chosen by a theorem: 30%
+value hands is our cut, and 33% is the slider's setting at Risk 50. The range viewer shows the
+same counts on every river board.
+
+### What is not claimed
+
+- **The bot as caller is not at the defence frequency.** When the bot faces a river bet it calls
+  by `callPays` (section 2.4), a count against a random hand, not a share of its own hands. So
+  `bettor_indifferent_iff` and the two `defend_` theorems describe the human's choice against
+  the bot's set; they say nothing about how the bot defends.
+- **Nothing beyond one street.** No theorem looks at the flop, the turn, the betting that led to
+  the river, or the bet size. The bot's pot-sized bet is a fixed rule (section 2.2), not a
+  theorem about sizing.
+- **A bluff-catcher is an assumption.** With a hand that beats some value hands or loses to
+  some bluffs, or with ties, `Polarized` fails and these totals do not apply; the review's
+  grade still does, because it counts the real hands.
+- **"Equilibrium" means the one-street indifference of A03's model**, with the bot's board-only
+  set as its range. It is not a claim that the bot, or Risk 50, is unexploitable in Hold'em,
+  and it is the only equilibrium property we have. Sections 3 and 6 still apply: nothing here
+  says the bot plays well.
 
 ## Appendix: where each number lives
 

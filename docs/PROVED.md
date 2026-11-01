@@ -1,6 +1,6 @@
 # What is proved, and what is not
 
-Sun Nov 1, 2026, main at c2f4034. Every theorem named here is stated in
+Sun Nov 1, 2026, main after the river-game merge (79 Comparator names). Every theorem named here is stated in
 [`engine/Checks/Challenge.lean`](../engine/Checks/Challenge.lean), proved under
 `engine/Engine/Proofs/`, listed in [`engine/comparator.json`](../engine/comparator.json) (69
 names since main at 6b9da7a and this update; see [GUARANTEES.md](GUARANTEES.md) for the full
@@ -59,6 +59,19 @@ the definitions a reader must still read. Most important first.
    `exploreHand_risk_monotone`). The range viewer's numbers add up and are the review's own
    counts (`rangeOf_adds_up`, `rangeOf_counts`).
 
+7. **The river indifference facts (THEORY.md section 7).** Against a river bet
+   from a polarised set, a bluff-catcher's call adds up to `2 × (bluffs × prize − value × cost)`
+   half-chips (`polarized_call_total`); it is zero exactly when `bluffs × prize = value × cost`,
+   which for a pot-sized bet means bluffs are half the value hands, one third of the set
+   (`caller_indifferent_iff`, `pot_bet_indifferent_iff`). Against the Risk 50 set the total is
+   `−4 × bet` chips over 484 hands, within 1% of the bet of indifference, counted over the
+   whole set before the hands your cards block are removed (`ideal_bluff_catcher_total`); at Risk 100 calling gains 0.8 bets per call
+   (`maniac_bluff_catcher_total`); at Risk 0 every call loses the bet
+   (`rock_bluff_catcher_total`). More bluffs never lower the caller's total
+   (`more_bluffs_more_call_total`). A bluff breaks even exactly when the caller defends
+   `pot / (pot + bet)` of its hands, loses if the caller defends more and gains if less
+   (`bettor_indifferent_iff`, `defend_more_bluff_loses`, `defend_less_bluff_gains`).
+
 ## Not proved, most important first
 
 1. **That the bot plays well.** No theorem about winning, exploitability or equilibrium. It
@@ -85,3 +98,9 @@ the definitions a reader must still read. Most important first.
    that the quoted Risk does not change the move). The river bluff reason still quotes the
    internal share. Session state beyond the game, such as the hand logs, has no theorems. The
    turn counts run 46 parallel tasks; the compiler is trusted to run them.
+
+7. **Equilibrium beyond one street.** The river indifference facts (item 7 above) are
+   one-street arithmetic under A03's conditions: a polarised set, call or fold, chip payoffs. The
+   bot as caller does not defend at `pot / (pot + bet)`; it calls by `callPays` against a random
+   hand. Nothing is proved about earlier streets, bet sizing, or the whole game, and this is the
+   only equilibrium property we have. It is not a claim that any Risk setting is unexploitable.

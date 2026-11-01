@@ -70,7 +70,17 @@
     "more_bluff_never_checks_a_bet",
     "more_risk_never_checks_a_bet",
     "exploreHandAt_moves",
-    "exploreHandAt_more_risk_continues"
+    "exploreHandAt_more_risk_continues",
+    "polarized_call_total",
+    "caller_indifferent_iff",
+    "pot_bet_indifferent_iff",
+    "more_bluffs_more_call_total",
+    "ideal_bluff_catcher_total",
+    "maniac_bluff_catcher_total",
+    "rock_bluff_catcher_total",
+    "bettor_indifferent_iff",
+    "defend_more_bluff_loses",
+    "defend_less_bluff_gains"
   ],
   "permitted_axioms": [
     "propext",
