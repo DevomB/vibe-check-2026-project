@@ -9,6 +9,7 @@ import {
   boardAt,
   buildMoveList,
   gradedCoach,
+  isRiverSetGrade,
   labelCounts,
   movesFromReview,
   noGradeReason,
@@ -49,7 +50,7 @@ interface Props {
 
 const STREET_NAME: Record<Street, string> = { preflop: "Preflop", flop: "Flop", turn: "Turn", river: "River" };
 
-const NOT_GRADED = "Not graded: Lean grades only your call or fold after the bot makes the first bet on the river.";
+const NOT_GRADED = "Not graded: Lean grades your calls and folds when you face a bet.";
 
 function Cards({ cards, slots = 0 }: { cards: readonly Card[]; slots?: number }) {
   return (
@@ -91,8 +92,10 @@ export function ReviewModal({ review, game = null, peeked = false, hideSliderInf
   const fromEvents = events ? buildMoveList(events, describeEvents(events, names, 0), review, human) : null;
   const streets = fromEvents ?? movesFromReview(review, human);
   const moves = selectableMoves(streets);
-  const gradedRow = moves.find((r) => r.decision?.label != null) ?? null;
+  // Open at the proved river grade if the hand has one, else at the first graded move.
+  const gradedRow = moves.find((r) => r.decision && isRiverSetGrade(r.decision)) ?? moves.find((r) => r.decision?.label != null) ?? null;
   const gradedCount = review.decisions.filter((d) => d.label !== null).length;
+  const hasRiverSetGrade = review.decisions.some(isRiverSetGrade);
   const range = review.decisions.find((d) => d.label !== null && d.range)?.range ?? null;
 
   // The selected move, by its place in the hand's events; null is the start, before any move.
@@ -228,7 +231,8 @@ export function ReviewModal({ review, game = null, peeked = false, hideSliderInf
                   <p className={styles.coachNumbers}>
                     {coach.worths} <span className={styles.band}>{coach.band}</span>
                   </p>
-                  <WhyChip ideas={["pot-odds", "exact-equity", "grade-bands"]} />
+                  {/* An any-hand grade's flop chance is sampled, so it does not cite exact equity. */}
+                  {coach.note ? <WhyChip ideas={["pot-odds", "grade-bands"]} /> : <WhyChip ideas={["pot-odds", "exact-equity", "grade-bands"]} />}
                 </>
               ) : row ? (
                 <>
@@ -246,24 +250,28 @@ export function ReviewModal({ review, game = null, peeked = false, hideSliderInf
                   ) : null}
                 </>
               ) : gradedCount > 0 ? (
-                <p>Step through the hand with the arrows below or the ← → keys. Your graded move carries its badge.</p>
+                <p>Step through the hand with the arrows below or the ← → keys. Each graded move carries its badge.</p>
               ) : (
                 <>
                   <p className={styles.coachHead}>
                     <b>No graded move in this hand.</b>
                   </p>
                   <p>{noGradeReason(events, human)}</p>
-                  <p className="muted">Practice hands on the setup screen always reach that spot.</p>
+                  <p className="muted">Practice hands on the setup screen always end with a graded call or fold.</p>
                 </>
               )}
             </div>
 
             {coach && (
               <div className={styles.model}>
-                <p>
-                  The grade counts every hand the bot bets on this river as equally likely, minus the hands your cards rule out. It ignores how
-                  the bot played earlier.
-                </p>
+                {coach.note ? (
+                  <p>{coach.note}</p>
+                ) : (
+                  <p>
+                    The grade counts every hand the bot bets on this river as equally likely, minus the hands your cards rule out. It ignores
+                    how the bot played earlier.
+                  </p>
+                )}
                 {decidedBeforeReveal && <p>Graded with the bot&apos;s real settings, which you did not know when you decided.</p>}
               </div>
             )}
@@ -286,7 +294,7 @@ export function ReviewModal({ review, game = null, peeked = false, hideSliderInf
               </button>
             </div>
 
-            {gradedCount > 0 && onShowProof && (
+            {hasRiverSetGrade && onShowProof && (
               <div className={styles.linkRow}>
                 <button type="button" className={styles.proofLink} onClick={() => onShowProof("review")}>
                   Why can I trust this grade?

@@ -1,4 +1,5 @@
 import type { LeanReview, LeanState, ReviewLabel } from "@/lean/protocol";
+import { isRiverSetGrade } from "@/lib/review";
 
 /**
  * Practice challenges: rehearsed hands that stop at a river decision. Each is hand 1 of a new
@@ -104,7 +105,8 @@ export interface PracticeVerdict {
 }
 
 export function practiceVerdict(review: LeanReview, result: LeanState["result"]): PracticeVerdict {
-  const graded = review.decisions.find((d) => d.label !== null);
+  // The river decision's grade. The calls before it can have any-hand grades of their own.
+  const graded = review.decisions.find(isRiverSetGrade);
   const choice = graded?.your_action === "call" || graded?.your_action === "fold" ? graded.your_action : null;
   const label = graded?.label ?? null;
   return { choice, label, unlucky: label === "Best" && result?.showdown === true && result.outcome === "player1" };
