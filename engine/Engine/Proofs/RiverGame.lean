@@ -1,41 +1,36 @@
-import Engine.Proofs.RiverGameSpec
 import Engine.Proofs.BluffCatcher
 import Engine.Proofs.OneSlider
 import Engine.Proofs.OneSliderRiver
 
 /-!
-# The one-street river game, part 2: the other Risk settings and the bettor's side
+# The bluff catcher against the other Risk settings, and for any bet size
 
-`Engine/Proofs/BluffCatcher.lean` proves the caller's side at Risk 50: against a bluff-catcher,
-calling adds up to `2·(bluffs·prize − value·cost)` half-chips (`bluff_catcher_call_total`), it is
-break-even exactly at one bluff in three for a pot-sized bet, and the Risk 50 set is two bluffs
-short of that (`risk50_bluff_catcher_call_loses`). This file adds:
+`Engine/Proofs/BluffCatcher.lean` proves the caller's side of the one-street river model at
+Risk 50: against a bluff catcher, calling adds up to `2·(bluffs·prize − value·cost)` half-chips
+(`bluff_catcher_call_total`), it is break-even exactly at one bluff in three for a pot-sized bet,
+and the Risk 50 set is two bluffs short of that (`risk50_bluff_catcher_call_loses`).
+`Engine/Proofs/Equilibrium.lean` proves the bot's side. This file adds three facts:
 
-- **The other two settings.** Against the Risk 100 set (486 bluffs) a bluff-catcher facing a
-  pot-sized bet of `b` gains `1296·b` half-chips over the 810 hands the bot bets, 0.8 bets per
-  call, so calling the maniac down wins (`maniac_bluff_catcher_total`). Against the Risk 0 set
-  (no bluffs) it loses `648·b` half-chips, the whole call every time, so folding is right
-  (`rock_bluff_catcher_total`).
-- **More bluffs never lower a bluff-catcher's call**, for any bet size
+- **Risk 100.** Against the Risk 100 set (486 bluffs) a bluff catcher facing a pot-sized bet of
+  `cost` gains `1296·cost` half-chips over the 810 hands the bot bets, 0.8 bets per call, so
+  calling the maniac down wins (`maniac_bluff_catcher_total`).
+- **Risk 0.** Against the Risk 0 set (no bluffs) it loses `648·cost` half-chips, the whole call
+  every time, so folding is right (`rock_bluff_catcher_total`).
+- **More bluffs never lower a bluff catcher's call**, for any bet size
   (`more_bluffs_more_call_total`).
-- **The bettor's side.** A bluff gains nothing exactly when the caller defends with share
-  `pot / (pot + bet)` of its bluff-catchers (`bettor_indifferent_iff`); defending more makes
-  every bluff lose, defending less makes it gain (`defend_more_bluff_loses`,
-  `defend_less_bluff_gains`).
 
-The totals are over the whole betting set, before the hands the caller's cards block are
+The two totals are over the whole betting set, before the hands the caller's cards block are
 removed; the review's grade removes them (`RiverSpot.botHands`), so the total at a real table
 differs by the blocked hands (`review_both_best_iff_one_third` is the statement through the
-review itself). One street, a bluff-catcher, the bot as bettor: this is the one textbook
-property the bot's river set has, it holds only inside the one-street model, and it is not a
-claim that the bot plays well.
+review itself). One street, a bluff catcher, the bot as bettor; not a claim that the bot plays
+well.
 
-What to review: `CatchesBluffs`, `choiceTotal`, `bluffGain`, `riverBettingSet`, `Sliders.ofRisk`.
+What to review: `CatchesBluffs`, `choiceTotal`, `riverBettingSet`, `Sliders.ofRisk`.
 -/
 
 /-! ## More bluffs never lower the call -/
 
-/-- Against a bluff-catcher, adding bluffs to the range never makes calling worth less, for any
+/-- Against a bluff catcher, adding bluffs to the range never makes calling worth less, for any
 prize and cost. -/
 theorem more_bluffs_more_call_total (mine : List Nat) (value bluffs bluffs' : List RankedHand)
     (prize cost : Nat) (hc : CatchesBluffs mine value bluffs)
@@ -69,7 +64,7 @@ theorem rock_river_set (board : List Card) (h5 : board.length = 5) (hd : board.N
   simp only [NearestWhole] at h
   exact ⟨h.1, by omega⟩
 
-/-- **Calling the maniac down wins.** On a river board with no card twice, a bluff-catcher
+/-- **Calling the maniac down wins.** On a river board with no card twice, a bluff catcher
 facing the Risk 100 bot's pot-sized bet of `cost` gains `1296·cost` half-chips over the 810
 hands the bot bets: `648·cost` chips, or 0.8 bets per call. The total is over the whole
 betting set, before the hands the caller's cards block are removed. -/
@@ -84,7 +79,7 @@ theorem maniac_bluff_catcher_total (board : List Card) (h5 : board.length = 5) (
     (maniac_river_set board h5 hd).2]
   omega
 
-/-- **Folding to the rock is right.** At Risk 0 the bot never bluffs, so a bluff-catcher facing
+/-- **Folding to the rock is right.** At Risk 0 the bot never bluffs, so a bluff catcher facing
 its pot-sized bet of `cost` loses `648·cost` half-chips over the 324 hands it bets: the whole
 call, every time. The total is over the whole betting set, before the hands the caller's
 cards block are removed. -/
@@ -99,44 +94,16 @@ theorem rock_bluff_catcher_total (board : List Card) (h5 : board.length = 5) (hd
     (rock_river_set board h5 hd).2]
   omega
 
-/-! ## The bettor's side: the defence frequency -/
-
-/-- **The bettor's indifference equation.** A bluff gains nothing over checking exactly when
-the caller calls with share `pot / (pot + bet)` of its bluff-catchers:
-`calls × (pot + bet) = hands × pot`. For a pot-sized bet that is half of them. A fact about the
-model's formula `bluffGain`; the engine has no function for it. -/
-theorem bettor_indifferent_iff (hands calls pot bet : Nat) :
-    bluffGain hands calls pot bet = 0 ↔ (calls : Int) * (pot + bet) = hands * pot := by
-  unfold bluffGain
-  rw [Int.sub_mul, Int.mul_add]
-  omega
-
-/-- Defending more than that share makes every bluff lose. -/
-theorem defend_more_bluff_loses (hands calls pot bet : Nat)
-    (h : (hands : Int) * pot < calls * (pot + bet)) : bluffGain hands calls pot bet < 0 := by
-  unfold bluffGain
-  rw [Int.sub_mul]
-  rw [Int.mul_add] at h
-  omega
-
-/-- Defending less than that share makes every bluff gain. -/
-theorem defend_less_bluff_gains (hands calls pot bet : Nat)
-    (h : (calls : Int) * (pot + bet) < hands * pot) : 0 < bluffGain hands calls pot bet := by
-  unfold bluffGain
-  rw [Int.sub_mul]
-  rw [Int.mul_add] at h
-  omega
-
 /-! ## Checks: the statements hold on a real board, and reject bad output
 
 The board is `boardAK257` (A K 2 5 7). A pair of sevens (7c 3d) beats every bluff in the Risk
-100 set, so in the Risk 50 set too, and loses to every value hand: a bluff-catcher at every
+100 set, so in the Risk 50 set too, and loses to every value hand: a bluff catcher at every
 Risk. (A pair of twos would do at Risk 50 but is itself among the 486 bluffs at Risk 100.)
 These guards rank the board in the interpreter; the kernel's `decide` would be too slow for
-1,081 hands, so the real-board instances are `#guard`s, and the kernel examples use the small
-range from `RiverGameSpec.lean`. -/
+1,081 hands, so the real-board instances are `#guard`s, and the kernel example uses the
+one-hand range from `BluffCatcherSpec.lean`. -/
 
-/-- A bluff-catcher on `boardAK257` at every Risk: a pair of sevens. -/
+/-- A bluff catcher on `boardAK257` at every Risk: a pair of sevens. -/
 def catcherAK257 : List Nat := bestScore ([card 7 .clubs, card 3 .diamonds] ++ boardAK257)
 
 #guard CatchesBluffs catcherAK257 (riverBettingSet (Sliders.ofRisk 100).bluffPct boardAK257).value
@@ -149,27 +116,17 @@ def catcherAK257 : List Nat := bestScore ([card 7 .clubs, card 3 .diamonds] ++ b
 #guard choiceTotal ((riverBettingSet (Sliders.ofRisk 0).bluffPct boardAK257).value ++
   (riverBettingSet (Sliders.ofRisk 0).bluffPct boardAK257).bluffs) catcherAK257 200 100 .call == -64800
 
-/-- `more_bluffs_more_call_total` with every hypothesis met: two bluffs beside the two value
-hands are worth at least as much to the caller as one. -/
-example : choiceTotal (exValueHands ++ exBluffHands) [5] 200 100 .call ≤
-    choiceTotal (exValueHands ++ (exBluffHands ++ exBluffHands)) [5] 200 100 .call :=
-  more_bluffs_more_call_total [5] exValueHands exBluffHands (exBluffHands ++ exBluffHands) 200 100
+/-- `more_bluffs_more_call_total` with every hypothesis met: two bluffs beside one value hand
+are worth at least as much to the caller as one. -/
+example : choiceTotal ([exValueHand] ++ [exBluffHand]) [3] 200 100 .call ≤
+    choiceTotal ([exValueHand] ++ [exBluffHand, exBluffHand]) [3] 200 100 .call :=
+  more_bluffs_more_call_total [3] [exValueHand] [exBluffHand] [exBluffHand, exBluffHand] 200 100
     (by decide) (by decide) (by decide)
 
 /-- The statement rejects the reverse: fewer bluffs are not worth more to the caller. -/
-example : ¬ choiceTotal (exValueHands ++ exBluffHands) [5] 200 100 .call <
-    choiceTotal (exValueHands ++ []) [5] 200 100 .call := by decide
-
-/-- `bettor_indifferent_iff` with every hypothesis met: calling with 2 of 4 bluff-catchers
-against a pot-sized bluff. A caller who defends with 1 of 4 lets the bluff gain; with 3 of 4
-the bluff loses. -/
-example : bluffGain 4 2 100 100 = 0 := (bettor_indifferent_iff 4 2 100 100).2 (by decide)
-example : 0 < bluffGain 4 1 100 100 := defend_less_bluff_gains 4 1 100 100 (by decide)
-example : bluffGain 4 3 100 100 < 0 := defend_more_bluff_loses 4 3 100 100 (by decide)
+example : ¬ choiceTotal ([exValueHand] ++ [exBluffHand]) [3] 200 100 .call <
+    choiceTotal ([exValueHand] ++ []) [3] 200 100 .call := by decide
 
 #print axioms more_bluffs_more_call_total
 #print axioms maniac_bluff_catcher_total
 #print axioms rock_bluff_catcher_total
-#print axioms bettor_indifferent_iff
-#print axioms defend_more_bluff_loses
-#print axioms defend_less_bluff_gains
