@@ -41,12 +41,12 @@ bluffing rises. The direction flips from the old UI, where higher Risk meant mor
 Every proved theorem is stated over an arbitrary `Sliders` value, so all of them keep holding
 for every value `ofRisk` can produce. The theorems about the map itself are in section 1.1.
 
-### 1.1 The ten theorems of the one-slider change, in plain words
+### 1.1 The eleven theorems of the one-slider change, in plain words
 
-All ten are registered in `engine/Checks/Challenge.lean` and `engine/comparator.json`
-(59 names in all, with the three merged from `sunday/review-fixes`), so Comparator checks
+All eleven are registered in `engine/Checks/Challenge.lean` and `engine/comparator.json`
+(60 names in all, with the three merged from `sunday/review-fixes`), so Comparator checks
 each statement. Seven are in `engine/Engine/Proofs/OneSlider.lean`, three in
-`engine/Engine/Proofs/Explain.lean`.
+`engine/Engine/Proofs/Explain.lean`, one in `engine/Engine/Proofs/OneSliderRiver.lean`.
 
 - `botDecide_action_shown` (OneSlider.lean, line 43). The extra Risk number the bot is handed
   to print in its reasons (`shownRisk`) never changes the move.
@@ -59,7 +59,13 @@ each statement. Seven are in `engine/Engine/Proofs/OneSlider.lean`, three in
   board and chips), if the bot calls or raises at Risk r, it also calls or raises at every
   higher Risk. It holds because, facing a bet, the bot reads only caution and never the bluff
   share (`botDecide_facing_bet_bluff`, line 78), and caution falls with Risk.
-- `ideal_is_textbook` (line 104). Risk 50 maps to caution 0 and bluff share 33.
+- `more_risk_never_checks_a_bet` (OneSliderRiver.lean, line 38). The river half of the same
+  fact. On a river board with no card twice, with nothing to call and a bet allowed, if the bot
+  bets its two cards at Risk r, it bets them at every higher Risk r'. The value hands are the
+  same at every Risk, and the bluffs, the last `bluffCount 324 b` ranked hands, only grow as the
+  bluff share rises through 0 to 60 (`bluffCount_step`, checked by `decide` over the 60 steps,
+  and `bluffCount_mono_60`, in the same file).
+- `ideal_is_textbook` (OneSlider.lean, line 104). Risk 50 maps to caution 0 and bluff share 33.
 - `ideal_river_set` (line 109). At Risk 50, on every river board with no card twice, the
   betting set has 324 value hands and 160 bluffs.
 - `botDecide_no_bet_off_river` (Explain.lean, line 100). With no bet to face before the river,
@@ -73,8 +79,13 @@ each statement. Seven are in `engine/Engine/Proofs/OneSlider.lean`, three in
   explorer shows a call or raise at Risk r, it shows one at every higher Risk up to 100. The
   "up to 100" is a hypothesis because past 100 the explorer has no entry.
 
-None of the ten says the bot plays well. They say what the map does, what the bot does at one
-decision, and that the explorer shows the real bot.
+Together, `more_risk_never_folds_a_call` (facing a bet), `more_risk_never_checks_a_bet` (the
+river with no bet to face) and `botDecide_no_bet_off_river` (no bet to face before the river)
+cover every place the slider acts: more Risk never makes the bot fold a call or check a bet,
+and before the river with nothing to face, Risk plays no part.
+
+None of the eleven says the bot plays well. They say what the map does, what the bot does at
+one decision, and that the explorer shows the real bot.
 
 ## 2. The formulas, where they live, and what supports them
 
@@ -171,7 +182,7 @@ bot calls or raises at some caution it does so at every lower caution), `callPay
 `bot_calls_only_when_worth_it`, `bot_folds_only_when_not_worth_it`, `no_loss_always_taken`.
 These compare one decision at a time; they say nothing about whole games. For the user's slider
 the direction flips: more Risk never folds a call the bot would have called at less Risk. That
-is `more_risk_never_folds_a_call` (section 1.1).
+is `more_risk_never_folds_a_call`, and on the river `more_risk_never_checks_a_bet` (section 1.1).
 
 ### 2.5 Exact equity
 
@@ -308,7 +319,7 @@ The README's "What we trust" section is the list of record. The items that bear 
 | One slider to two numbers | `Sliders.ofRisk` | `engine/Engine/Slider.lean` 39 | `ofRisk_bluff_le_60`, `ofRisk_bluff_monotone`, `ofRisk_caution_antitone`, `ideal_is_textbook` |
 | Loss weight 1 + caution/50 | `callPays` | `engine/Engine/Slider.lean` 98 | `callPays_iff_takes`, `risk_monotone`, `more_risk_takes_fewer_gambles`, `more_risk_never_folds_a_call` |
 | Pot-sized river bet | `View.potBetTarget`, `riverBetOrCheck` | `engine/Engine/Slider.lean` 165, 178 | none about the size: `bot_bets_its_set` says which hands bet; the pot sizing (`clampTo v.potBetTarget`) is code with no theorem |
-| The bot's move | `decideView`, `botDecide` | `engine/Engine/Slider.lean` 195, 230 | `botDecide_legal`, `botDecide_risk_monotone`, `botDecide_action_shown`, `botDecide_no_bet_off_river` |
+| The bot's move | `decideView`, `botDecide` | `engine/Engine/Slider.lean` 195, 230 | `botDecide_legal`, `botDecide_risk_monotone`, `botDecide_action_shown`, `botDecide_no_bet_off_river`, `more_risk_never_folds_a_call`, `more_risk_never_checks_a_bet` |
 | Value hands (30%) and bluff count | `valuePct`, `valueCount`, `bluffCount`, `riverBettingSet` | `engine/Engine/River.lean` 22, 70, 75, 81 | `bluff_frequency`, `value_and_bluffs_apart`, `value_strongest`, `bluffs_weakest`, `ideal_river_set` |
 | Exact counts | `riverCounts`, `turnCounts`, `countsFor` | `engine/Engine/Equity.lean` 79, 112, 175 | `enumeration_exact`, `countsFor_river`, `countsFor_turn` |
 | Review's model of the bot's hands | `riverSpotOf`, `RiverSpot.cost`, `RiverSpot.prize`, `RiverSpot.botHands` | `engine/Engine/Review.lean` 96, 103, 107, 119 | `no_hindsight`, `bot_hand_in_review`, `botHands_ne_nil_of_board` |
