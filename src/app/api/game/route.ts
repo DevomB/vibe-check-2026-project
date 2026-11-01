@@ -1,10 +1,11 @@
+import { randomBytes } from "node:crypto";
 import { LeanProcess } from "@/lean/process";
 import type { LeanCommand } from "@/lean/protocol";
 
 /**
- * The bridge between the browser and the Lean game program. Each POST carries one command;
- * it is passed to the program and its reply is returned unchanged. One game program runs
- * per server, so there is one game at a time (a local, single-player app).
+ * The bridge between the browser and the Lean game program. Lean decides the game state;
+ * this endpoint supplies private random seeds and reveals them only after game over.
+ * One game program runs per server: a local, single-player app.
  */
 
 export const runtime = "nodejs";
@@ -32,8 +33,10 @@ function parseCommand(body: unknown): LeanCommand | null {
   const b = body as Record<string, unknown>;
   switch (b.cmd) {
     case "new_game":
-      if (typeof b.seed !== "string" || !/^\d{1,20}$/.test(b.seed) || !isCount(b.risk) || !isCount(b.bluff_pct)) return null;
-      return { cmd: "new_game", seed: b.seed, risk: b.risk, bluff_pct: b.bluff_pct };
+      if (!isCount(b.risk) || !isCount(b.bluff_pct)) return null;
+      const seed = b.seed === undefined || b.seed === "" ? randomBytes(8).readBigUInt64LE().toString() : b.seed;
+      if (typeof seed !== "string" || !/^\d{1,20}$/.test(seed)) return null;
+      return { cmd: "new_game", seed, risk: b.risk, bluff_pct: b.bluff_pct };
     case "act":
       if (b.action === "fold" || b.action === "check" || b.action === "call") return { cmd: "act", action: b.action };
       if ((b.action === "bet" || b.action === "raise") && isCount(b.amount)) return { cmd: "act", action: b.action, amount: b.amount };
@@ -64,6 +67,8 @@ export async function POST(request: Request): Promise<Response> {
     if (lost && command.cmd !== "new_game" && "error" in reply) {
       return Response.json({ error: "The game engine stopped and this game was lost. Please start a new game.", state: null });
     }
+    // One seed determines future hands too, so a hand ending must not reveal it.
+    if (reply.state && reply.state.status !== "gameOver") reply.state.seed = null;
     return Response.json(reply);
   } catch (e) {
     return Response.json({ error: e instanceof Error ? e.message : String(e), state: null }, { status: 500 });
