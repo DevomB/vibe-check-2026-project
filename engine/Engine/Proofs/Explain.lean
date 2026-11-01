@@ -245,6 +245,18 @@ example : (((exploreHandAt 50 [exRecord])[0]?.bind fun e => e.moves[100]?).getD 
     (by decide)
     (by rw [exploreHandAt_moves 50 [exRecord] 0 26 (by decide) (by decide), Option.getD_some]; decide)
 
+/-- Chips with nothing to call: 100 in the pot, 450 behind each, the bot to act. -/
+def exNoBetState : State :=
+  { stack := fun _ => 450, pot := 100, bet := fun _ => 0, lastRaise := 10, toAct := 1 }
+
+/-- `botDecide_no_bet_off_river` with every hypothesis met: before the flop with nothing to
+call, the rock (Risk 0) and the maniac (Risk 100) make the same move with queen-jack. On the
+river they would not (the queen-jack guards in `Engine/Proofs/OneSliderRiver.lean`), which is
+why the statement leaves the river out. -/
+example : (botDecide (Sliders.ofRisk 0) 1 [card 12 .clubs, card 11 .diamonds] [] exNoBetState).action =
+    (botDecide (Sliders.ofRisk 100) 1 [card 12 .clubs, card 11 .diamonds] [] exNoBetState).action :=
+  botDecide_no_bet_off_river _ _ 1 _ [] exNoBetState (by decide) (by decide)
+
 /-- `exploreHand_moves` still applies to the caution sweep at the old settings. -/
 example : ((exploreHand ⟨50, 33⟩ [exRecord])[0]?.bind fun e => e.moves[50]?) =
     some (botDecide ⟨50, 33⟩ exRecord.seed exRecord.hole exRecord.board exRecord.state).action :=

@@ -12,7 +12,7 @@ slider, Risk, sets both internal settings; Risk 50 is the textbook setting).
 | 073e2e5 | `tasks/reports/sunday-1-lane2-contract.md`: every web, test and demo-record file the protocol touches, per file with lines (written by the second helper session) |
 | 003427c, cae2e15 | Merges of `sunday/review-fixes` (2fa13e1, c35f3fc): the helper's docstrings, `review_sound` comment fix, and `value_strongest`, `bluffs_weakest`, `botHands_ne_nil_of_board` registered |
 | a67afdf, 64b2e3d | Docstrings: the two `exploreHand` theorems are about the caution sweep; about thirty docstrings that said "Risk" for the internal number now say caution; `botDecide_no_bet_off_river` added and registered |
-| 11f50a0, 299d87d | THEORY.md with line references and the theorem list; README, SPEC.md and MVP.txt say one Risk slider with higher = more risk-seeking (asked for by Aarav, written by the helper session) |
+| 11f50a0, 299d87d, c846e9a | THEORY.md with line references and the theorem list; README, SPEC.md and MVP.txt say one Risk slider with higher = more risk-seeking (asked for by Aarav, written by the helper session) |
 | e3c6691, 71ee280 | `Engine/Proofs/OneSliderRiver.lean`: `more_bluff_never_checks_a_bet` and `more_risk_never_checks_a_bet`, the river half of the slider's direction, registered (61 names). The second commit replaces a 60-step `decide` and a no-card-twice hypothesis with the general arithmetic lemma `bluffCount_mono` (written by the second helper session) and a real rejected-output example |
 
 ## Checks on the branch head, 71ee280 (WSL2, Linux x64, Lean v4.35.0)
@@ -61,7 +61,8 @@ Risk, so the two old theorems keep their statements and the app has no dead code
 own. JSON changes: `risk` is the player's Risk; `continuesUpTo` is replaced by `continuesFrom`
 (the lowest Risk at which the bot calls, raises or bets, or null); `effect` is one of `noBet`,
 `raises`, `callsAlways`, `foldsAlways`, `callsFrom`, `betsAlways`, `checksAlways`, `bluffsFrom`,
-`varies` (`callsUpTo` still exists for the caution sweep but the app never produces it);
+`varies` (`callsUpTo` still exists for the caution sweep; the app never produces it, by
+`exploreHandAt_more_risk_continues`);
 summaries flip direction, for example "Folds at Risk 0-7, calls at 8-100." and "Checks at Risk
 0-40, bluffs at 41-100: more Risk, more bluffs."
 
@@ -81,8 +82,10 @@ fine on v4.35, and the kind of proof CLAUDE.md says to re-check after a toolchai
 ### The Risk quoted in a reason never changes the move
 
 Plain words: `botDecide` with any Risk number to quote makes the same move as `botDecide`
-without one. So the theorems about `botDecide` (legal moves, Risk-monotone, bets its set) are
-about the move the app's session makes.
+without one. The link to the app's session is `Session.botChoice_accepted`
+(`Engine/Proofs/Session.lean`), which rewrites with this theorem; it is proved but not itself a
+Comparator statement. The registered chain is `bot_move_accepted`, `handle_keeps_reachable`,
+`app_game_reachable`.
 
 ```lean
 theorem botDecide_action_shown (sl : Sliders) (seed : Nat) (hole board : List Card) (s : State)
@@ -209,16 +212,28 @@ The old `exploreHand_moves` and `exploreHand_risk_monotone` keep their statement
 - `more_risk_never_folds_a_call` on `exStart` with nine-two offsuit: the call at Risk 26 gives
   the call at Risk 100 (`OneSlider.lean`).
 - `exploreHandAt_moves` and `exploreHandAt_more_risk_continues` on `exRecord` (`Proofs/Explain.lean`).
+- `ideal_river_set` on the A K 2 5 7 board (`OneSliderRiver.lean`), and
+  `botDecide_no_bet_off_river` before the flop with the rock and the maniac
+  (`Proofs/Explain.lean`).
 - Rejected: a mapping `badMap r = ⟨r, 100 - r⟩` fails all three mapping statements; an explorer
-  that showed the Risk-50 fold at every Risk is wrong at Risk 100, where the bot calls.
+  that showed the Risk-50 fold at every Risk is wrong at Risk 100, where the bot calls; a bet
+  with queen-jack at Risk 50 together with a check at Risk 100 is impossible.
+- Limit: for the two river theorems the premise (the bot bets at the lower setting) is shown
+  by `#guard` in the interpreter, since a river decision ranks 1,081 hands and `decide` in the
+  kernel would be too slow; the example takes it as a hypothesis and discharges every other
+  one by `decide`. `more_bluff_never_checks_a_bet` is exercised through the `ofRisk` example;
+  `bluffCount_mono` and `mem_bettingSet_mono` are lemmas, not registered.
 
 ## Trusted surface added
 
 New definitions a reviewer must read: `Sliders.ofRisk` (`Slider.lean`), `View.shownRisk` and
 the optional parameter on `viewOf`, `decideWithCounts`, `botDecide`; `Session.risk`;
 `exploreHandAt`, `exploreHandWith`, `exploreMoveWith`, `movesBySetting`, `riverMoveRanked`,
-`bettingSetRanked`, `riverRoleRanked` (`Explain.lean`). Everything else in the statements
-already existed. Existing theorem statements in `Checks/Challenge.lean` are unchanged in text;
+`bettingSetRanked`, `riverRoleRanked` (`Explain.lean`). The two explorer statements read only
+`.moves`, but `exploreHandAt`'s body also computes `effect`, `continuesFrom` and `riskMatters`,
+so `riskEffect`, `RiskEffect`, `continuesFrom`, `continuesUpTo`, `Action.same`, `streetOfBoard`,
+`countsTable`, `countsIn` and `BotMoveRecord.countsKey` are in the transitive surface
+(`#spec_surface` would list them). Everything else in the statements already existed. Existing theorem statements in `Checks/Challenge.lean` are unchanged in text;
 their meaning changes only where `botDecide`, `viewOf`, `Command` and `Session` changed as
 described above, and `Session.botChoice` is covered by `botDecide_action_shown`.
 
@@ -234,7 +249,7 @@ described above, and `Session.botChoice` is covered by `botDecide_action_shown`.
   between sources; noted). The symbol-level Avellaneda-Stoikov formulas are marked UNVERIFIED
   in the notes (Greek letters lost in extraction; taken from a vendor write-up). Chen and
   Ankenman is not cited: A03 never opened it. Minimum defence frequency confirmed absent from
-  `engine/`. THEORY.md's line references are pinned to 64b2e3d and re-checked by the helper.
+  `engine/`. THEORY.md's line references are pinned to 64b2e3d and re-checked against 71ee280.
 
 - **Presets** (step 6): the brief's ladder stands (Mia 50, Dex 40, Rook 25, Ivy 0, Vex 100);
   `docs/THEORY.md` section 5 gives the reasons from the sources. One wording point: above Risk
