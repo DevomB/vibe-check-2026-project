@@ -111,7 +111,7 @@ export function Lobby({
           value={risk}
           max={RISK_MAX}
           shown={String(risk)}
-          help="How much the bot hates to lose chips. At 0 it calls any bet that pays off on average; at 100 it needs a much stronger hand to call."
+          help="How much the bot hates losing chips: at 0 it calls whenever calling pays off on average, and at 100 it needs a much stronger hand to call."
           onChange={setRisk}
         />
         <BotSlider
@@ -119,7 +119,7 @@ export function Lobby({
           value={bluffPct}
           max={BLUFF_PCT_MAX}
           shown={`${bluffPct}%`}
-          help="How many of the bot's river bets are bluffs with weak hands. At 0% it never bluffs on the river; at 60% it bluffs often."
+          help="How many of the bot's river bets are bluffs with weak hands, from 0% (never) to 60% (often)."
           onChange={setBluffPct}
         />
 

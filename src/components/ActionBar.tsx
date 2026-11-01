@@ -5,7 +5,7 @@ import { chips } from "@/lib/format";
 interface Props {
   hand: HandState;
   legal: LegalActions | null;
-  /** Shown while it is not the human's turn, e.g. "Dex is thinking…". */
+  /** Shown while it is not the human's turn, e.g. "Bot is thinking…". */
   waiting: string | null;
   /** The bot's latest move, in generic words ("Bot bets 60"). */
   botMessage?: string | null;
