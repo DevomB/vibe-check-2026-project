@@ -178,14 +178,15 @@ describe.skipIf(skipLean)("Lean game program", () => {
         if (s.result!.showdown) expect(s.players[1].cards).toEqual(ts.players[1]!.hole);
         expect(s.botReasons).toHaveLength(botMoves);
 
-        // The review changes nothing, and grades only river calls and folds.
+        // The review changes nothing, and grades only calls and folds. The proved river-set
+        // grade is only ever on the river.
         const { state: after, review } = await call({ cmd: "review", hand: s.hand });
         expect({ ...after, events: [] }).toEqual({ ...s, events: [] });
         expect(review?.hand).toBe(s.hand);
         for (const d of review!.decisions) {
           if (d.label === null) continue;
           expect(LABELS).toContain(d.label);
-          expect(d.street).toBe("river");
+          if (d.model === "river-set") expect(d.street).toBe("river");
           expect(["call", "fold"]).toContain(d.your_action);
           expect(d.worth_bb!.fold).toBe(0);
           expect(d.equity_had!).toBeGreaterThanOrEqual(0);

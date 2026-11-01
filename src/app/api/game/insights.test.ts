@@ -50,7 +50,7 @@ describe.skipIf(skipLean)("the review's range viewer and Risk explorer", () => {
   it("gives the range viewer's numbers on a graded river decision, and they add up", { timeout: 30_000 }, async () => {
     const { state, review } = await playSeed7();
     expect(state.status).not.toBe("playing");
-    const graded = review.decisions.filter((d) => d.label !== null);
+    const graded = review.decisions.filter((d) => d.model === "river-set");
     expect(graded).toHaveLength(1);
     const d = graded[0]!;
     expect(d.street).toBe("river");
