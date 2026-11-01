@@ -1,0 +1,241 @@
+/* Styles for the Proofs drawer, the practice challenges and the Mystery opponent. Kept apart
+   from globals.css so these features can merge without touching the shared stylesheet. */
+
+/* ---------- Proofs drawer ---------- */
+.drawerBackdrop {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: flex-end;
+  background: rgba(3, 6, 9, 0.6);
+  z-index: 60; /* above the review modal (50), which can open the drawer */
+}
+
+.drawer {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(520px, 100%);
+  height: 100%;
+  padding: 24px 20px 0;
+  background: var(--panel);
+  border-left: 1px solid var(--line-strong);
+  box-shadow: var(--shadow);
+}
+
+.drawer h2 {
+  margin: 0 40px 6px 0;
+  font-size: 22px;
+}
+
+.drawerIntro {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.drawerBody {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 24px;
+}
+
+.guarantee {
+  margin-bottom: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+}
+
+.guarantee.isFocus {
+  border-color: var(--gold);
+}
+
+.guarantee h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  color: var(--text);
+}
+
+.guarantee h4 {
+  margin: 12px 0 4px;
+  font-size: 13px;
+  color: var(--gold);
+}
+
+.guarantee ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.guarantee li {
+  margin-bottom: 4px;
+  color: #c9d2dc;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.code {
+  display: inline-block;
+  min-width: 30px;
+  margin-right: 4px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--panel-2);
+  border: 1px solid var(--line-strong);
+  color: var(--gold);
+  font-size: 12px;
+  text-align: center;
+}
+
+.theorems {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+}
+
+.theorems code {
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: var(--panel-2);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Practice challenges ---------- */
+.challenges {
+  display: grid;
+  gap: 8px;
+}
+
+.challenge {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.challenge:hover {
+  border-color: var(--line-strong);
+}
+
+.challengeTitle {
+  font-weight: 700;
+}
+
+.challengeAbout {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* The prompt or verdict line for a practice hand, under the table. */
+.practiceBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 14px;
+  margin: 12px auto 0;
+  max-width: 640px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--panel-2);
+  border: 1px solid var(--gold-deep);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.practiceBar b {
+  color: var(--gold);
+}
+
+/* While the review is open, the verdict floats above it (the review modal is at 50) at the
+   bottom of the screen, so it stays readable. */
+.practiceFloat {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  width: min(620px, calc(100% - 32px));
+  margin: 0;
+  box-shadow: var(--shadow);
+  z-index: 55;
+}
+
+.loading {
+  margin: 12px auto 0;
+  max-width: 640px;
+  color: var(--muted);
+  font-size: 14px;
+  text-align: center;
+}
+
+/* ---------- Mystery opponent ---------- */
+.mysteryNote {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--bg-2);
+  border: 1px dashed var(--line-strong);
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.toggle input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--gold);
+}
+
+.guess {
+  max-width: 480px;
+}
+
+.guessSliders {
+  display: grid;
+  gap: 14px;
+  margin: 12px 0 18px;
+}
+
+.revealTable {
+  width: 100%;
+  margin: 8px 0 16px;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.revealTable th,
+.revealTable td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+
+.revealTable th {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.verdict {
+  margin: 0 0 14px;
+  color: var(--gold);
+  font-weight: 700;
+}

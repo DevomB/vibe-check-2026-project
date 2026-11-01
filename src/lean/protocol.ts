@@ -208,3 +208,52 @@ export interface LeanReview {
   /** Every bot move in the hand, in order. Null while the hand is still being played. */
   risk_explorer?: LeanRiskExplorerEntry[] | null;
 }
+/*
+ * Mystery opponent (MVP §10, S9): route-level messages. Lean never sees these: the route picks
+ * the hidden settings, keeps them, and answers the reveal itself.
+ */
+
+/**
+ * Start a Mystery game. The route picks Risk (0-100), Bluff (0-60) and a private seed at
+ * random, and keeps them secret until the reveal. It must not carry a seed or sliders.
+ */
+export interface MysteryNewGame {
+  cmd: "new_game";
+  mystery: true;
+  peek?: boolean;
+}
+
+/** The player's one guess at the Mystery bot's settings. Allowed after 3 finished hands, or at game over. */
+export interface RevealCommand {
+  cmd: "reveal";
+  risk: number;
+  bluff_pct: number;
+  peek?: boolean;
+}
+
+/** Everything the browser may send to `/api/game`. */
+export type ApiCommand = LeanCommand | MysteryNewGame | RevealCommand;
+
+/** The reveal: the real settings, the guess, and how far off each guess was. */
+export interface MysteryReveal {
+  risk: number;
+  bluff_pct: number;
+  guess: { risk: number; bluff_pct: number };
+  /** How far each guess was from the real setting (never negative). */
+  off: { risk: number; bluff_pct: number };
+}
+
+/**
+ * A state as `/api/game` sends it. Until a Mystery game is revealed, the route removes
+ * `sliders` and `botReasons`, and `seed` stays null even at game over.
+ */
+export type RouteState = Omit<LeanState, "sliders" | "botReasons"> & Partial<Pick<LeanState, "sliders" | "botReasons">>;
+
+/**
+ * A reply from `/api/game`, Mystery games included. Before the reveal, a review request gets
+ * `reviewDeferred: true` and no `review`: its grades, equities and reasons would give away the
+ * hidden Bluff setting. A reveal gets `reveal`.
+ */
+export type RouteReply =
+  | { ok: true; state: RouteState; review?: LeanReview; reviewDeferred?: true; reveal?: MysteryReveal }
+  | { error: string; state: RouteState | null; lost?: true };

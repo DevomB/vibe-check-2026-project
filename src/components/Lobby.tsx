@@ -1,8 +1,11 @@
 import { type CSSProperties, useState } from "react";
+import { ChallengePicker } from "./ChallengePicker";
 import { PlayingCard } from "./PlayingCard";
 import { type GameSettings, TABLE } from "@/hooks/useGame";
 import { BLUFF_PCT_MAX, RISK_MAX } from "@/lean/protocol";
+import type { Challenge } from "@/lib/challenges";
 import { CUSTOM_BOT, OPPONENTS, presetFor } from "@/lib/roster";
+import styles from "./modes.module.css";
 
 interface SliderProps {
   label: string;
@@ -15,7 +18,7 @@ interface SliderProps {
   onChange: (v: number) => void;
 }
 
-function BotSlider({ label, value, max, shown, help, onChange }: SliderProps) {
+export function BotSlider({ label, value, max, shown, help, onChange }: SliderProps) {
   return (
     <div className="bot-slider">
       <div className="bot-slider-head">
@@ -38,14 +41,17 @@ function BotSlider({ label, value, max, shown, help, onChange }: SliderProps) {
 }
 
 /** Start screen: pick a named opponent or set the bot's Risk and Bluff sliders yourself, and
- * optionally a seed to replay a game. */
+ * optionally a seed to replay a game. Or play a Mystery opponent, or load a practice challenge. */
 export function Lobby({
   initial,
   onStart,
+  onPractice,
   onRules,
 }: {
   initial?: GameSettings;
   onStart: (s: GameSettings) => void;
+  /** Load a rehearsed hand at its river decision, at the chosen game speed. */
+  onPractice: (c: Challenge, fast: boolean) => void;
   onRules: () => void;
 }) {
   const [risk, setRisk] = useState(initial?.risk ?? 50);
@@ -57,11 +63,13 @@ export function Lobby({
     setBluffPct(bluffPct);
   };
   const [fast, setFast] = useState(initial?.fast ?? false);
+  /** Mystery opponent: the server picks the sliders and the seed, so neither is shown here. */
+  const [mystery, setMystery] = useState(initial?.mystery ?? false);
 
-  const seedValid = /^\d{0,20}$/.test(seedText.trim());
+  const seedValid = mystery || /^\d{0,20}$/.test(seedText.trim());
   const start = () => {
     const trimmed = seedText.trim();
-    onStart({ risk, bluffPct, seed: trimmed ? BigInt(trimmed) : null, fast });
+    onStart({ risk, bluffPct, seed: !mystery && trimmed ? BigInt(trimmed) : null, fast, mystery });
   };
 
   return (
@@ -78,50 +86,63 @@ export function Lobby({
       </div>
 
       <div className="lobby-card">
-        <div className="field-label">Your opponent</div>
-        <div className="opponent-list" role="radiogroup" aria-label="Opponent">
-          {OPPONENTS.map((o) => (
-            <button
-              key={o.name}
-              type="button"
-              role="radio"
-              aria-checked={preset === o}
-              className={`opponent ${preset === o ? "on" : ""}`}
-              onClick={() => pick(o.risk, o.bluffPct)}
-            >
-              <span className="avatar avatar-sm" style={{ "--avatar": o.color } as CSSProperties}>
-                {o.name[0]}
-              </span>
-              <span className="opponent-name">{o.name}</span>
-              <span className="opponent-style">{o.style}</span>
-            </button>
-          ))}
-          <div className={`opponent ${preset ? "" : "on"}`} role="radio" aria-checked={!preset} aria-disabled>
-            <span className="avatar avatar-sm" style={{ "--avatar": CUSTOM_BOT.color } as CSSProperties}>
-              ?
-            </span>
-            <span className="opponent-name">Custom</span>
-            <span className="opponent-style">Move a slider to build your own</span>
-          </div>
-        </div>
+        <label className={styles.toggle}>
+          <input type="checkbox" checked={mystery} onChange={(e) => setMystery(e.target.checked)} />
+          <span className="field-label">Mystery opponent</span>
+        </label>
+        {mystery ? (
+          <p className={styles.mysteryNote}>
+            The server picks the bot's Risk and Bluff at random and keeps them secret. Play at least 3 hands, then guess them. The
+            reveal shows how close you were. Reviews open after your guess.
+          </p>
+        ) : (
+          <>
+            <div className="field-label">Your opponent</div>
+            <div className="opponent-list" role="radiogroup" aria-label="Opponent">
+              {OPPONENTS.map((o) => (
+                <button
+                  key={o.name}
+                  type="button"
+                  role="radio"
+                  aria-checked={preset === o}
+                  className={`opponent ${preset === o ? "on" : ""}`}
+                  onClick={() => pick(o.risk, o.bluffPct)}
+                >
+                  <span className="avatar avatar-sm" style={{ "--avatar": o.color } as CSSProperties}>
+                    {o.name[0]}
+                  </span>
+                  <span className="opponent-name">{o.name}</span>
+                  <span className="opponent-style">{o.style}</span>
+                </button>
+              ))}
+              <div className={`opponent ${preset ? "" : "on"}`} role="radio" aria-checked={!preset} aria-disabled>
+                <span className="avatar avatar-sm" style={{ "--avatar": CUSTOM_BOT.color } as CSSProperties}>
+                  ?
+                </span>
+                <span className="opponent-name">Custom</span>
+                <span className="opponent-style">Move a slider to build your own</span>
+              </div>
+            </div>
 
-        <div className="field-label">Set up the bot</div>
-        <BotSlider
-          label="Risk"
-          value={risk}
-          max={RISK_MAX}
-          shown={String(risk)}
-          help="How much the bot hates losing chips: at 0 it calls whenever calling pays off on average, and at 100 it needs a much stronger hand to call."
-          onChange={setRisk}
-        />
-        <BotSlider
-          label="Bluff"
-          value={bluffPct}
-          max={BLUFF_PCT_MAX}
-          shown={`${bluffPct}%`}
-          help="Target bluff share in the bot's river betting range, from 0% to 60%. The share in played hands can differ."
-          onChange={setBluffPct}
-        />
+            <div className="field-label">Set up the bot</div>
+            <BotSlider
+              label="Risk"
+              value={risk}
+              max={RISK_MAX}
+              shown={String(risk)}
+              help="How much the bot hates losing chips: at 0 it calls whenever calling pays off on average, and at 100 it needs a much stronger hand to call."
+              onChange={setRisk}
+            />
+            <BotSlider
+              label="Bluff"
+              value={bluffPct}
+              max={BLUFF_PCT_MAX}
+              shown={`${bluffPct}%`}
+              help="Target bluff share in the bot's river betting range, from 0% to 60%. The share in played hands can differ."
+              onChange={setBluffPct}
+            />
+          </>
+        )}
 
         <div className="field">
           <span className="field-label">Game speed</span>
@@ -135,24 +156,29 @@ export function Lobby({
           </div>
         </div>
 
-        <label className="field">
-          <span className="field-label">
-            Seed <span className="muted">(optional, to replay a game)</span>
-          </span>
-          <input
-            className={`seed-input ${seedValid ? "" : "is-invalid"}`}
-            inputMode="numeric"
-            placeholder="random"
-            value={seedText}
-            onChange={(e) => setSeedText(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && seedValid && start()}
-            aria-invalid={!seedValid}
-          />
-        </label>
+        {!mystery && (
+          <label className="field">
+            <span className="field-label">
+              Seed <span className="muted">(optional, to replay a game)</span>
+            </span>
+            <input
+              className={`seed-input ${seedValid ? "" : "is-invalid"}`}
+              inputMode="numeric"
+              placeholder="random"
+              value={seedText}
+              onChange={(e) => setSeedText(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && seedValid && start()}
+              aria-invalid={!seedValid}
+            />
+          </label>
+        )}
 
         <button className="btn btn-primary btn-big" onClick={start} disabled={!seedValid}>
           Start
         </button>
+        <div className="field-label">Practice</div>
+        <ChallengePicker onPick={(c) => onPractice(c, fast)} />
+
         <button className="btn btn-link" onClick={onRules}>
           New to poker? Read the rules
         </button>
