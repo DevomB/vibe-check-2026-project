@@ -16,8 +16,10 @@ The review never sees the bot's real cards: `RiverSpot` has no field for them.
 Every amount is an exact fraction. The bridge turns them into decimals, for display only.
 Calling is compared with folding in plain chips, not with the bot's Risk weighting.
 
-Ported from the TypeScript reference `src/review/review.ts`. The theorems about it (T5
-`review_sound`, T8 `no_hindsight`) are in `Engine/Proofs/Review.lean`.
+Ported from the TypeScript reference `src/review/review.ts`. The theorems about it are in
+`Engine/Proofs/Review.lean`: T5 (`review_worth`, `review_lost`, `review_best_iff`,
+`review_label_monotone`, `review_call_best_iff_equity`) and T8 (`no_hindsight`,
+`bot_hand_in_review`).
 -/
 
 /-- An exact fraction `num / den`, with `den` above 0. It becomes a decimal only for display. -/
