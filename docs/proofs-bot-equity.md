@@ -31,7 +31,8 @@ Each theorem is checked by Lean. `#print axioms` shows only Lean's standard axio
 | `botDecide_legal` (T3, bot half) | Whenever the player to act may act at all, the bot's move is legal. This holds for every slider setting, seed, set of cards and board. | `Engine/Proofs/BotLegal.lean` |
 | `botDecide_risk_monotone` (T4) | Take one spot. If the bot calls or raises at some Risk, it also calls or raises at every lower Risk. So more Risk can turn a call into a fold, but never a fold into a call. | `Engine/Proofs/BotRisk.lean` |
 | `risk_monotone` (T4, for given counts) | The same, for any win/tie/loss counts. | `Engine/Proofs/BotRisk.lean` |
-| `enumeration_exact` (T6) | *In progress (session 46).* The river count visits every possible opponent hand exactly once (990 hands), and the turn count visits every river card and opponent hand pair exactly once. | `Engine/Proofs/EquityExact.lean` |
+| `enumeration_exact` (T6) | The exact river and turn counts look at every possible outcome exactly once, and score each one with the spec's `showdown`. On the river, that is every hand the opponent can hold (990 of them). On the turn, it is every (river card, opponent hand) pair. | `Engine/Proofs/EquityExact.lean` |
+| `bot_calls_only_when_worth_it`, `bot_folds_only_when_not_worth_it` | The bot calls only when the call is worth it at its Risk, and folds only when it is not. "Worth it" means that a lost chip counts (1 + Risk/50) times as much as a won chip (MVP §3; `RiskSpec.lean`). | `Engine/Proofs/RiskUtility.lean` |
 
 The two properties are written out on their own in `Engine/Proofs/BotSpec.lean`
 (`AlwaysLegal`, `RiskMonotone`). That file also shows that each property rejects a bad bot:
