@@ -244,6 +244,11 @@ example : fullDeck.length = 52 := by decide
 example (deck : List Card) (h : deck.Perm fullDeck) :
     ∃ picks, ValidPicks 52 picks ∧ pickWith picks fullDeck = deck :=
   every_order_possible fullDeck deck h
+-- The deck the real shuffle deals from seed 42 is one such order, so exactly one of the 52!
+-- pick lists makes it. The kernel checks this from the statements alone; nothing is computed.
+example : ((allValidPicks fullDeck.length).filter
+      fun picks => pickWith picks fullDeck == shuffle 42 fullDeck).length = 1 :=
+  each_order_once fullDeck (shuffle 42 fullDeck) fullDeck_nodup (shuffle_same_cards 42 fullDeck)
 
 -- Compiled checks on the real shuffle: it is the picking method with the generator's numbers,
 -- and seeds 2^64 apart give the same deck.

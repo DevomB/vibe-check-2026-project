@@ -64,7 +64,7 @@ export const GUARANTEES: readonly Guarantee[] = [
       "While a hand is played, the board has as many cards as the betting round says: none before the flop, 3 on the flop, 4 on the turn and 5 on the river.",
       "A hand only goes to a showdown with all 5 board cards.",
       "The shuffle picks the next card from the cards that are left, at a place given by a number from a seeded generator. With n different cards there are n! lists of picks, and each order of the deck comes from exactly one of them. So if the picks are fair, every order of the deck has the same chance: 1 in n!.",
-      "The shuffle reads only 64 bits of its seed, and 2^64 is less than 52!. So most of the 52! orders of a deck can never come out.",
+      "The shuffle reads only 64 bits of its seed, and 2^64 is less than 52!. Together, those two facts mean most of the 52! orders of a deck can never come out.",
     ],
     theorems: [
       "shuffle_same_cards",

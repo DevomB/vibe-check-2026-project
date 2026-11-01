@@ -96,7 +96,7 @@ the definitions a reader must still read. Most important first.
    bet in three is a bluff and you call half the time (`river_equilibrium_iff`). Risk 50 is
    two bluffs short of that (item 7), so the real bot is near this equilibrium, not on it.
 
-9. **The shuffle method is fair (randomness, part 1).** The real shuffle picks each next card
+9. **The shuffle method is fair if its picks are (randomness, part 1).** The real shuffle picks each next card
    from the cards that are left, using a number from a seeded generator
    (`shuffle_eq_pickWith`), and only ever makes an order of the same cards (`pickWith_perm`).
    With `n` different cards there are exactly `n!` valid pick lists (`allValidPicks_length`,
@@ -105,8 +105,9 @@ the definitions a reader must still read. Most important first.
    (`picks_one_to_one`). So each order comes from exactly one of the `n!` pick lists
    (`each_order_once`): if the picks are fair, every order of the deck has the same chance,
    1 in `n!`. The proof also shows a limit: the shuffle reads only 64 bits of its seed
-   (`shuffle_uses_64_bits`) and 2^64 is less than 52! (`fewer_seeds_than_orders`), so most of
-   the 52! deck orders can never come out.
+   (`shuffle_uses_64_bits`) and 2^64 is less than 52! (`fewer_seeds_than_orders`); put
+   together, most of the 52! deck orders can never come out (a consequence of the two, not a
+   separate theorem).
 
 ## Not proved, most important first
 

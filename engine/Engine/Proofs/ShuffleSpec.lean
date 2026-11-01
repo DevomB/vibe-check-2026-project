@@ -12,7 +12,9 @@ What can be proved, and what cannot:
 - **The method is fair.** With `n` cards there are `n!` lists of valid picks, and each order of
   the deck comes from exactly one of them. So if each valid pick list is equally likely, each
   order of the deck is equally likely: a chance of exactly 1 in `n!`.
-- **The real shuffle is this method**, fed by the generator's numbers (`seedPicks`).
+- **The real shuffle is this method**, fed by the generator's numbers (`seedPicks`), each
+  reduced modulo the cards left, so that they form a valid pick list. "If each valid pick list
+  is equally likely" is about those reduced numbers.
 - **Whether the generator's numbers are random is not proved.** They come from a fixed rule
   (SplitMix64), on purpose, so a game can be replayed from its seed. That is trusted.
 - **The generator has 2^64 states**, far fewer than the 52! orders of a deck. So most orders

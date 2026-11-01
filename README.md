@@ -36,10 +36,11 @@ npm start
 To check the proofs yourself: `checks/audit.sh` builds the engine and fails on any `sorry`
 or extra axiom. `lake comparator` and `lake check` (from `engine/`) need Linux.
 
-**Evidence.** Commit `575954d` on `main` passed every CI check: the proof audit, Comparator,
-`lake check`, and a fresh Linux clone that runs `make install`, `make run`, 350 tests and an
+**Evidence.** Commit `2c1ccac` on `main` passed every CI check: the proof audit, Comparator,
+`lake check`, and a fresh Linux clone that runs `make install`, `make run`, 466 tests and an
 HTTP smoke test
-([run 41343366226](https://github.com/DevomB/vibe-check-2026-project/actions/runs/41343366226)).
+([run 41358927590](https://github.com/DevomB/vibe-check-2026-project/actions/runs/41358927590)).
+It carries 90 Comparator theorems, including the one-street river model.
 Other documents link here rather than repeat this line. CI skips commits that change only
 docs, so the final commit gets a run started by hand, and this line moves to it.
 
@@ -55,7 +56,7 @@ proof proves exactly that statement, with only the three standard axioms.
 | --- | --- | --- |
 | T1 | In every game the engine can reach, there are exactly 1,000 chips. Moves and new deals never create or destroy chips. | `step_keeps_chips`, `startHand_keeps_chips`, `chips_always_1000` |
 | T1b | At a showdown the better hand wins the pot and ends with more chips, the other with fewer; a tie leaves both as they were; a fold pays the player who did not fold. Every hand of a reachable game is a real deal to two players with chips. | `showdown_pays_better_hand`, `fold_pays_other_player`, `fold_records_other_player`, `game_hand_from_deal` |
-| T2 | The shuffle keeps exactly the 52 cards. In every reachable game, no card is dealt twice. | `shuffle_same_cards`, `shuffle_fair`, `no_card_dealt_twice` |
+| T2 | The shuffle keeps exactly the 52 cards. In every reachable game, no card is dealt twice. The shuffle method is fair if its picks are: it picks each next card from the cards left, at a place given by the generator's number reduced modulo the cards left; with n different cards there are exactly n! valid pick lists, every order comes from one of them, and each order from exactly one, so if the picks are equally likely every order has the same chance, 1 in n!. The shuffle reads only 64 bits of its seed, and 2^64 is less than 52!; together those two theorems mean most deck orders can never come out. That the generator's numbers are random is not proved; it is a fixed rule so games can be replayed. | `shuffle_same_cards`, `shuffle_fair`, `no_card_dealt_twice`, `shuffle_eq_pickWith`, `pickWith_perm`, `allValidPicks_length`, `mem_allValidPicks`, `allValidPicks_nodup`, `every_order_possible`, `picks_one_to_one`, `each_order_once`, `shuffle_uses_64_bits`, `fewer_seeds_than_orders` |
 | T2b | While a hand is played the board has 0, 3, 4 or 5 cards as the street says; a showdown has all five. | `board_matches_street`, `showdown_has_five_cards` |
 | T3 | The engine accepts only legal moves. An illegal move is rejected and changes nothing. The player to act is allowed to act. The bot only picks legal moves. A legal move in a hand that is not over is always accepted. The buttons and raise range the engine offers are exactly the legal moves. | `accepted_move_is_legal`, `illegal_move_rejected`, `legal_move_accepted`, `player_to_act_may_act`, `botDecide_legal`, `legalOptions_exact` |
 | Risk | One Risk slider (0 to 100) sets the bot's caution (how heavily a lost chip counts) and its bluff share. Risk 0 counts a lost chip three times and has no river bluffs. Risk 50 plays for plain chip profit and bluffs 33% of its river bets ([docs/THEORY.md](docs/THEORY.md) says why that matches the textbook ratio). The share never passes 60%. More Risk never makes the bot more cautious and never makes it bluff less. The Risk quoted in the bot's reason never changes its move. | `ofRisk_caution_antitone`, `ofRisk_bluff_monotone`, `ofRisk_bluff_le_60`, `ideal_is_textbook`, `botDecide_action_shown` |
@@ -116,6 +117,12 @@ plain-English docstring.
 - What "a hand ends" means, in
   [`Engine/Proofs/EndsSpec.lean`](engine/Engine/Proofs/EndsSpec.lean): `RunsTo` and
   `RunsWith` (a run of moves the engine accepts).
+- How the shuffle picks cards, in
+  [`Engine/Proofs/ShuffleSpec.lean`](engine/Engine/Proofs/ShuffleSpec.lean): `pickWith` (build
+  a deck by taking the card at each given position from the cards left), `ValidPicks` and
+  `allValidPicks` (which position lists are in range, and the list of all of them), `seedPicks`
+  (the positions the generator gives from a seed) and `factorial`; with `shuffle`, `nextSeed`
+  and `mixSeed` in `Engine/Deck.lean`. T2's fairness theorems are about these.
 - How many shared cards each street has, in
   [`Engine/Proofs/BoardSpec.lean`](engine/Engine/Proofs/BoardSpec.lean): `Street.boardCards`
   (0 before the flop, then 3, 4 and 5). T2b compares the board against it.
