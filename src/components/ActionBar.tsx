@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { type Action, type LegalActions, potTotal, type HandState } from "@/engine";
+import { type Action, type HandState, type LegalActions, potTotal } from "@/lib/table";
 import { chips } from "@/lib/format";
 
 interface Props {
@@ -46,7 +46,7 @@ export function ActionBar({ hand, legal, waiting, botMessage = null, handStrengt
       if (e.repeat) return;
       if (e.target instanceof HTMLInputElement && e.target.type === "number") return;
       const key = e.key.toLowerCase();
-      if (key === "f" && legal.call > 0) onAct({ type: "fold" });
+      if (key === "f" && legal.fold) onAct({ type: "fold" });
       else if (key === "c" || key === "k") onAct(legal.check ? { type: "check" } : { type: "call" });
       else if (key === "r" && raise) onAct({ type: "raise", to: clamp(raiseTo) });
       else return;
@@ -68,7 +68,7 @@ export function ActionBar({ hand, legal, waiting, botMessage = null, handStrengt
       {legal && (
         <>
           <div className="action-buttons">
-            <button className="btn btn-fold" onClick={() => onAct({ type: "fold" })} disabled={legal.call === 0} title="Fold (F)">
+            <button className="btn btn-fold" onClick={() => onAct({ type: "fold" })} disabled={!legal.fold} title="Fold (F)">
               Fold <kbd>F</kbd>
             </button>
             <button className="btn btn-call" onClick={check} title="Check / Call (C)">

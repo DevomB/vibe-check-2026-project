@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { type Card, suitOf } from "@/engine";
+import { type Card, suitOf } from "@/lib/cards";
 import { SUIT_SYMBOL, cardText, isRed, rankLabel } from "@/lib/format";
 
 interface Props {

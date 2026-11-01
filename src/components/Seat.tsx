@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
-import type { Card, PlayerState } from "@/engine";
+import type { Card } from "@/lib/cards";
+import type { PlayerState } from "@/lib/table";
 import { chips } from "@/lib/format";
 import type { Player } from "@/hooks/useGame";
 import { PlayingCard } from "./PlayingCard";
@@ -13,6 +14,8 @@ interface Props {
   isTurn: boolean;
   /** Show the hole cards face up (always for the human; at showdown for others). */
   reveal: boolean;
+  /** The cards are face up only because the human peeked: draw them dimmed, with a label. */
+  peeked?: boolean;
   /** Seconds to wait before flipping revealed cards (lets an all-in run-out finish first). */
   revealDelay: number;
   winAmount: number;
@@ -20,7 +23,7 @@ interface Props {
   style: CSSProperties;
 }
 
-export function Seat({ player, state, stack, isHuman, isTurn, reveal, revealDelay, winAmount, winningCards, style }: Props) {
+export function Seat({ player, state, stack, isHuman, isTurn, reveal, peeked = false, revealDelay, winAmount, winningCards, style }: Props) {
   const out = state === null;
   const folded = state?.folded ?? false;
   const status = out ? "Out" : state.allIn ? "All-in" : state.lastAction;
@@ -37,7 +40,12 @@ export function Seat({ player, state, stack, isHuman, isTurn, reveal, revealDela
 
   return (
     <div className={classes.filter(Boolean).join(" ")} style={style}>
-      <div className="seat-cards">
+      <div className={peeked ? "seat-cards is-peeked" : "seat-cards"}>
+        {peeked && (
+          <span className="peek-label" title="Shown because Peek at bot's cards is on">
+            👁 Peeked
+          </span>
+        )}
         {cards.map((card, i) => (
           <PlayingCard
             key={`${card}-${i}`}
@@ -46,7 +54,7 @@ export function Seat({ player, state, stack, isHuman, isTurn, reveal, revealDela
             size={isHuman ? "lg" : "sm"}
             delay={reveal && !isHuman ? revealDelay : i * 0.08}
             highlight={card !== null && winningCards?.has(card)}
-            dim={folded || (winningCards !== null && (card === null || !winningCards.has(card)))}
+            dim={peeked || folded || (winningCards !== null && (card === null || !winningCards.has(card)))}
           />
         ))}
       </div>

@@ -17,9 +17,13 @@ Requests:
 - `{"cmd":"next_hand"}`, `{"cmd":"state"}`
 - `{"cmd":"review","hand":3}`: the review of hand 3. It changes nothing.
 
+Any request may add `"peek":true` (the "Peek at bot's cards" toggle). Then the reply's state
+also shows the bot's two cards. Peeking changes nothing else: not the game, not the seed, and
+not when the bot's reasons are sent.
+
 Replies: `{"ok":true,"state":...}`, plus `"review":...` for a review. A rejected request gets
-`{"error":"...","state":...}` with the state unchanged. The bot's cards are only sent once
-the hand reaches a showdown, and its reasons only once the hand is over.
+`{"error":"...","state":...}` with the state unchanged. Without `peek`, the bot's cards are
+only sent once the hand reaches a showdown. Its reasons are only sent once the hand is over.
 -/
 
 open Lean
@@ -64,8 +68,9 @@ def Frac.json (f : Frac) (places : Nat) : Json :=
 #guard (Frac.json ⟨1, 3⟩ 3).compress == "0.333"
 #guard (Frac.json ⟨2, 3⟩ 3).compress == "0.667"
 
-/-- The table as the human may see it. -/
-def stateJson (srv : Session) : Json :=
+/-- The table as the human may see it. With `peek`, the bot's cards are shown too. `commit` is
+the commit the program was built from (`Main.lean`), for the replay record. -/
+def stateJson (srv : Session) (peek : Bool := false) (commit : String := "unknown") : Json :=
   let g := srv.game
   let h := g.hand
   let s := h.chips
@@ -80,7 +85,7 @@ def stateJson (srv : Session) : Json :=
     Json.mkObj
       [ ("stack", toJson (s.stack p)),
         ("bet", toJson (s.bet p)),
-        ("cards", if shown then cardsJson (h.hole p) else Json.null),
+        ("cards", if shown || peek then cardsJson (h.hole p) else Json.null),
         ("folded", toJson folded),
         ("allIn", toJson (s.stack p == 0 && !folded)),
         ("lastAction", match srv.labels p with | some l => toJson l | none => Json.null),
@@ -120,7 +125,11 @@ def stateJson (srv : Session) : Json :=
       ("result", result),
       ("events", Json.arr (srv.events.map Event.json)),
       ("sliders", Json.mkObj [("risk", toJson srv.sliders.risk), ("bluffPct", toJson srv.sliders.bluffPct)]),
-      ("botReasons", match srv.botReasons with | some rs => toJson rs | none => Json.null) ]
+      ("botReasons", match srv.botReasons with | some rs => toJson rs | none => Json.null),
+      -- Replay record (MVP §5, §15). The turn is always counted exactly: see the mode note
+      -- "Turn: exact" in `Engine/Equity.lean`.
+      ("turnMode", toJson "exact"),
+      ("engineCommit", toJson commit) ]
 
 /-- The review of hand `n` (MVP §13). Ungraded moves have `null` grades: "not graded yet". -/
 def reviewJson (srv : Session) (n : Nat) (lines : Array ReviewLine) : Json :=
@@ -171,6 +180,15 @@ def parseUpTo (j : Json) (key : String) (hi : Nat) (msg : String) : Except Strin
   | .ok n => if n ≤ hi then pure n else throw msg
   | .error _ => throw msg
 
+/-- The optional `"peek"` flag of any request. Missing means `false`. -/
+def parsePeek (j : Json) : Except String Bool :=
+  match j.getObjVal? "peek" with
+  | .error _ => pure false
+  | .ok v =>
+    match v.getBool? with
+    | .ok b => pure b
+    | .error _ => throw "peek must be true or false"
+
 /-- Read one request. Unknown commands, such as the old `bot`, are rejected. -/
 def parseRequest (j : Json) : Except String Request := do
   match ← j.getObjValAs? String "cmd" with
@@ -186,25 +204,30 @@ def parseRequest (j : Json) : Except String Request := do
 /-! ## One request, one reply -/
 
 /-- Answer one request line. Returns the session to keep and the reply. A rejected request
-keeps the old session, so it changes nothing. -/
-def respond (cur : Option Session) (line : String) : Option Session × Json :=
-  let unchanged : Json := match cur with
-    | some s => stateJson { s with events := #[] }
+keeps the old session, so it changes nothing. `peek` only changes how the state is written,
+never the session. `commit` goes into every state, for the replay record. -/
+def respond (cur : Option Session) (line : String) (commit : String := "unknown") : Option Session × Json :=
+  let unchanged (peek : Bool) : Json := match cur with
+    | some s => stateJson { s with events := #[] } peek commit
     | none => Json.null
-  let fail (e : String) := (cur, Json.mkObj [("error", toJson e), ("state", unchanged)])
+  let fail (e : String) (peek : Bool) := (cur, Json.mkObj [("error", toJson e), ("state", unchanged peek)])
   match Json.parse line with
-  | .error e => fail s!"bad JSON: {e}"
+  | .error e => fail s!"bad JSON: {e}" false
   | .ok j =>
+    match parsePeek j with
+    | .error e => fail e false
+    | .ok peek =>
     match parseRequest j with
-    | .error e => fail e
+    | .error e => fail e peek
     | .ok (.review n) =>
       match cur with
-      | none => fail "no game yet: send new_game first"
+      | none => fail "no game yet: send new_game first" peek
       | some s =>
         match s.review n with
-        | .error e => fail e
-        | .ok lines => (cur, Json.mkObj [("ok", toJson true), ("state", unchanged), ("review", reviewJson s n lines)])
+        | .error e => fail e peek
+        | .ok lines =>
+          (cur, Json.mkObj [("ok", toJson true), ("state", unchanged peek), ("review", reviewJson s n lines)])
     | .ok (.game c) =>
       match Session.handle cur c with
-      | .error e => fail e
-      | .ok s => (some s, Json.mkObj [("ok", toJson true), ("state", stateJson s)])
+      | .error e => fail e peek
+      | .ok s => (some s, Json.mkObj [("ok", toJson true), ("state", stateJson s peek commit)])

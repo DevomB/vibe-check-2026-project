@@ -1,4 +1,4 @@
-import type { Card } from "@/engine";
+import type { Card } from "@/lib/cards";
 
 /**
  * Messages between the browser and the Lean game program (`Main.lean`), passed through
@@ -10,7 +10,7 @@ import type { Card } from "@/engine";
 export const RISK_MAX = 100;
 export const BLUFF_PCT_MAX = 60;
 
-export type LeanCommand =
+export type LeanCommand = (
   /** At the HTTP boundary, an empty seed requests a private server-generated game. */
   | { cmd: "new_game"; seed: string; risk: number; bluff_pct: number }
   | { cmd: "act"; action: "fold" | "check" | "call" }
@@ -18,13 +18,20 @@ export type LeanCommand =
   | { cmd: "act"; action: "bet" | "raise"; amount: number }
   | { cmd: "next_hand" }
   | { cmd: "state" }
-  | { cmd: "review"; hand: number };
+  | { cmd: "review"; hand: number }
+) & {
+  /**
+   * The "Peek at bot's cards" toggle: when true, the reply's state also shows the bot's cards.
+   * It changes nothing else. Any command may carry it.
+   */
+  peek?: boolean;
+};
 
 export interface LeanPlayer {
   stack: number;
   /** Chips put in during the current betting round. */
   bet: number;
-  /** Null while hidden: the bot's cards until a showdown. */
+  /** Null while hidden: the bot's cards until a showdown, unless the command asked to peek. */
   cards: Card[] | null;
   folded: boolean;
   allIn: boolean;
@@ -78,6 +85,21 @@ export interface LeanState {
   sliders: { risk: number; bluffPct: number };
   /** The bot's reason for each of its moves this hand. Null until the hand is over. */
   botReasons: string[] | null;
+  /**
+   * Replay record (MVP §5, §15). How the bot counts its chances on the turn: always "exact"
+   * (the mode note is in engine/Engine/Equity.lean).
+   */
+  turnMode: "exact";
+  /**
+   * The git commit the Lean program was built from. "unknown" when that cannot be told: git
+   * failed, or files under engine/ had changes when it was built.
+   */
+  engineCommit: string;
+  /**
+   * Added by the HTTP bridge, not Lean: the commit of the server's checkout, read when the
+   * server starts, or "unknown". It can differ from `engineCommit`.
+   */
+  serverCommit?: string;
 }
 
 /** The labels of a graded decision, best first. */
@@ -103,8 +125,18 @@ export interface ReviewDecision {
 export interface LeanReview {
   hand: number;
   decisions: ReviewDecision[];
+  /** The bot's detailed reason for each of its moves in this hand. Null while the hand is still being played. */
+  bot_reasons: string[] | null;
 }
 
 export type LeanReply =
   | { ok: true; state: LeanState; review?: LeanReview }
   | { error: string; state: LeanState | null };
+
+/**
+ * A reply from `/api/game`: Lean's reply, plus what the bridge adds.
+ * `lost` is true when the game is gone: the program stopped, did not answer, or restarted
+ * without it. The screen must then offer only a new game. A malformed request is turned away
+ * (HTTP 400) without `lost`, and the game goes on.
+ */
+export type ApiReply = LeanReply & { lost?: true };
