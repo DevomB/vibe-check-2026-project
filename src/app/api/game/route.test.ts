@@ -51,6 +51,12 @@ describe("/api/game input checks", () => {
     expect(status).toBe(400);
     expect("error" in reply).toBe(true);
   });
+
+  it("says why a new game with the old Bluff setting is turned away, in Lean's words", async () => {
+    const { status, reply } = await post({ cmd: "new_game", seed: "42", risk: 50, bluff_pct: 33 });
+    expect(status).toBe(400);
+    expect(reply).toEqual({ error: "bluff_pct was removed; Risk sets both", state: null });
+  });
 });
 
 describe("/api/game when the game program fails", () => {

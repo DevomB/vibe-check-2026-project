@@ -102,7 +102,7 @@ function parseGameCommand(b: Record<string, unknown>): LeanCommand | null {
   switch (b.cmd) {
     case "new_game":
       // The bot has one setting, Risk. A Bluff value is from the old two-slider protocol:
-      // turning it away is better than silently playing a different bot.
+      // turning it away (see `BLUFF_REMOVED`) is better than silently playing a different bot.
       if (!isCount(b.risk) || b.bluff_pct !== undefined) return null;
       const seed = b.seed === undefined || b.seed === "" ? privateSeed() : b.seed;
       if (typeof seed !== "string" || !/^\d{1,20}$/.test(seed)) return null;
@@ -153,6 +153,15 @@ function parseRequest(body: unknown): RouteRequest | null {
 }
 
 const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
+
+/** Lean's own words for a `new_game` that still sends the old Bluff slider. */
+const BLUFF_REMOVED = "bluff_pct was removed; Risk sets both";
+
+/** Why a request was turned away before Lean saw it. */
+function refusal(body: unknown): string {
+  const b = typeof body === "object" && body !== null ? (body as Record<string, unknown>) : {};
+  return (b.cmd === "new_game" || b.cmd === "reveal") && b.bluff_pct !== undefined ? BLUFF_REMOVED : "unknown or malformed command";
+}
 
 /** A program that stopped or hung took its game with it. The browser must offer a new game. */
 function gameLost(status: number): Response {
@@ -232,7 +241,7 @@ export async function POST(request: Request): Promise<Response> {
   }
   const parsed = parseRequest(body);
   // Turned away before Lean sees it: the game, if any, is unchanged.
-  if (!parsed) return Response.json({ error: "unknown or malformed command", state: null } satisfies ApiReply, { status: 400 });
+  if (!parsed) return Response.json({ error: refusal(body), state: null } satisfies ApiReply, { status: 400 });
   let lean: LeanProcess;
   try {
     lean = engine();

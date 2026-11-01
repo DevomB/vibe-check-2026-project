@@ -99,14 +99,18 @@ describe.skipIf(skipLean)("Lean game program", () => {
     }
   });
 
+  it("refuses the old Bluff setting, in its own words", async () => {
+    const reply = await lean.send({ cmd: "new_game", seed: "1", risk: 50, bluff_pct: 33 } as LeanCommand);
+    expect(reply).toMatchObject({ error: "bluff_pct was removed; Risk sets both" });
+  });
+
   it("stores Risk, accepts both ends of its range, and derives the bot's settings from it", async () => {
     // The ends are the old two-slider bots the demo scenes use: Ivy and Vex.
     expect((await newGame("5", 0)).sliders).toEqual({ risk: 0, caution: 100, bluffPct: 0 });
     expect((await newGame("5", 100)).sliders).toEqual({ risk: 100, caution: 0, bluffPct: 60 });
-    const s = await newGame("5", 37);
-    expect(s.sliders.risk).toBe(37);
-    expect(Number.isInteger(s.sliders.caution) && s.sliders.caution >= 0 && s.sliders.caution <= 100).toBe(true);
-    expect(Number.isInteger(s.sliders.bluffPct) && s.sliders.bluffPct >= 0 && s.sliders.bluffPct <= 60).toBe(true);
+    // Risk 50 is plain chip profit with a 33% bluff share (`ideal_is_textbook`).
+    expect((await newGame("5", 50)).sliders).toEqual({ risk: 50, caution: 0, bluffPct: 33 });
+    expect((await newGame("5", 37)).sliders).toEqual({ risk: 37, caution: 26, bluffPct: 24 });
   });
 
   it("keeps the bot's cards and reasons hidden until the hand is over", async () => {
