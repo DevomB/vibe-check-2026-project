@@ -46,10 +46,10 @@ export const GUARANTEES: readonly Guarantee[] = [
       "showdown_pays_better_hand",
       "fold_pays_other_player",
       "fold_records_other_player",
+      "game_hand_from_deal",
     ],
     assumes: [
       "The game started as a new game and then changed only by moves and new hands that the engine accepted. For the engine's session this is proved.",
-      "For who wins the pot: both players had chips when the hand was dealt.",
     ],
     limits: ["It is about the engine's own game state. It does not check the numbers the web page shows."],
   },
@@ -82,6 +82,7 @@ export const GUARANTEES: readonly Guarantee[] = [
       "In every game, the player whose turn it is has chips and has not bet more than the other player.",
       "Whenever the player to act may act, the bot's move is legal, at every Risk.",
       "Only a game command the engine accepts changes the game. Bad JSON, an unknown command, a review request or a rejected move leaves it exactly as it was.",
+      "The buttons the engine offers you are exactly the legal moves: Fold and Check work exactly when they are legal, Call shows what a call costs, and every raise in the offered range, and no other, is legal.",
     ],
     theorems: [
       "accepted_move_is_legal",
@@ -93,13 +94,13 @@ export const GUARANTEES: readonly Guarantee[] = [
       "bot_move_accepted",
       "handle_keeps_reachable",
       "respond_keeps_session_unless_accepted",
+      "legalOptions_exact",
     ],
     assumes: [
       "The rules are the ones written in Legal, in engine/Poker/Spec/Basics.lean.",
       "For a rejection: the hand is not over yet.",
     ],
     limits: [
-      "The buttons and raise limits on the page come from code that is not proved to match the rules. The engine still rejects any illegal move it gets.",
       "The browser and the Node bridge between the page and the engine are tested, not proved.",
     ],
   },

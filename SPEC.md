@@ -162,6 +162,8 @@ These follow `MVP.txt`, which is the team's agreed rule set.
 - `exploreHand_moves` and `exploreHand_risk_monotone` (the internal caution sweep),
   `exploreHandAt_moves` and `exploreHandAt_more_risk_continues` (the player's Risk sweep the
   app shows), `rangeOf_adds_up` and `rangeOf_counts` are registered. Faithful recording of the bot's original inputs remains tested, not proved.
-- That `legalOptions` (the moves and raise bounds the human is offered) matches `Legal`.
+- `legalOptions_exact`: the moves and raise bounds the human is offered (`legalOptions`) are
+  exactly the legal moves. `game_hand_from_deal`: every hand of a reachable game was dealt
+  from two stacks above 0, so the pot and board theorems hold for every hand the app plays.
 - T9 is proved and registered. T10 remains optional if a separate fast evaluator is added.
 - The JSON layer (`Engine/Protocol.lean`) is tested, not proved.

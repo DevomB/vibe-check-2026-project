@@ -183,8 +183,6 @@ otherwise try to run the 52-card shuffle on an unknown seed inside a proof.
 - **Recorded review inputs**: the Risk explorer is proved equal to the bot on the inputs
   the session recorded. That the session records the right inputs, and the right river
   spot for the review, is tested, not proved.
-- **The human's buttons**: `legalOptions` (which moves to offer, and the raise bounds)
-  is never proved equal to `Legal`. The engine still rejects any illegal move (T3).
 - **`Task.spawn` in `turnCounts`**: the turn counts run 46 tasks in parallel. The proofs
   treat a task as the plain function it runs; the compiler is trusted to run them
   correctly.

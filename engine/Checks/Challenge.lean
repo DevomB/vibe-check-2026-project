@@ -67,6 +67,14 @@ ends and the recorded winner is the player who did not fold. -/
 theorem fold_records_other_player (h h' : Hand) (hs : step h .fold = .ok h') :
     h'.ended = some (.folded (other h.chips.toAct)) := sorry
 
+/-- Every hand of a game is a real deal: in every game the engine can reach, the current hand
+was dealt with `startHand` from two stacks that both had chips, and then played with moves
+the engine accepted. So the hand theorems above and below (who wins the pot, the board's
+size) hold for every hand the app plays. -/
+theorem game_hand_from_deal (g : Game) (hg : g.Reachable) :
+    ∃ (stacks : Player → Nat) (button : Player) (seed : Nat) (as : List Action),
+      0 < stacks 0 ∧ 0 < stacks 1 ∧ RunsTo (startHand stacks button seed) as g.hand := sorry
+
 /-! ## T2: no card is dealt twice -/
 
 /-- The shuffle only changes the order of the cards: nothing is added, lost or copied. -/
@@ -109,6 +117,18 @@ theorem illegal_move_rejected (h : Hand) (a : Action) (hnot : h.ended = none)
 it, an engine that rejects every move would satisfy the two theorems above.) -/
 theorem legal_move_accepted (h : Hand) (a : Action) (hnot : h.ended = none)
     (hl : Legal h.chips a) : ∃ h', step h a = .ok h' := sorry
+
+/-- The buttons match the rules (`legalOptions` is what the app offers the human): Fold and
+Check work exactly when they are legal; the call amount is above 0 exactly when calling is
+legal, and is then what a call costs; and a raise to `n` is legal exactly when a raise range
+is offered and `n` is inside it. -/
+theorem legalOptions_exact (s : State) :
+    ((legalOptions s).fold = true ↔ Legal s .fold) ∧
+    ((legalOptions s).check = true ↔ Legal s .check) ∧
+    (0 < (legalOptions s).call ↔ Legal s .call) ∧
+    (Legal s .call → (legalOptions s).call = s.toCall) ∧
+    (∀ n, Legal s (.raiseTo n) ↔
+      ∃ lo hi, (legalOptions s).raise = some (lo, hi) ∧ lo ≤ n ∧ n ≤ hi) := sorry
 
 /-- In every game the engine can reach, if the hand is not over, the player whose turn it
 is is allowed to act: they have chips and have not bet more than the other player. -/

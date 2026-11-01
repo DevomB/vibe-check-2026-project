@@ -33,6 +33,8 @@ import Engine.Proofs.Chips
 import Engine.Proofs.Payout
 import Engine.Proofs.Board
 import Engine.Proofs.Accepted
+import Engine.Proofs.Buttons
+import Engine.Proofs.GameHands
 import Engine.Proofs.Deck
 import Engine.Proofs.ReviewSpec
 import Engine.Proofs.Review
