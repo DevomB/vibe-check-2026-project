@@ -109,4 +109,21 @@ def foldThenNext := [start42, "{\"cmd\":\"act\",\"action\":\"fold\"}", "{\"cmd\"
   let r := runLines [start42, "{\"cmd\":\"review\",\"hand\":1}"]
   field (field r[1]! "review") "bot_reasons" == Json.null
 
+-- A short caller pays 50 against a bet of 100, but the review must retain the full gap
+-- to refund the other 50. Playing the royal-flush board gains 50 chips (5 BB), not 75.
+#guard
+  let h : Hand := { (startHand (fun _ => 500) 1 7) with
+    street := .river
+    board := [card 10 .clubs, card 11 .clubs, card 12 .clubs, card 13 .clubs, card 14 .clubs]
+    hole := fun p => if p = 0 then [card 2 .diamonds, card 3 .diamonds]
+      else [card 4 .hearts, card 5 .hearts]
+    chips := { stack := fun p => if p = 0 then 50 else 750
+               pot := 100, bet := fun p => if p = 0 then 0 else 100
+               lastRaise := 100, toAct := 0 } }
+  let spot := riverSpotOf h 33
+  let verdict := reviewRiver spot .call
+  decide (ValidDeal (h.hole 0) (h.hole 1) h.board) && h.chips.total == 1000
+    && h.chips.toCall == 50 && spot.toCall == 100
+    && verdict.worthCall.num == 5 * (verdict.worthCall.den : Int)
+
 end SessionTests

@@ -70,7 +70,7 @@ structure RiverVerdict where
 def riverSpotOf (h : Hand) (bluffPct : Nat) : RiverSpot :=
   let s := h.chips
   { board := h.board, hole := h.hole s.toAct, pot := s.pot + s.bet 0 + s.bet 1,
-    toCall := s.toCall, stack := s.stack s.toAct, bluffPct }
+    toCall := s.bet (other s.toAct) - s.bet s.toAct, stack := s.stack s.toAct, bluffPct }
 
 /-- The label for losing `lost` big blinds against the better of call and fold (MVP §6):
 Best = 0, Good under 0.5, Inaccuracy under 2, Mistake under 5, else Blunder. -/
