@@ -349,7 +349,14 @@ export function PokerApp() {
         />
       )}
       {review && (
-        <ReviewModal {...reviewExtras} review={review} peeked={peekedHands.includes(review.hand)} onClose={closeReview} />
+        <ReviewModal
+          key={review.hand}
+          {...reviewExtras}
+          review={review}
+          game={game}
+          peeked={peekedHands.includes(review.hand)}
+          onClose={closeReview}
+        />
       )}
       {proofs && <ProofsDrawer focus={proofs.focus} onClose={closeProofs} />}
       {rulesModal}

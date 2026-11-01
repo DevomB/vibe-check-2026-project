@@ -75,6 +75,8 @@ export interface Game {
   boardBefore: number;
   /** Hand history, one line per event. Not shown on screen; kept for testing and checking games afterwards. */
   log: string[];
+  /** Lean's events for the current hand so far, in order. The review's move list is built from them. */
+  handEvents: LeanEvent[];
   stats: Stats;
   /**
    * Why the game is gone (the engine stopped, hung or restarted), or null while it is live.
@@ -172,7 +174,7 @@ function streetName(street: string) {
  * Turns Lean's events into readable log lines. `startBet` is the round's highest bet before
  * these events, so the first chips of a round read as a bet ("Bot bets 40"), not a raise.
  */
-function describeEvents(events: readonly LeanEvent[], names: string[], startBet: number): string[] {
+export function describeEvents(events: readonly LeanEvent[], names: string[], startBet: number): string[] {
   let roundBet = startBet;
   return events.map((e): string => {
     const name = "player" in e ? names[e.player]! : "";
@@ -215,7 +217,11 @@ function appendLog(log: string[], entries: string[]): string[] {
 }
 
 /** The game after a reply from Lean. `previous` is null for a new game. */
-function withReply(base: Omit<Game, "lean" | "session" | "dealt" | "legal" | "botLine" | "boardBefore" | "lost" | "peeked">, previous: Game | null, s: RouteState): Game {
+function withReply(
+  base: Omit<Game, "lean" | "session" | "dealt" | "legal" | "botLine" | "boardBefore" | "handEvents" | "lost" | "peeked">,
+  previous: Game | null,
+  s: RouteState,
+): Game {
   const names = base.players.map((p) => p.name);
   const newHand = !previous || previous.lean.hand !== s.hand;
   const header = newHand ? [`Hand #${s.hand}`] : [];
@@ -245,6 +251,7 @@ function withReply(base: Omit<Game, "lean" | "session" | "dealt" | "legal" | "bo
     boardBefore: newHand ? 0 : previous.lean.board.length,
     botLine: lastBotLine(s.events, lines),
     log: appendLog(base.log, [...header, ...lines]),
+    handEvents: newHand ? s.events : previous.handEvents.concat(s.events),
     stats,
     lost: null,
     peeked: false,

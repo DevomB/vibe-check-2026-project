@@ -1,0 +1,743 @@
+/* The game review: badges, the equity bar, the move list, the coach line and the panels under them. */
+
+/* ---------- Label tones (our own colors for the five labels) ---------- */
+.tone-best {
+  --tone: #26a65b;
+}
+
+.tone-good {
+  --tone: #6fb556;
+}
+
+.tone-inaccuracy {
+  --tone: #dcad2f;
+}
+
+.tone-mistake {
+  --tone: #e6843a;
+}
+
+.tone-blunder {
+  --tone: #dc4646;
+}
+
+/* ---------- Badges ---------- */
+.badgeWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  vertical-align: middle;
+}
+
+.badge {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  border-radius: 50%;
+  background: var(--tone, var(--muted));
+  color: #fff;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.06em;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45), inset 0 -2px 0 rgba(0, 0, 0, 0.18);
+}
+
+.badge-sm {
+  width: 19px;
+  height: 19px;
+  font-size: 10.5px;
+}
+
+.badge-md {
+  width: 24px;
+  height: 24px;
+  font-size: 12.5px;
+}
+
+.badge-lg {
+  width: 34px;
+  height: 34px;
+  font-size: 17px;
+}
+
+/* Two marks (?! and ??) need a little less room each. */
+.badgeTwo {
+  font-size: 0.86em;
+  letter-spacing: -0.12em;
+  text-indent: -0.12em;
+}
+
+.badgeName {
+  font-weight: 800;
+  color: var(--tone, var(--text));
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- The modal ---------- */
+.modal:global(.modal) {
+  max-width: 1040px;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  padding-right: 40px;
+  margin-bottom: 14px;
+}
+
+.header h2 {
+  margin: 0;
+}
+
+.modal .summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.modal .summary li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 3px 10px 3px 4px;
+  border-radius: 999px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.modal .summary b {
+  font-variant-numeric: tabular-nums;
+}
+
+.modal .summary li.isZero {
+  opacity: 0.45;
+}
+
+.note {
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(233, 196, 106, 0.1);
+  border: 1px solid rgba(233, 196, 106, 0.4);
+  color: var(--gold) !important;
+  font-size: 13px;
+}
+
+.main {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.side {
+  display: flex;
+  gap: 14px;
+  align-items: stretch;
+}
+
+.panel {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.section {
+  margin-top: 16px;
+}
+
+/* ---------- Equity bar ---------- */
+.equityBar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 58px;
+}
+
+.equityTrack {
+  position: relative;
+  flex: 1;
+  width: 26px;
+  min-height: 210px;
+}
+
+.equityClip {
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #262d36;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.equityFill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, #ffffff, #dfe5ec);
+  transition: height 0.35s ease;
+}
+
+.equityNeed {
+  position: absolute;
+  left: -6px;
+  right: -6px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--gold);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55);
+  transform: translateY(50%);
+  transition: bottom 0.35s ease;
+}
+
+.equityLegend {
+  display: grid;
+  justify-items: center;
+  font-size: 11px;
+  line-height: 1.2;
+  color: var(--muted);
+  text-align: center;
+}
+
+.equityLegend b {
+  font-size: 13px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.equityLegend b.needText {
+  margin-top: 4px;
+  color: var(--gold);
+}
+
+.equityBar.isEmpty .equityClip {
+  background: repeating-linear-gradient(135deg, #20262e 0 6px, #262d36 6px 12px);
+}
+
+/* ---------- The moment in the hand ---------- */
+.spot {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  width: 236px;
+  padding: 12px;
+  border-radius: 14px;
+  background: radial-gradient(120% 90% at 50% 0%, var(--felt) 0%, var(--felt-deep) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 0 0 4px rgba(0, 0, 0, 0.18);
+}
+
+.spotStreet {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.spotPart {
+  display: grid;
+  gap: 4px;
+}
+
+.spotPart > span {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: rgba(233, 238, 244, 0.75);
+}
+
+.cards {
+  display: flex;
+  gap: 4px;
+}
+
+.cards :global(.card) {
+  animation-duration: 0.25s;
+}
+
+/* Empty board spots, the same size as the small cards beside them. */
+.cards :global(.card-slot) {
+  --w: 38px;
+}
+
+.spotNote {
+  margin: 0;
+  font-size: 11.5px !important;
+  line-height: 1.35 !important;
+  color: rgba(233, 238, 244, 0.8) !important;
+}
+
+/* ---------- Coach line ---------- */
+.coach {
+  display: grid;
+  gap: 6px;
+  min-height: 96px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--panel-2);
+  border: 1px solid var(--line-strong);
+  border-left: 4px solid var(--tone, var(--line-strong));
+}
+
+.coach p {
+  margin: 0;
+}
+
+.coachHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  color: var(--text) !important;
+}
+
+.coachNumbers {
+  font-size: 13.5px;
+  color: var(--muted) !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.band {
+  color: var(--text);
+}
+
+.model {
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.model p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted) !important;
+}
+
+/* ---------- "Why?" chip and proof links ---------- */
+.why {
+  display: grid;
+  justify-items: start;
+}
+
+.whyChip {
+  padding: 3px 11px;
+  border-radius: 999px;
+  border: 1px solid rgba(233, 196, 106, 0.5);
+  background: rgba(233, 196, 106, 0.1);
+  color: var(--gold);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.whyChip:hover,
+.whyChip[aria-expanded="true"] {
+  background: rgba(233, 196, 106, 0.2);
+}
+
+.whyPanel {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  display: grid;
+  gap: 8px;
+}
+
+.whyPanel h4 {
+  margin: 0 0 2px;
+  font-size: 12.5px;
+  color: var(--text);
+}
+
+.whyPanel ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.whyPanel li {
+  margin: 0 0 4px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.whyPanel cite {
+  font-style: normal;
+  color: var(--gold);
+}
+
+.citeId {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.modal .whyFoot {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.linkRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 18px;
+}
+
+.proofLink,
+.textButton {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--gold);
+  font: inherit;
+  font-size: 13px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(233, 196, 106, 0.45);
+  cursor: pointer;
+}
+
+.proofLink:hover,
+.textButton:hover {
+  color: #f3d488;
+  text-decoration-color: currentColor;
+}
+
+/* ---------- Move list ---------- */
+.moveList {
+  max-height: 260px;
+  overflow-y: auto;
+  border-radius: 12px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+}
+
+.street {
+  padding: 8px 8px 6px;
+}
+
+.street + .street {
+  border-top: 1px solid var(--line);
+}
+
+.streetHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 4px 4px;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.streetCards {
+  display: inline-flex;
+  gap: 3px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.miniCard {
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: #f4f1ea;
+  color: #15181c;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.miniCard.red {
+  color: #c62828;
+}
+
+.modal .moves {
+  display: grid;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.modal .moves li {
+  margin: 0;
+}
+
+.move {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #c9d2dc;
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.move:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.move.mine {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.move.isSelected {
+  background: rgba(233, 196, 106, 0.14);
+  border-color: rgba(233, 196, 106, 0.55);
+}
+
+.moveText {
+  min-width: 0;
+}
+
+.modal .moveNote {
+  margin: 0;
+  padding: 2px 9px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.nav {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.nav button {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--line-strong);
+  background: var(--panel-2);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.nav button:hover:not(:disabled) {
+  background: #222c38;
+}
+
+.nav button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ---------- Range viewer ---------- */
+.range {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+}
+
+.range h4 {
+  margin: 0 0 6px;
+  font-size: 15px;
+  color: var(--gold);
+}
+
+.range p {
+  margin: 0 0 10px;
+  font-size: 14px;
+}
+
+.rangeBar {
+  display: flex;
+  height: 10px;
+  border-radius: 5px;
+  overflow: hidden;
+  background: var(--panel-2);
+}
+
+.beat {
+  background: var(--green);
+}
+
+.tie {
+  background: var(--muted);
+}
+
+.lose {
+  background: var(--red);
+}
+
+.rangeKey {
+  display: flex;
+  gap: 14px;
+  margin: 6px 0 10px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.rangeKey span::before {
+  content: "";
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 5px;
+  border-radius: 2px;
+  vertical-align: -1px;
+}
+
+.keyBeat::before {
+  background: var(--green);
+}
+
+.keyTie::before {
+  background: var(--muted);
+}
+
+.keyLose::before {
+  background: var(--red);
+}
+
+/* ---------- Risk explorer ---------- */
+.explorer {
+  display: grid;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.explorerMoves {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pill {
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pill:hover {
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.pill.isSelected {
+  background: linear-gradient(180deg, #f3d488, var(--gold-deep));
+  border-color: transparent;
+  color: #1d1505;
+}
+
+.explorerCard {
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+}
+
+.explorerCard p {
+  margin: 0;
+}
+
+.explorerSpot {
+  color: var(--muted) !important;
+}
+
+.explorerSlider {
+  display: grid;
+  gap: 4px;
+}
+
+.explorerSlider input {
+  width: 100%;
+  accent-color: var(--gold);
+}
+
+.explorerMarker {
+  position: relative;
+  height: 30px;
+  margin: -6px 8px 0;
+}
+
+.explorerMarker span {
+  position: absolute;
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.markerTip {
+  top: 0;
+  transform: translateX(-50%);
+  color: var(--gold) !important;
+  font-size: 10px !important;
+}
+
+.markerText {
+  top: 13px;
+}
+
+.explorerSummary {
+  font-weight: 700;
+  color: var(--text) !important;
+}
+
+/* ---------- The bot's reasons ---------- */
+.modal .reasons li {
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+/* ---------- Narrow screens ---------- */
+@media (max-width: 760px) {
+  .main {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .side {
+    justify-content: center;
+  }
+
+  .equityTrack {
+    min-height: 180px;
+  }
+}

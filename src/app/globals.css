@@ -1182,103 +1182,6 @@ kbd {
   justify-content: center;
 }
 
-/* ---------- Review ---------- */
-.modal.review {
-  max-width: 620px;
-}
-
-.review-intro {
-  margin: -6px 0 4px;
-  font-size: 14px;
-}
-
-.modal ul.review-list {
-  display: grid;
-  gap: 8px;
-  padding: 0;
-  list-style: none;
-}
-
-.modal .review-item {
-  margin: 0;
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: var(--bg-2);
-  border: 1px solid var(--line);
-}
-
-.review-item.is-ungraded {
-  padding: 8px 14px;
-  opacity: 0.75;
-}
-
-.review-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.review-move {
-  font-weight: 700;
-}
-
-.review-label {
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.label-best {
-  background: rgba(47, 191, 113, 0.18);
-  color: var(--green);
-}
-
-.label-good {
-  background: rgba(47, 191, 113, 0.1);
-  color: #8fd9b0;
-}
-
-.label-inaccuracy {
-  background: rgba(233, 196, 106, 0.15);
-  color: var(--gold);
-}
-
-.label-mistake {
-  background: rgba(240, 140, 70, 0.16);
-  color: #f0a060;
-}
-
-.label-blunder {
-  background: rgba(224, 86, 86, 0.18);
-  color: var(--red);
-}
-
-.label-none {
-  background: var(--panel-2);
-  color: var(--muted);
-  font-weight: 600;
-}
-
-.review-numbers {
-  display: grid;
-  gap: 2px;
-  margin-top: 8px;
-  font-size: 14px;
-  font-variant-numeric: tabular-nums;
-}
-
-.modal .review-reasons li {
-  margin-bottom: 4px;
-  font-size: 14px;
-}
-
-.modal.review .modal-actions {
-  margin-top: 20px;
-}
-
 /* ---------- Animations ---------- */
 @keyframes deal {
   from {
@@ -1614,15 +1517,4 @@ div.opponent { cursor: default; }
   font-weight: 700;
   white-space: nowrap;
   z-index: 2;
-}
-
-/* Review of a hand played with the peek toggle on. */
-.review-peeked {
-  margin: 0 0 12px;
-  padding: 8px 12px;
-  border-radius: 10px;
-  background: rgba(233, 196, 106, 0.1);
-  border: 1px solid rgba(233, 196, 106, 0.4);
-  color: var(--gold);
-  font-size: 13px;
 }
