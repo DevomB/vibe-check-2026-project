@@ -88,7 +88,9 @@ export function Table({ game, botThinking = false }: { game: Game; botThinking?:
           const index = seatOf.indexOf(seat);
           const state = index >= 0 ? hand.players[index]! : null;
           const isHuman = seat === HUMAN_SEAT;
-          const reveal = isHuman || (!!result?.showdown && !!state && !state.folded);
+          // Bot cards shown before a showdown only because of "Peek at bot's cards" are marked.
+          const peeked = !isHuman && game.peeked && !result?.showdown && !!state && state.hole.length > 0;
+          const reveal = isHuman || peeked || (!!result?.showdown && !!state && !state.folded);
           return (
             <Seat
               key={seat}
@@ -98,6 +100,7 @@ export function Table({ game, botThinking = false }: { game: Game; botThinking?:
               isHuman={isHuman}
               isTurn={index >= 0 && (botThinking ? !isHuman : hand.toAct === index)}
               reveal={reveal}
+              peeked={peeked}
               revealDelay={isHuman ? 0 : revealDelay}
               winAmount={index >= 0 ? (result?.winnings[index] ?? 0) : 0}
               winningCards={winningCards}

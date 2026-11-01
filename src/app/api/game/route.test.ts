@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { type LeanProcess, leanBinaryPath } from "@/lean/process";
-import type { ApiReply } from "@/lean/protocol";
+import type { ApiReply, LeanReview, LeanState } from "@/lean/protocol";
 import { POST } from "./route";
 
 /**
@@ -39,6 +39,9 @@ describe("/api/game input checks", () => {
     ["a raise without an amount", { cmd: "act", action: "raise" }],
     ["a bet without an amount", { cmd: "act", action: "bet" }],
     ["a review without a hand", { cmd: "review" }],
+    ["a peek that is a string", { cmd: "state", peek: "yes" }],
+    ["a peek that is a number", { cmd: "act", action: "call", peek: 1 }],
+    ["a peek that is null", { cmd: "new_game", seed: "42", risk: 50, bluff_pct: 33, peek: null }],
   ])("turns away %s", async (_name, body) => {
     const { status, reply } = await post(body);
     expect(status).toBe(400);
@@ -157,6 +160,57 @@ describe.skipIf(!existsSync(leanBinaryPath()))("/api/game with the Lean program"
     expect(reply.state.status).toBe("gameOver");
     expect(reply.state).toMatchObject({ seed: "1", sliders: { risk: 0, bluffPct: 0 }, turnMode: "exact", serverCommit });
     expect(reply.state.engineCommit).toBe(start.reply.state.engineCommit);
+  });
+
+  it("hides the bot's cards mid-hand, and shows them only when a command asks to peek", async () => {
+    const start = await post({ cmd: "new_game", seed: "7", risk: 50, bluff_pct: 33 });
+    if (!("ok" in start.reply)) throw new Error(start.reply.error);
+    expect(start.reply.state.status).toBe("playing");
+    expect(start.reply.state.players[1].cards).toBeNull();
+    const peeked = await post({ cmd: "state", peek: true });
+    if (!("ok" in peeked.reply)) throw new Error(peeked.reply.error);
+    expect(peeked.reply.state.players[1].cards).toHaveLength(2);
+    for (const card of peeked.reply.state.players[1].cards!) expect(card).toMatch(/^[2-9TJQKA][cdhs]$/);
+    // The seed and the bot's reasons stay hidden.
+    expect(peeked.reply.state.seed).toBeNull();
+    expect(peeked.reply.state.botReasons).toBeNull();
+    const plain = await post({ cmd: "state", peek: false });
+    if (!("ok" in plain.reply)) throw new Error(plain.reply.error);
+    expect(plain.reply.state.players[1].cards).toBeNull();
+  });
+
+  it("changes nothing else by peeking: the same seed and moves give the same game", { timeout: 120_000 }, async () => {
+    /** Two hands of check/call from seed 2026, with every command peeking or none. */
+    async function play(peek: boolean): Promise<{ states: LeanState[]; reviews: (LeanReview | undefined)[] }> {
+      const extra = peek ? { peek: true } : {};
+      const states: LeanState[] = [];
+      const reviews: (LeanReview | undefined)[] = [];
+      const send = async (body: object) => {
+        const { reply } = await post({ ...body, ...extra });
+        if (!("ok" in reply)) throw new Error(reply.error);
+        states.push(reply.state);
+        return reply;
+      };
+      let s = (await send({ cmd: "new_game", seed: "2026", risk: 50, bluff_pct: 33 })).state;
+      for (let hand = 0; hand < 2 && s.status !== "gameOver"; hand++) {
+        for (let guard = 0; s.status === "playing" && guard < 50; guard++) {
+          await send({ cmd: "state" });
+          s = (await send({ cmd: "act", action: s.legal!.check ? "check" : "call" })).state;
+        }
+        reviews.push((await send({ cmd: "review", hand: s.hand })).review);
+        if (s.status === "handOver") s = (await send({ cmd: "next_hand" })).state;
+      }
+      return { states, reviews };
+    }
+    const hideBotCards = (s: LeanState) => ({ ...s, players: [s.players[0], { ...s.players[1], cards: null }] });
+    const plain = await play(false);
+    const peeked = await play(true);
+    expect(peeked.states.map(hideBotCards)).toEqual(plain.states.map(hideBotCards));
+    expect(peeked.reviews).toEqual(plain.reviews);
+    // Mid-hand, only the peeking game showed the bot's cards.
+    const midHand = (states: LeanState[]) => states.filter((s) => s.status === "playing");
+    expect(midHand(plain.states).every((s) => s.players[1].cards === null)).toBe(true);
+    expect(midHand(peeked.states).every((s) => s.players[1].cards?.length === 2)).toBe(true);
   });
 
   it("passes slider values out of range to Lean, which rejects them", async () => {

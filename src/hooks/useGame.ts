@@ -61,6 +61,11 @@ export interface Game {
    * A lost game shows only this message and a way back to the setup screen.
    */
   lost: string | null;
+  /**
+   * True when the latest reply was asked for with "Peek at bot's cards" on. The bot's cards it
+   * shows before a showdown are there only because of the peek, so the table marks them.
+   */
+  peeked: boolean;
 }
 
 export type Status = "playing" | "handOver" | "gameOver";
@@ -196,7 +201,7 @@ function appendLog(log: string[], entries: string[]): string[] {
 }
 
 /** The game after a reply from Lean. `previous` is null for a new game. */
-function withReply(base: Omit<Game, "lean" | "session" | "dealt" | "legal" | "botLine" | "boardBefore" | "lost">, previous: Game | null, s: LeanState): Game {
+function withReply(base: Omit<Game, "lean" | "session" | "dealt" | "legal" | "botLine" | "boardBefore" | "lost" | "peeked">, previous: Game | null, s: LeanState): Game {
   const names = base.players.map((p) => p.name);
   const newHand = !previous || previous.lean.hand !== s.hand;
   const header = newHand ? [`Hand #${s.hand}`] : [];
@@ -228,7 +233,25 @@ function withReply(base: Omit<Game, "lean" | "session" | "dealt" | "legal" | "bo
     log: appendLog(base.log, [...header, ...lines]),
     stats,
     lost: null,
+    peeked: false,
   };
+}
+
+/** The game with the bot's cards hidden again, after "Peek at bot's cards" was turned off. */
+function withoutBotCards(g: Game): Game {
+  const [human, bot] = g.lean.players;
+  const lean: LeanState = { ...g.lean, players: [human, { ...bot, cards: null }] };
+  const players = g.dealt.hand.players.map((p, i) => (i === BOT_SEAT ? { ...p, hole: [] } : p));
+  return { ...g, lean, dealt: { ...g.dealt, hand: { ...g.dealt.hand, players } }, peeked: false };
+}
+
+/**
+ * A game built from a reply, with the peek toggle applied. `asked`: the command asked to peek.
+ * `on`: the toggle now. If it was turned off while the reply was on its way, the bot's cards
+ * the reply carries are dropped.
+ */
+function withPeek(g: Game, asked: boolean, on: boolean): Game {
+  return asked && !on ? withoutBotCards(g) : { ...g, peeked: asked };
 }
 
 export function gameStatus(game: Game): Status {
@@ -243,11 +266,32 @@ export function useGame() {
   const [thinking, setThinking] = useState(false);
   /** The review of the finished hand, once asked for. */
   const [review, setReview] = useState<LeanReview | null>(null);
+  /** "Peek at bot's cards": off by default, and off again at the start of every game. */
+  const [peek, setPeekState] = useState(false);
+  const peekRef = useRef(false);
+  /** Hands during which the peek toggle was on while the hand was played. The review marks them. */
+  const [peekedHands, setPeekedHands] = useState<number[]>([]);
   const gameRef = useRef(game);
   gameRef.current = game;
   // One request at a time; replies to an abandoned game are ignored.
   const busy = useRef(false);
   const generation = useRef(0);
+  /** A refresh of the table (after the peek toggle changed) waits for the request on its way. */
+  const refreshPending = useRef(false);
+  const refreshRef = useRef<() => void>(() => {});
+
+  const markPeeked = useCallback((s: LeanState) => {
+    if (s.status === "playing") setPeekedHands((hands) => (hands.includes(s.hand) ? hands : [...hands, s.hand]));
+  }, []);
+
+  /** The request on its way is done: allow the next one, and run a refresh that was waiting. */
+  const release = useCallback(() => {
+    busy.current = false;
+    if (refreshPending.current) {
+      refreshPending.current = false;
+      refreshRef.current();
+    }
+  }, []);
 
   /** Show an error reply. If it says the game is gone, the table offers only a new game. */
   const failed = useCallback((reply: { error: string; lost?: true }) => {
@@ -269,9 +313,10 @@ export function useGame() {
     busy.current = true;
     const gen = generation.current;
     const sent = Date.now();
+    const asked = peekRef.current;
     if (pause) setThinking(true);
     try {
-      const reply = await sendToLean(command);
+      const reply = await sendToLean(asked ? { ...command, peek: true } : command);
       if (gen !== generation.current) return;
       if ("ok" in reply) {
         setError(null);
@@ -280,7 +325,8 @@ export function useGame() {
           await new Promise((resolve) => window.setTimeout(resolve, wait));
           if (gen !== generation.current) return;
         }
-        setGame(make(reply.state));
+        setGame(withPeek(make(reply.state), asked, peekRef.current));
+        if (peekRef.current) markPeeked(reply.state);
       } else {
         failed(reply);
       }
@@ -288,11 +334,51 @@ export function useGame() {
       if (gen === generation.current) setError(`Could not reach the game engine: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       if (gen === generation.current) {
-        busy.current = false;
         setThinking(false);
+        release();
       }
     }
-  }, [failed]);
+  }, [failed, markPeeked, release]);
+
+  /** Ask Lean for the table again, with or without the bot's cards. It changes nothing in the game. */
+  const refresh = useCallback(() => {
+    const g = gameRef.current;
+    if (!g || g.lost !== null) return;
+    if (busy.current) {
+      refreshPending.current = true;
+      return;
+    }
+    void request({ cmd: "state" }, (s) => {
+      const now = gameRef.current ?? g;
+      return withReply(now, now, s);
+    });
+  }, [request]);
+  refreshRef.current = refresh;
+
+  /** Turn "Peek at bot's cards" on or off. Turning it off hides cards already shown, at once. */
+  const setPeek = useCallback(
+    (on: boolean) => {
+      peekRef.current = on;
+      setPeekState(on);
+      const g = gameRef.current;
+      if (!g || g.lost !== null) return;
+      if (on) markPeeked(g.lean);
+      else if (g.peeked) {
+        const hidden = withoutBotCards(g);
+        gameRef.current = hidden;
+        setGame(hidden);
+      }
+      refresh();
+    },
+    [markPeeked, refresh],
+  );
+
+  const resetPeek = useCallback(() => {
+    peekRef.current = false;
+    setPeekState(false);
+    setPeekedHands([]);
+    refreshPending.current = false;
+  }, []);
 
   const start = useCallback(
     (settings: GameSettings) => {
@@ -300,6 +386,7 @@ export function useGame() {
       busy.current = false;
       setThinking(false);
       setReview(null);
+      resetPeek();
       const players: Player[] = [
         { name: "You", color: HUMAN_COLOR },
         botFor(settings.risk, settings.bluffPct),
@@ -310,7 +397,7 @@ export function useGame() {
         withReply(base, null, s),
       );
     },
-    [request],
+    [request, resetPeek],
   );
 
   const humanAct = useCallback(
@@ -361,9 +448,9 @@ export function useGame() {
     } catch (e) {
       if (gen === generation.current) setError(`Could not reach the game engine: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
-      if (gen === generation.current) busy.current = false;
+      if (gen === generation.current) release();
     }
-  }, [failed]);
+  }, [failed, release]);
 
   const closeReview = useCallback(() => setReview(null), []);
 
@@ -373,8 +460,9 @@ export function useGame() {
     setThinking(false);
     setReview(null);
     setError(null);
+    resetPeek();
     setGame(null);
-  }, []);
+  }, [resetPeek]);
 
   // The hand history isn't shown on screen; expose it for testing.
   const log = game?.log;
@@ -382,5 +470,5 @@ export function useGame() {
     window.__holdemLog = log ?? [];
   }, [log]);
 
-  return { game, error, thinking, review, start, humanAct, nextHand, openReview, closeReview, quit };
+  return { game, error, thinking, review, peek, peekedHands, setPeek, start, humanAct, nextHand, openReview, closeReview, quit };
 }

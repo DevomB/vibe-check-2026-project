@@ -46,6 +46,14 @@ function isCount(x: unknown): x is number {
 function parseCommand(body: unknown): LeanCommand | null {
   if (typeof body !== "object" || body === null) return null;
   const b = body as Record<string, unknown>;
+  // Any command may ask to see the bot's cards ("Peek at bot's cards"); Lean adds them.
+  if (b.peek !== undefined && typeof b.peek !== "boolean") return null;
+  const command = parseGameCommand(b);
+  return command && b.peek === true ? { ...command, peek: true } : command;
+}
+
+/** The command itself, apart from the peek flag. */
+function parseGameCommand(b: Record<string, unknown>): LeanCommand | null {
   switch (b.cmd) {
     case "new_game":
       if (!isCount(b.risk) || !isCount(b.bluff_pct)) return null;

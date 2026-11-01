@@ -1573,3 +1573,56 @@ kbd {
 }
 
 div.opponent { cursor: default; }
+
+/* "Peek at bot's cards": a checkbox in the top bar, off by default. */
+.peek-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+.peek-toggle input {
+  accent-color: var(--gold);
+}
+
+.peek-toggle:has(input:checked) {
+  color: var(--gold);
+}
+
+/* The bot's cards, face up only because of a peek: dimmed (see .card.is-dim) and labeled. */
+.seat-cards.is-peeked {
+  position: relative;
+}
+
+.peek-label {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: rgba(10, 14, 19, 0.85);
+  border: 1px solid var(--line-strong);
+  color: var(--gold);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  z-index: 2;
+}
+
+/* Review of a hand played with the peek toggle on. */
+.review-peeked {
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(233, 196, 106, 0.1);
+  border: 1px solid rgba(233, 196, 106, 0.4);
+  color: var(--gold);
+  font-size: 13px;
+}

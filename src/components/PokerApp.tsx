@@ -12,7 +12,7 @@ import { chips, describeStartingHand } from "@/lib/format";
 import { type GameSettings, HUMAN_SEAT, TABLE, gameStatus, useGame } from "@/hooks/useGame";
 
 export function PokerApp() {
-  const { game, error, thinking, review, start, humanAct, nextHand, openReview, closeReview, quit } = useGame();
+  const { game, error, thinking, review, peek, peekedHands, setPeek, start, humanAct, nextHand, openReview, closeReview, quit } = useGame();
   const [showRules, setShowRules] = useState(false);
   // The sliders used last, so the setup screen keeps them after leaving a table.
   const [lastSettings, setLastSettings] = useState<GameSettings | undefined>(undefined);
@@ -100,6 +100,13 @@ export function PokerApp() {
           )}
         </div>
         <div className="topbar-actions">
+          <label
+            className="peek-toggle"
+            title="Show the bot's two cards during the hand. The review still grades your moves as if you could not see them."
+          >
+            <input type="checkbox" checked={peek} disabled={lost !== null} onChange={(e) => setPeek(e.target.checked)} />
+            Peek at bot's cards
+          </label>
           <button className="btn btn-ghost btn-sm" onClick={() => setShowRules(true)}>
             How to play
           </button>
@@ -169,7 +176,9 @@ export function PokerApp() {
           onLobby={quit}
         />
       )}
-      {review && <ReviewModal review={review} botReasons={game.lean.botReasons} onClose={closeReview} />}
+      {review && (
+        <ReviewModal review={review} botReasons={game.lean.botReasons} peeked={peekedHands.includes(review.hand)} onClose={closeReview} />
+      )}
       {rulesModal}
     </div>
   );

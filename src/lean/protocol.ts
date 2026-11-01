@@ -10,7 +10,7 @@ import type { Card } from "@/engine";
 export const RISK_MAX = 100;
 export const BLUFF_PCT_MAX = 60;
 
-export type LeanCommand =
+export type LeanCommand = (
   /** At the HTTP boundary, an empty seed requests a private server-generated game. */
   | { cmd: "new_game"; seed: string; risk: number; bluff_pct: number }
   | { cmd: "act"; action: "fold" | "check" | "call" }
@@ -18,13 +18,20 @@ export type LeanCommand =
   | { cmd: "act"; action: "bet" | "raise"; amount: number }
   | { cmd: "next_hand" }
   | { cmd: "state" }
-  | { cmd: "review"; hand: number };
+  | { cmd: "review"; hand: number }
+) & {
+  /**
+   * The "Peek at bot's cards" toggle: when true, the reply's state also shows the bot's cards.
+   * It changes nothing else. Any command may carry it.
+   */
+  peek?: boolean;
+};
 
 export interface LeanPlayer {
   stack: number;
   /** Chips put in during the current betting round. */
   bet: number;
-  /** Null while hidden: the bot's cards until a showdown. */
+  /** Null while hidden: the bot's cards until a showdown, unless the command asked to peek. */
   cards: Card[] | null;
   folded: boolean;
   allIn: boolean;
