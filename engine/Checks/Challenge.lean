@@ -6,6 +6,7 @@ import Engine.Proofs.BluffSpec
 import Engine.Proofs.ReviewSpec
 import Engine.Proofs.BluffCatcherSpec
 import Engine.Proofs.EquilibriumSpec
+import Engine.Proofs.ShuffleSpec
 import Engine.Proofs.EndsSpec
 import Engine.Proofs.BoardSpec
 import Engine.Protocol
@@ -687,3 +688,55 @@ theorem rock_bluff_catcher_total (board : List Card) (h5 : board.length = 5) (hd
     choiceTotal ((riverBettingSet (Sliders.ofRisk 0).bluffPct board).value ++
         (riverBettingSet (Sliders.ofRisk 0).bluffPct board).bluffs) mine (2 * cost) cost .call =
       -(648 * (cost : Int)) := sorry
+
+/-! ## T2: how fair the shuffle is (see `Engine/Proofs/Shuffle.lean`)
+
+The definitions (`pickWith`, `ValidPicks`, `allValidPicks`, `seedPicks`, `factorial`) are in
+`Engine/Proofs/ShuffleSpec.lean`. -/
+
+/-- **The real shuffle is `pickWith`, fed by the generator.** Shuffling `l` from `seed` is
+picking with the generator's numbers from `seed`, one per card. -/
+theorem shuffle_eq_pickWith {α : Type} (seed : Nat) (l : List α) :
+    shuffle seed l = pickWith (seedPicks l.length seed) l := sorry
+
+/-- **Only orders of the cards come out.** A pick list that makes `l'` from `l` makes an
+order of the same cards. -/
+theorem pickWith_perm {α : Type} : ∀ (picks : List Nat) (l : List α), (pickWith picks l).Perm l := sorry
+
+/-- **`n` cards have `n!` valid pick lists.** -/
+theorem allValidPicks_length (n : Nat) : (allValidPicks n).length = factorial n := sorry
+
+/-- `allValidPicks n` holds exactly the valid pick lists for `n` cards. -/
+theorem mem_allValidPicks (n : Nat) (picks : List Nat) :
+    picks ∈ allValidPicks n ↔ ValidPicks n picks := sorry
+
+/-- `allValidPicks n` lists no pick list twice. -/
+theorem allValidPicks_nodup (n : Nat) : (allValidPicks n).Nodup := sorry
+
+/-- **Every order can come out.** Every order of the cards in `l` (every list `l'` with the
+same cards) is what `pickWith` makes from some valid pick list. -/
+theorem every_order_possible {α : Type} (l l' : List α) (hp : l'.Perm l) :
+    ∃ picks, ValidPicks l.length picks ∧ pickWith picks l = l' := sorry
+
+/-- **Different picks give different orders.** If the cards in `l` are all different, two
+valid pick lists that make the same order are the same pick list. -/
+theorem picks_one_to_one {α : Type} (l : List α) (hl : l.Nodup) (p q : List Nat)
+    (hp : ValidPicks l.length p) (hq : ValidPicks l.length q)
+    (h : pickWith p l = pickWith q l) : p = q := sorry
+
+/-- **Fair picks give a fair deck.** If the cards in `l` are all different, then for every
+order `l'` of them, exactly one of the `n!` valid pick lists makes `l'`. So if every valid
+pick list is equally likely, every order of the cards has the same chance, 1 in `n!`. -/
+theorem each_order_once {α : Type} [DecidableEq α] (l l' : List α) (hl : l.Nodup)
+    (hp : l'.Perm l) :
+    ((allValidPicks l.length).filter fun picks => pickWith picks l == l').length = 1 := sorry
+
+/-- **The shuffle reads its seed only modulo 2^64.** Two seeds that differ by a multiple of
+2^64 give the same deck. -/
+theorem shuffle_uses_64_bits {α : Type} (seed : Nat) (l : List α) :
+    shuffle seed l = shuffle (seed % 2 ^ 64) l := sorry
+
+/-- **There are far fewer seeds than deck orders.** 2^64 is less than 52!. With
+`shuffle_uses_64_bits`, at most 2^64 of the 52! orders of a deck can ever come out of the
+shuffle, so most orders never do. -/
+theorem fewer_seeds_than_orders : 2 ^ 64 < factorial 52 := sorry

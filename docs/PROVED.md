@@ -2,8 +2,8 @@
 
 Sun Nov 1, 2026, main at 3e01c5b. Every theorem named here is stated in
 [`engine/Checks/Challenge.lean`](../engine/Checks/Challenge.lean), proved under
-`engine/Engine/Proofs/`, listed in [`engine/comparator.json`](../engine/comparator.json) (90
-names since the bluff-catcher, equilibrium and Risk 0 and 100 theorems were added; see [GUARANTEES.md](GUARANTEES.md) for the full
+`engine/Engine/Proofs/`, listed in [`engine/comparator.json`](../engine/comparator.json) (100
+names since the bluff-catcher, equilibrium, Risk 0 and 100, and shuffle-fairness theorems were added; see [GUARANTEES.md](GUARANTEES.md) for the full
 table), and checked on every push to main by `checks/audit.sh`, `lake comparator` and
 `lake check`, using only the three standard axioms. The README's "What we trust" section lists
 the definitions a reader must still read. Most important first.
@@ -96,6 +96,18 @@ the definitions a reader must still read. Most important first.
    bet in three is a bluff and you call half the time (`river_equilibrium_iff`). Risk 50 is
    two bluffs short of that (item 7), so the real bot is near this equilibrium, not on it.
 
+9. **The shuffle method is fair (randomness, part 1).** The real shuffle picks each next card
+   from the cards that are left, using a number from a seeded generator
+   (`shuffle_eq_pickWith`), and only ever makes an order of the same cards (`pickWith_perm`).
+   With `n` different cards there are exactly `n!` valid pick lists (`allValidPicks_length`,
+   `mem_allValidPicks`, `allValidPicks_nodup`). Every order of the cards comes from some pick
+   list (`every_order_possible`), and different pick lists make different orders
+   (`picks_one_to_one`). So each order comes from exactly one of the `n!` pick lists
+   (`each_order_once`): if the picks are fair, every order of the deck has the same chance,
+   1 in `n!`. The proof also shows a limit: the shuffle reads only 64 bits of its seed
+   (`shuffle_uses_64_bits`) and 2^64 is less than 52! (`fewer_seeds_than_orders`), so most of
+   the 52! deck orders can never come out.
+
 ## Not proved, most important first
 
 1. **That the bot plays well.** No theorem about winning or exploitability over whole
@@ -112,8 +124,12 @@ the definitions a reader must still read. Most important first.
 3. **The estimates.** Preflop equity comes from a stored table and flop equity from 1,000
    seeded deals. Only the turn and river counts are exact.
 
-4. **Randomness.** The shuffle is proved to be a permutation of the 52 cards, not to be random
-   or evenly distributed.
+4. **Randomness.** The shuffle method is proved fair (item 9): fair picks give every deck order
+   the same chance. What is not proved is that the picks are fair. They come from a fixed rule
+   (SplitMix64) on purpose, so a game can be replayed; "random" is not something a fixed rule
+   can be proved to be. Two smaller gaps: each pick is the generator's 64-bit number modulo
+   the cards left, which favours some places by at most one part in 2^64 / 52 (not proved),
+   and with only 2^64 seeds most deck orders never come out (proved, item 9).
 
 5. **The river set ignores earlier streets.** The review's grades are exact for that model,
    not a claim about full-hand strategy. A provable upgrade later: make the set depend on the
