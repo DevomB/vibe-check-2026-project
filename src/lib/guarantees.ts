@@ -34,10 +34,10 @@ export const GUARANTEES: readonly Guarantee[] = [
       "After every move the engine accepts, the stacks, the pot and the bets add up to the same number of chips as before.",
       "A new hand holds exactly the chips the two players brought to it.",
       "So every game always has exactly 1,000 chips.",
-      "The game the app plays is always such a game: answering the page's requests in order only builds games the engine can reach.",
+      "The engine's own game session is always such a game: whatever requests it gets, answering them in order only builds games the engine can reach.",
     ],
     theorems: ["step_keeps_chips", "startHand_keeps_chips", "chips_always_1000", "app_game_reachable"],
-    assumes: ["The game started as a new game and then changed only by moves and new hands that the engine accepted. For the app's game this is proved."],
+    assumes: ["The game started as a new game and then changed only by moves and new hands that the engine accepted. For the engine's session this is proved."],
     limits: ["It is about the engine's own game state. It does not check the numbers the web page shows."],
   },
   {
@@ -89,9 +89,11 @@ export const GUARANTEES: readonly Guarantee[] = [
   {
     id: "risk",
     code: "T4",
-    title: "More Risk never turns a call into a fold",
+    title: "More Risk never turns a call into a fold, or a bet into a check",
     says: [
       "Facing a bet in one spot, if the bot calls or raises at some Risk, it also calls or raises at every higher Risk.",
+      "On the river, with nothing to call and a bet allowed, if the bot bets at some Risk, it also bets at every higher Risk.",
+      "Before the river, with nothing to call, the bot makes the same move at every Risk.",
       "Risk sets two numbers inside the bot. Its caution never goes up as Risk goes up, and its bluff share never goes down.",
       "Risk 50 is the textbook setting: caution 0, so a call is judged on plain chips, and a 33% bluff share.",
       "When the bot reaches the call/fold rule, it calls exactly when the call, with a lost chip counted 1 + caution/50 times, is worth at least as much as folding. A strong hand can raise instead.",
@@ -104,6 +106,8 @@ export const GUARANTEES: readonly Guarantee[] = [
     ],
     theorems: [
       "more_risk_never_folds_a_call",
+      "more_risk_never_checks_a_bet",
+      "botDecide_no_bet_off_river",
       "ofRisk_caution_antitone",
       "ofRisk_bluff_monotone",
       "ideal_is_textbook",
@@ -121,7 +125,10 @@ export const GUARANTEES: readonly Guarantee[] = [
       "exploreHand_moves",
       "exploreHand_risk_monotone",
     ],
-    assumes: ["The same spot: the same game state, cards, board and win, tie and loss counts. For Risk: the bot faces a bet."],
+    assumes: [
+      "The same spot: the same game state, cards, board and win, tie and loss counts.",
+      "For calls: the bot faces a bet. For bets: five cards on the board, nothing to call, and a bet allowed.",
+    ],
     limits: [
       "It compares one decision at a time. It says nothing about whole games, or how often a bot wins.",
       "It holds for any win, tie and loss counts. It does not say the counts are exact on the flop or preflop.",
@@ -191,6 +198,7 @@ export const GUARANTEES: readonly Guarantee[] = [
       "No hand is both a value hand and a bluff.",
       "Every value hand is at least as strong as every hand the bot does not bet for value. Every bluff is no stronger than any hand that is not a bluff.",
       "With no bet to face on the river and a legal bet available, the bot bets exactly the hands in this set.",
+      "A bigger bluff share never turns a river bet into a check: the value hands stay the same, and the bluffs only grow.",
     ],
     theorems: [
       "bluff_frequency",
@@ -202,8 +210,12 @@ export const GUARANTEES: readonly Guarantee[] = [
       "rankRiverHands_sorted",
       "ofRisk_bluff_le_60",
       "ideal_river_set",
+      "more_bluff_never_checks_a_bet",
     ],
-    assumes: ["The board has five different cards."],
+    assumes: [
+      "The board has five different cards.",
+      "For a bigger bluff share: nothing to call, a bet allowed, and a share below 100%. Risk never sets more than 60%.",
+    ],
     limits: [
       "It is about the set of hands, not how often the bot bluffs in played games.",
       "Your cards, the earlier betting and luck change what you see at the table.",
