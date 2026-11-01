@@ -31,19 +31,19 @@ Each theorem is checked by Lean. `#print axioms` shows only Lean's standard axio
 | `botDecide_legal` (T3, bot half) | Whenever the player to act may act at all, the bot's move is legal. This holds for every slider setting, seed, set of cards and board. | `Engine/Proofs/BotLegal.lean` |
 | `botDecide_risk_monotone` (T4) | Take one spot. If the bot calls or raises at some Risk, it also calls or raises at every lower Risk. So more Risk can turn a call into a fold, but never a fold into a call. | `Engine/Proofs/BotRisk.lean` |
 | `risk_monotone` (T4, for given counts) | The same, for any win/tie/loss counts. | `Engine/Proofs/BotRisk.lean` |
-| `enumeration_exact` (T6) | The exact river and turn counts look at every possible outcome exactly once, and score each one with the spec's `showdown`. On the river, that is every hand the opponent can hold (990 of them). On the turn, it is every (river card, opponent hand) pair. | `Engine/Proofs/EquityExact.lean` |
-| `bot_calls_only_when_worth_it`, `bot_folds_only_when_not_worth_it` | The bot calls only when the call is worth it at its Risk, and folds only when it is not. "Worth it" means that a lost chip counts (1 + Risk/50) times as much as a won chip (MVP §3; `RiskSpec.lean`). | `Engine/Proofs/RiskUtility.lean` |
+| `enumeration_exact` (T6) | The exact river and turn counts look at every possible outcome exactly once, and score each one with the spec's `showdown`. On the river, that is every hand the opponent can hold (990 of them, when the bot's two cards and the five board cards are all different). On the turn, it is every (river card, opponent hand) pair. | `Engine/Proofs/EquityExact.lean` |
+| `bot_calls_only_when_worth_it`, `bot_folds_only_when_not_worth_it` | The bot calls only when the call is worth it at its Risk, and folds only when it is not. Both assume the pot is at least the call, which is always true in a real hand. "Worth it" means that a lost chip counts (1 + Risk/50) times as much as a won chip (MVP §3; `RiskSpec.lean`). | `Engine/Proofs/RiskUtility.lean` |
 
 The two properties are written out on their own in `Engine/Proofs/BotSpec.lean`
 (`AlwaysLegal`, `RiskMonotone`). That file also shows that each property rejects a bad bot:
 a bot that always checks, a bot that bets more chips than it has, and a decision table that
-calls at Risk 100 but folds at Risk 0. Each theorem also has a worked example on a real
+calls at Risk 100 but folds at Risk 0. T3 and T4 each also have a worked example on a real
 spot, with every condition met.
 
-`Classical.choice` appears only through the preflop lookup (`startingHandName`, reached via
-`countsFor`). It is used inside a proof, not to pick a value: the code still runs, and the
-tests run it. The bot's decision step alone (`decideWithCounts_legal`, `risk_monotone`) uses
-only `propext` and `Quot.sound`.
+`Classical.choice` comes in only through the preflop lookup: `rankLetters` (the letters
+`23456789TJQKA` used to name a starting hand) calls Lean's own `String.toList`, which uses it.
+That code still runs, and the tests run it. The bot's decision step on its own
+(`decideWithCounts_legal`, `risk_monotone`) uses only `propext` and `Quot.sound`.
 
 ## What to review
 
