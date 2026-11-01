@@ -1,5 +1,6 @@
 import type { Card } from "@/lib/cards";
-import type { LeanEvent, LeanReview, ReviewDecision, ReviewLabel } from "@/lean/protocol";
+import type { LeanEvent, LeanHandSummary, LeanHands, LeanReview, LeanRiskExplorerEntry, ReviewDecision, ReviewLabel } from "@/lean/protocol";
+import { describeStartingHand } from "@/lib/format";
 
 /**
  * Display helpers for the game review: the label badges, the move list and the coach's
@@ -225,4 +226,104 @@ function missingRiverSpot(events: readonly LeanEvent[], human: number): string {
   const answer = moves.slice(firstBet + 1).find((e) => e.player === human);
   if (answer?.action === "raise") return "You raised the bot's bet instead of calling or folding.";
   return NO_SUCH_DECISION;
+}
+
+/* ---------- The hands: what each player held, and how close to the right call each move was ---------- */
+
+/** A hand as words: "Full House", or the starting hand before the flop ("Pocket Kings"). */
+export function handWords(h: LeanHandSummary): string {
+  return h.hand ?? describeStartingHand(h.cards);
+}
+
+/** "a Full House" / "an Ace-King suited" / "Pocket Kings". */
+function withA(words: string): string {
+  if (/^Pocket /.test(words)) return words;
+  return `${/^[AEIOU]/.test(words) ? "an" : "a"} ${words}`;
+}
+
+/**
+ * One or two sentences on the two final hands: who was stronger, and the one thing worth
+ * noticing, such as a hand made by the board alone. Lean names the hands and says whose is
+ * stronger; this only words it.
+ */
+export function handsVerdict(hands: LeanHands, botName: string): string {
+  const you = handWords(hands.you);
+  const bot = handWords(hands.bot);
+  const notes: string[] = [];
+  if (hands.you.hand && hands.you.cards_used === 0) {
+    notes.push(`Your ${you.toLowerCase()} was all on the board, so ${botName} had it too: your own cards did not play.`);
+  } else if (hands.bot.hand && hands.bot.cards_used === 0) {
+    notes.push(`${botName}'s ${bot.toLowerCase()} was all on the board: its own cards did not play.`);
+  }
+  let head: string;
+  if (hands.stronger === null) head = `Before the flop: you held ${you}, ${botName} held ${bot}.`;
+  else if (hands.stronger === "tie") head = `Both hands were equal: ${withA(you)} each.`;
+  else if (hands.stronger === "you") head = `Your ${you.toLowerCase()} was stronger than ${botName}'s ${bot.toLowerCase()}.`;
+  else head = `${botName}'s ${bot.toLowerCase()} was stronger than your ${you.toLowerCase()}.`;
+  return [head, ...notes].join(" ");
+}
+
+/** A chance as a whole percentage: 0.345 is "35%". */
+export function wholePct(x: number): string {
+  return `${Math.round(x * 100)}%`;
+}
+
+export interface MoveCoach {
+  /** What you held and how strong it was. */
+  held: string;
+  /** How the move compares with the price, by pot odds; null when there was no price to compare. */
+  verdict: string | null;
+  /** True when pot odds agree with the move. */
+  sound: boolean | null;
+}
+
+/**
+ * For your moves Lean does not grade exactly: what you held, its win chance against a random
+ * hand, and whether the move fits the price (pot odds). A rough check, not a grade.
+ */
+export function moveCoach(d: ReviewDecision, yourCards: readonly Card[]): MoveCoach | null {
+  if (d.win_chance == null) return null;
+  const hand = d.hand_then ?? describeStartingHand(yourCards);
+  const held = `You held ${withA(hand)}: about ${wholePct(d.win_chance)} to win against a random hand.`;
+  const price = d.price ?? null;
+  if (price === null) {
+    if (d.your_action === "bet" || d.your_action === "raise") {
+      const strong = d.win_chance >= 0.5;
+      return { held, verdict: strong ? "Betting a hand that wins more often than not is how you get paid." : "A bet with a weaker hand is a bluff: it works only if the bot folds.", sound: strong ? true : null };
+    }
+    return { held, verdict: null, sound: null };
+  }
+  const enough = d.win_chance >= price;
+  const need = `A call cost ${wholePct(price)} of the pot after calling`;
+  switch (d.your_action) {
+    case "call":
+      return { held, verdict: enough ? `${need}, and your hand won more often than that: a sound call.` : `${need}, more than your hand's chances: by pot odds, folding was better.`, sound: enough };
+    case "fold":
+      return { held, verdict: enough ? `${need}, less than your hand's chances: folding gave up a good price.` : `${need}, more than your hand's chances: a sound fold.`, sound: !enough };
+    case "raise":
+      return { held, verdict: enough ? `${need}, and your hand had more than that, so putting more in was reasonable.` : `${need}, more than your hand's chances: this raise was a bluff.`, sound: enough ? true : null };
+    default:
+      return { held, verdict: null, sound: null };
+  }
+}
+
+/**
+ * For one of the bot's moves: its hand then (`hand`, or its starting hand from `cards` before
+ * the flop) with its win chance, and, only when they differ, the move the textbook setting
+ * (Risk 50) would have made.
+ */
+export function botCoach(
+  entry: LeanRiskExplorerEntry | null,
+  hand: string | null,
+  cards: readonly Card[],
+  botName: string,
+): { held: string | null; textbook: string | null } {
+  const counts = entry?.counts;
+  const total = counts ? counts.win + counts.tie + counts.loss : 0;
+  const chance = counts && total > 0 ? ` (about ${wholePct((2 * counts.win + counts.tie) / (2 * total))} to win against a random hand)` : "";
+  const words = hand ?? (cards.length === 2 ? describeStartingHand(cards) : null);
+  const held = words || chance ? `${botName} held ${words ? withA(words) : "its two cards"}${chance}.` : null;
+  const textbookMove = entry?.actions[50];
+  if (!entry || textbookMove === undefined || entry.risk === 50 || textbookMove === entry.action) return { held, textbook: null };
+  return { held, textbook: `At the textbook setting (Risk 50) it would ${textbookMove.toLowerCase()} here instead.` };
 }

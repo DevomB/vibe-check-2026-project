@@ -164,11 +164,32 @@ def RiskExplorerEntry.json (e : RiskExplorerEntry) : Json :=
       ("effect", toJson e.effect.name),
       ("summary", toJson e.effect.summary) ]
 
+/-- One player's hand for the review: their two cards and, once the board has three or more
+cards, the name of their best hand, its five cards and how many of their own two cards it
+uses (0 means the board alone makes it). -/
+def handSummaryJson (hole board : List Card) : Json :=
+  let best := bestFive (hole ++ board)
+  Json.mkObj
+    [ ("cards", cardsJson hole),
+      ("hand", match handName best with | some n => toJson n | none => Json.null),
+      ("best", if best.isEmpty then Json.null else cardsJson best),
+      ("cards_used", toJson (hole.filter best.contains).length) ]
+
+/-- The win chance of `hole` against one random hand, ties counting half, as the bot works it
+out (`countsFor`: a table before the flop, 1,000 seeded deals on the flop, exact after). -/
+def winChance (seed : Nat) (hole board : List Card) : Frac :=
+  let c := countsFor seed hole board
+  ⟨2 * c.win + c.tie, max (2 * c.total) 1⟩
+
 /-- The review of hand `n` (MVP §13). Ungraded moves have `null` grades: "not graded yet".
 A graded move also has `range`: the river range viewer's numbers. `risk_explorer` has one
 entry per bot move, or is `null` while hand `n` is played. -/
 def reviewJson (srv : Session) (n : Nat) (lines : Array ReviewLine) : Json :=
   let ranges := srv.ranges n
+  -- The cards are sent only once hand `n` is over, so the bot's cards never show early.
+  let over := n ≠ srv.game.handNo || srv.game.hand.ended.isSome
+  let cards := if over then srv.handCards n else none
+  let seed := handSeed srv.game.seed n
   let line (i : Nat) (l : ReviewLine) : Json :=
     let grade (f : RiverVerdict → Json) := match l.verdict with | some v => f v | none => Json.null
     Json.mkObj <|
@@ -178,13 +199,42 @@ def reviewJson (srv : Session) (n : Nat) (lines : Array ReviewLine) : Json :=
         ("worth_bb", grade fun v =>
           Json.mkObj [("call", v.worthCall.json 2), ("fold", v.worthFold.json 2)]),
         ("equity_had", grade (·.equityHad.json 3)),
-        ("equity_needed", grade (·.equityNeeded.json 3)) ]
+        ("equity_needed", grade (·.equityNeeded.json 3)),
+        -- What you held when you moved, and the price of a call then (for the hand summary).
+        ("hand_then", match cards with
+          | some (you, _, _) => match handName (bestFive (you ++ l.board)) with
+            | some name => toJson name | none => Json.null
+          | none => Json.null),
+        ("win_chance", match cards with
+          | some (you, _, _) => (winChance seed you l.board).json 3
+          | none => Json.null),
+        ("price", if l.toCall = 0 then Json.null
+          else (Frac.mk l.toCall (l.pot + l.toCall)).json 3) ]
       ++ match ranges[i]?.join with
         | some r => [("range", r.json)]
         | none => []
   Json.mkObj
     [("hand", toJson n), ("decisions", Json.arr (lines.mapIdx line)),
+     -- Both players' cards and best hands, shown in every review once the hand is over.
+     ("hands", match cards with
+       | some (you, botCards, board) => Json.mkObj
+          [("board", cardsJson board), ("you", handSummaryJson you board),
+           ("bot", handSummaryJson botCards board),
+           -- Whose best hand is stronger on the final board (by the rules' ranking); null
+           -- before the flop.
+           ("stronger", if board.length < 3 then Json.null else
+              let a := bestScore (you ++ board)
+              let b := bestScore (botCards ++ board)
+              toJson (if b < a then "you" else if a < b then "bot" else "tie"))]
+       | none => Json.null),
      -- Like `botReasons`: `null` while hand `n` is still being played.
+     -- The bot's best hand when it made each move (null before the flop), once hand `n` is over.
+     ("bot_hands", if !over then Json.null else
+        match srv.logs[n - 1]? with
+        | some log => Json.arr (log.botMoves.map fun (_, hole, board, _, _) =>
+            match handName (bestFive (hole ++ board)) with
+            | some name => toJson name | none => Json.null)
+        | none => Json.null),
      ("bot_reasons", match srv.reasonsFor n with | some rs => toJson rs | none => Json.null),
      -- Also `null` while hand `n` is played: the counts show how strong the bot's hand was.
      ("risk_explorer", match srv.riskExplorer n with

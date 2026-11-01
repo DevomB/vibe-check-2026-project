@@ -86,7 +86,17 @@ def foldThenNext := [start42, "{\"cmd\":\"act\",\"action\":\"fold\"}", "{\"cmd\"
   !isError r[3]! && stateOf r[3]! == stateOf r[4]!
     && field review "decisions" == Json.arr #[Json.mkObj
       [("street", "preflop"), ("your_action", "fold"), ("label", Json.null),
-       ("worth_bb", Json.null), ("equity_had", Json.null), ("equity_needed", Json.null)]]
+       ("worth_bb", Json.null), ("equity_had", Json.null), ("equity_needed", Json.null),
+       -- 7-2 offsuit before the flop: no named hand yet, 34.5% against a random hand, and
+       -- calling 5 to win 15 would have cost a quarter of the pot after the call.
+       ("hand_then", Json.null), ("win_chance", Json.num ⟨345, 3⟩), ("price", Json.num ⟨250, 3⟩)]]
+
+-- Once the hand is over, its review shows both players' cards, the bot's included.
+#guard
+  let r := runLines (foldThenNext ++ ["{\"cmd\":\"review\",\"hand\":1}"])
+  let hands := field (field r[3]! "review") "hands"
+  field (field hands "you") "cards" == Json.arr #["7d", "2s"]
+    && field (field hands "bot") "cards" == Json.arr #["Ts", "Ks"]
 
 -- No review for a hand not dealt yet, or hand 0.
 #guard (runLines (foldThenNext ++ ["{\"cmd\":\"review\",\"hand\":3}"])).map isError

@@ -797,3 +797,62 @@
     min-height: 180px;
   }
 }
+
+/* ---------- The hands: both players' cards and best hands ---------- */
+.hands {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid var(--line-strong);
+}
+
+.handRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.handRow b {
+  font-family: var(--display);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ivory);
+}
+
+.handWho {
+  width: 44px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.handsVerdict {
+  margin: 2px 0 0;
+  font-size: 14.5px;
+  line-height: 1.45;
+}
+
+.offPrice {
+  color: var(--brass) !important;
+}
+
+/* ---------- Extra detail, folded away ---------- */
+.more {
+  margin-top: 16px;
+  border-top: 1px solid var(--line-strong);
+  padding-top: 10px;
+}
+
+.more > summary {
+  cursor: pointer;
+  font-size: 13.5px;
+  color: var(--muted);
+}
+
+.more[open] > summary {
+  margin-bottom: 6px;
+}
