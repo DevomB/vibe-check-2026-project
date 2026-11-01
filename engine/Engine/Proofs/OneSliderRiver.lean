@@ -106,7 +106,8 @@ def boardAK257 : List Card :=
 -- it is among the 486 bluffs at Risk 100 (Bluff 60%) but not among the 160 at Risk 50 (33%).
 -- More Risk turned a check into a bet. The reverse, a hand bet at Risk 50 and checked at
 -- Risk 100, is what the theorem rules out; `riverBets` decides these bets
--- (`botDecide_river_follows_set`).
+-- (`botDecide_river_follows_set`). This is also why `botDecide_no_bet_off_river` leaves the
+-- river out: with no bet to face, the two settings differ only there.
 #guard riverBets (Sliders.ofRisk 100).bluffPct boardAK257 [card 12 .clubs, card 11 .diamonds] == true
 #guard riverBets (Sliders.ofRisk 50).bluffPct boardAK257 [card 12 .clubs, card 11 .diamonds] == false
 -- Eight-six is weak enough to be a bluff at both; two aces are a value hand at both.
@@ -130,6 +131,12 @@ example (n : Nat) :
     stateAK257 (by decide) (by decide) ⟨100, by decide⟩ (by decide) ⟨n, hbet50⟩
   rw [hm] at hcheck100
   cases hcheck100
+
+/-- `ideal_river_set` on a real board with both hypotheses met: at Risk 50 the A K 2 5 7 board
+has 324 value hands and 160 bluffs. -/
+example : (riverBettingSet (Sliders.ofRisk 50).bluffPct boardAK257).value.length = 324 ∧
+    (riverBettingSet (Sliders.ofRisk 50).bluffPct boardAK257).bluffs.length = 160 :=
+  ideal_river_set boardAK257 (by decide) (by decide)
 
 #print axioms more_bluff_never_checks_a_bet
 #print axioms more_risk_never_checks_a_bet

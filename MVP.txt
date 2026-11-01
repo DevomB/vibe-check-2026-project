@@ -11,11 +11,12 @@ CHANGED FROM v2 (decisions confirmed during the MVP review)
 - Value hands use floor(30%); bluff hands round their target count half upward. Pot sizing has explicit legal bounds and fallback. Tier 1 remains mandatory; pitch optional proofs only when completed.
 - Lean 4.35.0 with standard axioms only; Lean drives bot actions and street transitions. The required demo is one local active game, not a hosted multi-user service.
 
+READ THIS FIRST: this is the original plan and its rule decisions, written Saturday Oct 31. Sections 3 to 6 still define how the game, the bot and the review behave; the sliders changed on Sunday Nov 1, see the block below. Current status and the CI evidence are in README.md. The proved theorems, with their Lean names, are in SPEC.md and README.md. Plans, timelines and checklists below are kept as they were written. Research notes provide background; older research recommendations do not override this file. Findings and decisions are recorded in docs/MVP_REVIEW.md.
+
 CHANGED SUNDAY NOV 1 (the one-slider decision)
 - Bluff is no longer its own slider. The player sets one Risk, 0 to 100, meaning appetite for risk: higher Risk is more risk-seeking (calls more, bluffs more), lower Risk is more risk-averse. Risk 0 is the rock, 50 the textbook setting (plain chip profit, 33% bluffs), 100 the maniac (60% bluffs). The engine maps it to its two internal numbers with Sliders.ofRisk (engine/Engine/Slider.lean); see docs/THEORY.md.
 - The "Risk" described in section 3 below is now the bot's INTERNAL caution number (0 = plain chip profit, 100 = a lost chip counts three times), which falls as the player's Risk rises. The section 8 theorems about Risk are stated over that internal number; more_risk_never_folds_a_call states the player's direction.
 
-READ THIS FIRST: this is the original plan and its rule decisions, written Saturday Oct 31. Sections 3 to 6 still define how the game, the sliders, the bot and the review behave. Current status and the CI evidence are in README.md. The proved theorems, with their Lean names, are in SPEC.md and README.md. Plans, timelines and checklists below are kept as they were written. Research notes provide background; older research recommendations do not override this file. Findings and decisions are recorded in docs/MVP_REVIEW.md.
 
 ONE LINE
 Build your opponent. Play it. Get a game review whose grades are proved to follow its stated rules, and never peek at the bot's cards.
@@ -164,7 +165,7 @@ A Proofs screen. Blind increases. 3+ players and side pots. Kuhn/Leduc mode. Rea
 - S6 Kuhn poker mode with a proven unexploitable strategy.
 - S7 3-player table with side pots, and T1 extended to side pots.
 - S8 T10, the evaluator equivalence proof.
-- S9 Mystery bot (you read the bot): the sliders are hidden, you play, then you guess its Risk, and the review tells you how close you were. Cheap on top of the MVP. (Done: Mystery mode.)
+- S9 Mystery bot (you read the bot): the sliders are hidden, you play, then you guess its Risk, and the review tells you how close you were. Cheap on top of the MVP. (Done: Mystery mode; since Nov 1 the guess is one Risk value.)
 - S10 The bot reads you: it tracks how often you fold and bluffs more only when its own numbers say it pays. Provable: it never bluffs unless its estimate says the bluff is profitable. Not provable: that its read on you is accurate.
 
 

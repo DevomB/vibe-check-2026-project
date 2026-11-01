@@ -34,6 +34,8 @@ export function ResultBadge({ game, delay }: { game: Game; delay: number }) {
   const { hand, seatOf } = game.dealt;
   const folders = hand.players.flatMap((p, i) => (p.folded ? [game.players[seatOf[i]!]!.name] : []));
   const foldText = folders.length === 1 ? `${folders[0]} folded` : "everyone else folded";
+  const losingHand = game.lean.result?.outcome === "player0" ? game.lean.players[1].handName
+    : game.lean.result?.outcome === "player1" ? game.lean.players[0].handName : null;
   return (
     <div className={`result-badge ${youWon ? "is-you" : ""}`} style={{ animationDelay: `${delay}s` }}>
       {winners.map((w) => (
@@ -41,7 +43,9 @@ export function ResultBadge({ game, delay }: { game: Game; delay: number }) {
           <span className="result-who">
             {winText(w)} <strong>{chips(w.amount)}</strong>
           </span>
-          <span className="result-hand">{w.hand ?? foldText}</span>
+          <span className="result-hand">
+            {w.hand && losingHand && winners.length === 1 ? `${w.hand} beats ${losingHand}` : w.hand ?? foldText}
+          </span>
         </div>
       ))}
       {split && <div className="result-note">Split pot</div>}
