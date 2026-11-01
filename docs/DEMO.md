@@ -244,12 +244,13 @@ Also check the integrated features:
 
 | Item | Value |
 | --- | --- |
-| OS and machine | |
-| Commit | |
-| Date and time | |
-| `make install && make run` on a fresh clone | [ ] pass [ ] fail |
-| Scene (a) script above | [ ] PASS [ ] FAIL |
-| Green Lean proofs CI run for this commit (link) | |
+| OS and machine | WSL2 Ubuntu 26.04.1 on Windows, kernel 6.18 microsoft-standard, 20 cores, 15 GB RAM (the demo machine) |
+| Commit | 45d13b3 (web); the engine code is 0c5c5b3's, which the server reports as `engineCommit`, turn mode exact |
+| Date and time | 2026-11-01, 14:43 to 14:47 PST |
+| `make install && make run` on a fresh clone | [ ] pass [x] fail: GNU make is not installed in this WSL (`make: command not found`; apt has 4.4.1) and there is none on the Windows side. Every recipe step run by hand passed: `cd engine && lake build` from an empty `.lake` in 47.7 s wall (3 min 52 s CPU, 135 jobs, 119 MB binary); incremental rebuild 0.15 s; `npm ci` 8.8 s; `npm run build` 6.6 s; `npm start --port 3001` ready in about 2 s. Re-run the literal command after `sudo apt-get install -y make`. |
+| Scene (a) script above | [x] PASS: six requests all ok; last decision Mistake, worth call −2.67 BB, fold 0, equity had 0.185, needed 0.333 |
+| Full `npm test` against the fresh build | [x] PASS: 23 files, 466 tests, 29 s |
+| Green Lean proofs CI run for this commit (link) | pending: the README's evidence line is updated when CI is green on the final commit |
 
 ### Build-path notes for the Sunday check
 
@@ -259,4 +260,5 @@ These were seen and are not fixed yet; they are planned for after judging.
   (`Makefile:37`) runs after the build, so a busy port shows up only after a full build.
 - `Makefile:4` joins PATH with `:`. Native Windows GNU make uses `;`, so it may not find
   elan's `lake`. The Makefile says to use Git Bash on Windows.
-- Nobody has timed a fresh `lake build` from an empty `.lake`. Time it on Sunday.
+- A fresh `lake build` from an empty `.lake` took 47.7 s wall on the demo machine (20 cores) on
+  Nov 1; see the Sunday check table.
