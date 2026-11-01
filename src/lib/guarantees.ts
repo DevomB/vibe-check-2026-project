@@ -250,6 +250,7 @@ export const GUARANTEES: readonly Guarantee[] = [
       "The review agrees: it grades both call and fold Best exactly when one third of the bot hands your cards do not block are bluffs.",
       "At Risk 50 the bot's river set has 324 value hands and 160 bluffs, two short of one third. Before your cards remove any hands, calling a pot-sized bet with such a hand loses 1/121 of the bet on average.",
       "No whole-number bluff share gives exactly one third beside 324 value hands. 33%, the Risk 50 share, is the closest.",
+      "At Risk 100 the set has 486 bluffs: calling such a bet down gains 0.8 bets per call. At Risk 0 it has none: every call loses the bet. For any bet size, more bluffs in the set never make your call worth less. These totals are over the whole set, before your cards remove any hands.",
     ],
     theorems: [
       "bluff_catcher_call_total",
@@ -262,6 +263,9 @@ export const GUARANTEES: readonly Guarantee[] = [
       "risk50_bluff_catcher_call_loses",
       "no_bluff_setting_is_exact",
       "bluff_33_is_closest",
+      "more_bluffs_more_call_total",
+      "maniac_bluff_catcher_total",
+      "rock_bluff_catcher_total",
     ],
     assumes: [
       "Your hand beats every bluff and loses to every value hand: no ties.",

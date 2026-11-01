@@ -88,7 +88,10 @@
     "fewer_calls_bluff_wins",
     "value_bet_never_worse",
     "river_equilibrium_iff",
-    "bot_river_bet_is_pot_sized"
+    "bot_river_bet_is_pot_sized",
+    "more_bluffs_more_call_total",
+    "maniac_bluff_catcher_total",
+    "rock_bluff_catcher_total"
   ],
   "permitted_axioms": [
     "propext",

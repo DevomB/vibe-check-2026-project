@@ -24,6 +24,7 @@ import Engine.Proofs.BotLegal
 import Engine.Proofs.BotRisk
 import Engine.Proofs.OneSlider
 import Engine.Proofs.OneSliderRiver
+import Engine.Proofs.RiverGame
 import Engine.Proofs.Reachable
 import Engine.Proofs.Legal
 import Engine.Proofs.RiskUtility

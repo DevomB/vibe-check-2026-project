@@ -649,3 +649,41 @@ theorem bot_river_bet_is_pot_sized (sl : Sliders) (seed : Nat) (hole board : Lis
     (hlo : lo ≤ s.bet s.toAct + s.potToWin) (hhi : s.bet s.toAct + s.potToWin ≤ hi)
     (n : Nat) (hbet : (botDecide sl seed hole board s shown).action = .raiseTo n) :
     n = s.bet s.toAct + s.potToWin := sorry
+
+/-! ## The bluff catcher against the other Risk settings (see `Engine/Proofs/RiverGame.lean`)
+
+Risk 100 and Risk 0 against a bluff catcher, and more bluffs never lowering the call for any
+bet size. Totals are over the whole betting set, before blocked hands are removed. One street,
+a bluff catcher, the bot as bettor; nothing here says the bot plays well. -/
+
+/-- Against a bluff catcher, adding bluffs to the range never makes calling worth less, for any
+prize and cost. -/
+theorem more_bluffs_more_call_total (mine : List Nat) (value bluffs bluffs' : List RankedHand)
+    (prize cost : Nat) (hc : CatchesBluffs mine value bluffs)
+    (hc' : CatchesBluffs mine value bluffs') (hlen : bluffs.length ≤ bluffs'.length) :
+    choiceTotal (value ++ bluffs) mine prize cost .call ≤
+      choiceTotal (value ++ bluffs') mine prize cost .call := sorry
+
+/-- **Calling the maniac down wins.** On a river board with no card twice, a bluff catcher
+facing the Risk 100 bot's pot-sized bet of `cost` gains `1296·cost` half-chips over the 810
+hands the bot bets: `648·cost` chips, or 0.8 bets per call. The total is over the whole
+betting set, before the hands the caller's cards block are removed. -/
+theorem maniac_bluff_catcher_total (board : List Card) (h5 : board.length = 5) (hd : board.Nodup)
+    (mine : List Nat) (cost : Nat)
+    (hc : CatchesBluffs mine (riverBettingSet (Sliders.ofRisk 100).bluffPct board).value
+      (riverBettingSet (Sliders.ofRisk 100).bluffPct board).bluffs) :
+    choiceTotal ((riverBettingSet (Sliders.ofRisk 100).bluffPct board).value ++
+        (riverBettingSet (Sliders.ofRisk 100).bluffPct board).bluffs) mine (2 * cost) cost .call =
+      1296 * (cost : Int) := sorry
+
+/-- **Folding to the rock is right.** At Risk 0 the bot never bluffs, so a bluff catcher facing
+its pot-sized bet of `cost` loses `648·cost` half-chips over the 324 hands it bets: the whole
+call, every time. The total is over the whole betting set, before the hands the caller's
+cards block are removed. -/
+theorem rock_bluff_catcher_total (board : List Card) (h5 : board.length = 5) (hd : board.Nodup)
+    (mine : List Nat) (cost : Nat)
+    (hc : CatchesBluffs mine (riverBettingSet (Sliders.ofRisk 0).bluffPct board).value
+      (riverBettingSet (Sliders.ofRisk 0).bluffPct board).bluffs) :
+    choiceTotal ((riverBettingSet (Sliders.ofRisk 0).bluffPct board).value ++
+        (riverBettingSet (Sliders.ofRisk 0).bluffPct board).bluffs) mine (2 * cost) cost .call =
+      -(648 * (cost : Int)) := sorry
