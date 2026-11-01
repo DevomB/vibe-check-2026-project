@@ -59,7 +59,6 @@ export function ActionBar({ hand, legal, waiting, botMessage = null, handStrengt
   return (
     <div className={`action-bar ${legal ? "is-active" : ""}`}>
       <div className="action-info">
-        <span className="strength-label">Your hand</span>
         <span className="strength-value">{handStrength || "—"}</span>
         {botMessage && <span className="bot-message">{botMessage}</span>}
         {!legal && <span className="waiting">{waiting}</span>}

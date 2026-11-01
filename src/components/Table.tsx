@@ -61,7 +61,6 @@ export function Table({ game, botThinking = false }: { game: Game; botThinking?:
       <div className="table">
         <div className="table-rail" />
         <div className="table-felt">
-          <div className="felt-mark">TEXAS HOLD'EM</div>
           <div className="board">
             {Array.from({ length: 5 }, (_, i) => {
               const card = hand.board[i];

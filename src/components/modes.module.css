@@ -9,8 +9,10 @@
   justify-content: flex-end;
   background: rgba(3, 6, 9, 0.6);
   z-index: 60; /* above the review modal (50), which can open the drawer */
+  animation: backdropIn 200ms var(--ease-out) both;
 }
 
+/* Slides in from the edge it is attached to, on the drawer curve from Emil Kowalski's Vaul. */
 .drawer {
   position: relative;
   display: flex;
@@ -19,13 +21,35 @@
   height: 100%;
   padding: 24px 20px 0;
   background: var(--panel);
-  border-left: 1px solid var(--line-strong);
-  box-shadow: var(--shadow);
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: -16px 0 48px rgba(0, 0, 0, 0.4);
+  animation: drawerIn 320ms var(--ease-drawer) both;
+}
+
+@keyframes backdropIn {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes drawerIn {
+  from {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drawer {
+    animation-name: backdropIn;
+  }
 }
 
 .drawer h2 {
   margin: 0 40px 6px 0;
-  font-size: 22px;
+  font-family: var(--display);
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1.1;
 }
 
 .drawerIntro {
@@ -41,28 +65,33 @@
   padding-bottom: 24px;
 }
 
+/* One guarantee per section, split by hairlines rather than boxed. */
 .guarantee {
-  margin-bottom: 12px;
-  padding: 14px 16px;
-  border-radius: 12px;
-  background: var(--bg-2);
-  border: 1px solid var(--line);
+  padding: 18px 0;
+  border-top: 1px solid var(--line);
 }
 
 .guarantee.isFocus {
-  border-color: var(--gold);
+  margin: 0 -12px;
+  padding: 18px 12px;
+  border-radius: 10px;
+  background: rgba(201, 165, 92, 0.08);
+  border-top-color: transparent;
 }
 
 .guarantee h3 {
   margin: 0 0 8px;
-  font-size: 16px;
+  font-family: var(--display);
+  font-size: 21px;
+  font-weight: 600;
   color: var(--text);
 }
 
 .guarantee h4 {
-  margin: 12px 0 4px;
+  margin: 14px 0 4px;
   font-size: 13px;
-  color: var(--gold);
+  font-weight: 700;
+  color: var(--muted);
 }
 
 .guarantee ul {
@@ -72,22 +101,16 @@
 
 .guarantee li {
   margin-bottom: 4px;
-  color: #c9d2dc;
+  color: #d3d4ca;
   font-size: 14px;
   line-height: 1.5;
 }
 
+/* The guarantee's id (T1, T2, ...), as the docs name it. */
 .code {
-  display: inline-block;
-  min-width: 30px;
-  margin-right: 4px;
-  padding: 1px 6px;
-  border-radius: 6px;
-  background: var(--panel-2);
-  border: 1px solid var(--line-strong);
-  color: var(--gold);
-  font-size: 12px;
-  text-align: center;
+  margin-right: 8px;
+  color: var(--brass);
+  font-style: italic;
 }
 
 .theorems {
@@ -106,9 +129,10 @@
 }
 
 /* ---------- Practice challenges ---------- */
+/* A list of rows split by hairlines, like the opponents above it. */
 .challenges {
   display: grid;
-  gap: 8px;
+  border-top: 1px solid var(--line);
 }
 
 .challenge {
@@ -116,17 +140,20 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 2px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: var(--bg-2);
-  border: 1px solid var(--line);
+  padding: 10px 12px 10px 14px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: none;
   color: var(--text);
   text-align: left;
   cursor: pointer;
+  transition: background-color 150ms ease;
 }
 
-.challenge:hover {
-  border-color: var(--line-strong);
+@media (hover: hover) and (pointer: fine) {
+  .challenge:hover {
+    background: rgba(236, 231, 219, 0.04);
+  }
 }
 
 .challengeTitle {
@@ -148,15 +175,15 @@
   margin: 12px auto 0;
   max-width: 640px;
   padding: 10px 14px;
-  border-radius: 12px;
+  border-radius: 10px;
   background: var(--panel-2);
-  border: 1px solid var(--gold-deep);
+  border: 1px solid var(--line-strong);
   font-size: 14px;
   line-height: 1.45;
 }
 
 .practiceBar b {
-  color: var(--gold);
+  color: var(--text);
 }
 
 /* While the review is open, the verdict floats above it (the review modal is at 50) at the
@@ -183,13 +210,9 @@
 /* ---------- Mystery opponent ---------- */
 .mysteryNote {
   margin: 0;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: var(--bg-2);
-  border: 1px dashed var(--line-strong);
   color: var(--muted);
-  font-size: 13px;
-  line-height: 1.45;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .toggle {
@@ -236,8 +259,10 @@
 
 .verdict {
   margin: 0 0 14px;
-  color: var(--gold);
-  font-weight: 700;
+  font-family: var(--display);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text);
 }
 
 /* ---------- The Risk slider's scale names (setup screen and Mystery guess) ---------- */

@@ -1,24 +1,44 @@
 /* ---------- Tokens ---------- */
+/* Every color is a thing in a card room: the dark room, the green felt, the ivory card stock,
+   the black and red ink on the cards, and the brass of the dealer button. */
 :root {
-  --bg: #0a0e13;
-  --bg-2: #0f141b;
-  --panel: #131a23;
-  --panel-2: #19222d;
-  --line: rgba(255, 255, 255, 0.08);
-  --line-strong: rgba(255, 255, 255, 0.16);
-  --text: #e9eef4;
-  --muted: #8b98a9;
-  --gold: #e9c46a;
-  --gold-deep: #c99a2e;
-  --green: #2fbf71;
-  --red: #e05656;
-  --felt: #12744c;
-  --felt-deep: #0a4a31;
-  --rail: #2b1a10;
-  --rail-light: #5a3820;
-  --radius: 14px;
-  --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  --bg: #0e1613;
+  --bg-2: #121c18;
+  --panel: #16211c;
+  --panel-2: #1c2823;
+  --line: rgba(236, 231, 219, 0.08);
+  --line-strong: rgba(236, 231, 219, 0.16);
+  --text: #ece7db;
+  --muted: #98a59d;
+  --ivory: #f3eee2;
+  --ink: #18191b;
+  --card-red: #c3343c;
+  --brass: #c9a55c;
+  --gold: var(--brass);
+  --gold-deep: #9c7c3a;
+  --green: #2f9e6a;
+  --red: #e0605f;
+  --felt: #17704b;
+  --felt-deep: #0c4630;
+  --radius: 12px;
+  --display: var(--font-display), "Bodoni 72", Didot, Georgia, serif;
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  /* Motion, after Emil Kowalski: ease-out for things that appear, ease-in-out for things that
+     move on screen, under 300 ms, and only transform and opacity. Enter from 97%, never from 0. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --enter-y: 6px;
+  --enter-scale: 0.97;
   color-scheme: dark;
+}
+
+/* Reduced motion: things still fade in, but nothing moves or scales. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --enter-y: 0px;
+    --enter-scale: 1;
+  }
 }
 
 * {
@@ -31,13 +51,19 @@ body,
   height: 100%;
 }
 
+/* A dim room with the light over the table. */
 body {
   margin: 0;
-  background: radial-gradient(1200px 700px at 50% -10%, #17212d 0%, var(--bg) 60%) fixed, var(--bg);
+  background: radial-gradient(1100px 640px at 50% 40%, #15241d 0%, var(--bg) 72%) fixed, var(--bg);
   color: var(--text);
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--font-text), "Franklin Gothic Book", "Segoe UI", system-ui, sans-serif;
   font-size: 15px;
   -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: 2px;
 }
 
 button {
@@ -68,20 +94,29 @@ kbd {
   justify-content: center;
   gap: 4px;
   padding: 11px 18px;
-  border-radius: 10px;
+  border-radius: 8px;
   border: 1px solid transparent;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
-  transition: transform 0.08s ease, filter 0.15s ease, background 0.15s ease, opacity 0.15s;
+  transition:
+    transform 160ms var(--ease-out),
+    filter 150ms ease,
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease,
+    opacity 150ms ease;
   white-space: nowrap;
 }
 
-.btn:hover:not(:disabled) {
-  filter: brightness(1.12);
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover:not(:disabled) {
+    filter: brightness(1.1);
+  }
 }
 
+/* A pressed button gives a little, so the page feels like it heard the click. */
 .btn:active:not(:disabled) {
-  transform: translateY(1px);
+  transform: scale(0.97);
 }
 
 .btn:disabled {
@@ -101,14 +136,14 @@ kbd {
   font-size: 17px;
 }
 
+/* The way forward (Start, Next hand, Raise) is printed on card stock. */
 .btn-primary {
-  background: linear-gradient(180deg, #f3d488, var(--gold-deep));
-  color: #1d1505;
-  box-shadow: 0 6px 18px rgba(233, 196, 106, 0.25);
+  background: var(--ivory);
+  color: var(--ink);
 }
 
 .btn-ghost {
-  background: rgba(255, 255, 255, 0.05);
+  background: transparent;
   border-color: var(--line-strong);
 }
 
@@ -123,20 +158,21 @@ kbd {
   color: var(--text);
 }
 
+/* Fold is quiet: an outline with red ink. Call is felt green; Raise is the card-stock button. */
 .btn-fold {
-  background: rgba(224, 86, 86, 0.12);
-  border-color: rgba(224, 86, 86, 0.5);
-  color: #ff9a9a;
+  background: transparent;
+  border-color: var(--line-strong);
+  color: #ec8f88;
 }
 
 .btn-call {
-  background: linear-gradient(180deg, #3bd486, #1f9a59);
-  color: #04170c;
+  background: var(--green);
+  color: #f6fbf7;
 }
 
 .btn-raise {
-  background: linear-gradient(180deg, #f3d488, var(--gold-deep));
-  color: #1d1505;
+  background: var(--ivory);
+  color: var(--ink);
 }
 
 /* ---------- App shell ---------- */
@@ -153,30 +189,35 @@ kbd {
   gap: 16px;
   padding: 12px 24px;
   border-bottom: 1px solid var(--line);
-  background: rgba(10, 14, 19, 0.7);
-  backdrop-filter: blur(8px);
+  background: var(--bg);
   position: sticky;
   top: 0;
   z-index: 20;
 }
 
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: 800;
-  font-size: 18px;
-  letter-spacing: 0.2px;
+/* The top bar's buttons are quiet text buttons; the table is what matters. */
+.topbar .btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--muted);
+  font-weight: 600;
 }
 
-.brand-mark {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
-  background: linear-gradient(180deg, #f3d488, var(--gold-deep));
-  color: #1d1505;
+@media (hover: hover) and (pointer: fine) {
+  .topbar .btn-ghost:hover:not(:disabled) {
+    filter: none;
+    color: var(--text);
+    background: rgba(236, 231, 219, 0.06);
+  }
+}
+
+/* The name is the mark: set in the playing-card serif, like the maker's name on a deck. */
+.brand {
+  font-family: var(--display);
+  font-style: italic;
+  font-weight: 600;
+  font-size: 24px;
+  line-height: 1;
 }
 
 .topbar-info {
@@ -213,22 +254,6 @@ kbd {
   min-width: 0;
 }
 
-.panel {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-}
-
-.panel-title {
-  margin: 0;
-  padding: 14px 16px 10px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 1.2px;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
 /* ---------- Table ---------- */
 .table-area {
   padding: 74px 96px 112px;
@@ -242,40 +267,32 @@ kbd {
   aspect-ratio: 2.05 / 1;
 }
 
+/* A padded black rail around the felt. The felt has a faint weave, so it reads as cloth. */
 .table-rail {
   position: absolute;
   inset: 0;
   border-radius: 9999px;
-  background: linear-gradient(180deg, var(--rail-light), var(--rail) 40%, #1b0f08);
+  background: linear-gradient(#1b211e, #0d110f);
   box-shadow:
-    0 30px 60px rgba(0, 0, 0, 0.6),
-    inset 0 2px 0 rgba(255, 255, 255, 0.12),
-    inset 0 -3px 8px rgba(0, 0, 0, 0.5);
+    0 28px 60px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(236, 231, 219, 0.08);
 }
 
 .table-felt {
   position: absolute;
-  inset: 16px;
+  inset: 12px;
   border-radius: 9999px;
   background:
-    radial-gradient(ellipse at 50% 42%, rgba(255, 255, 255, 0.1), transparent 60%),
-    radial-gradient(ellipse at center, var(--felt) 0%, var(--felt-deep) 100%);
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse at 50% 42%, #1c7c53 0%, var(--felt) 45%, var(--felt-deep) 100%);
   box-shadow:
-    inset 0 0 0 2px rgba(233, 196, 106, 0.25),
-    inset 0 0 60px rgba(0, 0, 0, 0.55);
+    inset 0 0 0 1px rgba(0, 0, 0, 0.35),
+    inset 0 0 60px rgba(0, 0, 0, 0.35);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 14px;
-}
-
-.felt-mark {
-  font-weight: 800;
-  letter-spacing: 6px;
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.12);
-  margin-top: -18px;
 }
 
 .board {
@@ -287,19 +304,6 @@ kbd {
   min-height: 30px;
   display: flex;
   align-items: center;
-}
-
-.pot-label {
-  padding: 5px 12px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.35);
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-
-.pot-label.muted {
-  color: rgba(255, 255, 255, 0.45);
-  font-weight: 600;
 }
 
 .bet {
@@ -316,12 +320,19 @@ kbd {
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: radial-gradient(circle at 35% 30%, #fff, #d9d9d9);
-  color: #222;
+  background: var(--ivory);
+  color: var(--ink);
+  font-family: var(--display);
   font-weight: 800;
-  font-size: 12px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5), inset 0 -2px 0 rgba(0, 0, 0, 0.15);
-  transition: left 0.5s ease, top 0.5s ease;
+  font-size: 13px;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 2px var(--ivory),
+    inset 0 0 0 3px rgba(24, 25, 27, 0.25);
+  /* Moves across the table once a hand, so ease-in-out. */
+  transition:
+    left 300ms var(--ease-in-out),
+    top 300ms var(--ease-in-out);
   z-index: 4;
 }
 
@@ -332,8 +343,8 @@ kbd {
   gap: 6px;
   padding: 3px 10px 3px 4px;
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.4);
-  animation: pop-in 0.25s ease-out both;
+  background: rgba(0, 0, 0, 0.32);
+  animation: fade-in 150ms ease-out both;
 }
 
 .chips {
@@ -365,9 +376,11 @@ kbd {
   height: calc(var(--w) * 1.4);
   perspective: 600px;
   flex: none;
-  animation: deal 0.35s cubic-bezier(0.2, 0.8, 0.3, 1.2) both;
+  animation: deal 260ms var(--ease-out) both;
   animation-delay: var(--delay, 0s);
-  transition: transform 0.25s ease, filter 0.25s ease;
+  transition:
+    transform 200ms var(--ease-out),
+    filter 200ms ease;
 }
 
 .card-sm {
@@ -387,7 +400,8 @@ kbd {
   width: 100%;
   height: 100%;
   transform-style: preserve-3d;
-  transition: transform 0.55s ease;
+  /* A card turning over moves on screen, so ease-in-out; a reveal can take a little longer. */
+  transition: transform 380ms var(--ease-in-out);
   transition-delay: var(--delay, 0s);
 }
 
@@ -400,26 +414,29 @@ kbd {
   inset: 0;
   border-radius: calc(var(--w) * 0.11);
   backface-visibility: hidden;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
 }
 
 .card-front {
-  background: linear-gradient(160deg, #ffffff, #eef0f3);
-  color: #1b1f24;
+  background: #f7f4ec;
+  color: var(--ink);
   font-weight: 800;
 }
 
 .card-front.red {
-  color: #d22f3c;
+  color: var(--card-red);
 }
 
+/* The rank is set in the playing-card serif, as on a printed deck. */
 .card-corner {
   position: absolute;
   display: flex;
   flex-direction: column;
   align-items: center;
   line-height: 1;
+  font-family: var(--display);
   font-size: calc(var(--w) * 0.3);
+  letter-spacing: -0.04em;
 }
 
 .card-corner .card-suit {
@@ -457,12 +474,14 @@ kbd {
   padding: calc(var(--w) * 0.45) 0 0 calc(var(--w) * 0.3);
 }
 
+/* A deep red back with a fine diamond lattice and a white border, like a printed deck. */
 .card-back {
   transform: rotateY(180deg);
   background:
-    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.07) 0 4px, transparent 4px 8px),
-    linear-gradient(160deg, #b23a48, #7a1f2b);
-  border: calc(var(--w) * 0.06) solid #f4f1ea;
+    repeating-linear-gradient(45deg, rgba(247, 244, 236, 0.1) 0 1px, transparent 1px 5px),
+    repeating-linear-gradient(-45deg, rgba(247, 244, 236, 0.1) 0 1px, transparent 1px 5px),
+    #6b1f27;
+  border: calc(var(--w) * 0.06) solid #f7f4ec;
 }
 
 .card.is-highlight {
@@ -470,19 +489,21 @@ kbd {
 }
 
 .card.is-highlight .card-face {
-  box-shadow: 0 0 0 2px var(--gold), 0 6px 18px rgba(233, 196, 106, 0.45);
+  box-shadow: 0 0 0 2px var(--gold), 0 4px 10px rgba(0, 0, 0, 0.4);
 }
 
 .card.is-dim {
   filter: brightness(0.55) saturate(0.6);
 }
 
+/* An empty board spot: a faint inset, not a dashed outline. */
 .card-slot {
   --w: 58px;
   width: var(--w);
   height: calc(var(--w) * 1.4);
   border-radius: calc(var(--w) * 0.11);
-  border: 2px dashed rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(247, 244, 236, 0.07);
 }
 
 /* ---------- Seats ---------- */
@@ -494,7 +515,7 @@ kbd {
   align-items: center;
   gap: 6px;
   z-index: 5;
-  transition: opacity 0.3s;
+  transition: opacity 200ms ease;
 }
 
 .seat-cards {
@@ -523,22 +544,25 @@ kbd {
   gap: 10px;
   min-width: 150px;
   padding: 7px 14px 7px 7px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, rgba(30, 38, 50, 0.96), rgba(16, 21, 28, 0.96));
+  border-radius: 14px;
+  background: rgba(14, 22, 19, 0.95);
   border: 1px solid var(--line-strong);
-  box-shadow: var(--shadow);
-  transition: box-shadow 0.25s, border-color 0.25s;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+  transition:
+    box-shadow 200ms var(--ease-out),
+    border-color 200ms var(--ease-out);
 }
 
+/* Whose turn it is: a steady brass ring. It does not pulse; a pulse that never stops only
+   distracts. */
 .seat.is-turn .seat-plate {
-  border-color: var(--gold);
-  box-shadow: 0 0 0 3px rgba(233, 196, 106, 0.25), 0 0 26px rgba(233, 196, 106, 0.35);
-  animation: turn-pulse 1.4s ease-in-out infinite;
+  border-color: var(--brass);
+  box-shadow: 0 0 0 3px rgba(201, 165, 92, 0.2), 0 6px 16px rgba(0, 0, 0, 0.35);
 }
 
 .seat.is-winner .seat-plate {
-  border-color: var(--gold);
-  box-shadow: 0 0 0 3px rgba(233, 196, 106, 0.35), 0 0 40px rgba(233, 196, 106, 0.5);
+  border-color: var(--brass);
+  box-shadow: 0 0 0 3px rgba(201, 165, 92, 0.28), 0 6px 16px rgba(0, 0, 0, 0.35);
 }
 
 .seat.is-folded .seat-cards,
@@ -561,8 +585,7 @@ kbd {
   font-weight: 800;
   font-size: 17px;
   color: #10141a;
-  background: radial-gradient(circle at 30% 25%, color-mix(in srgb, var(--avatar) 60%, white), var(--avatar));
-  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.2);
+  background: var(--avatar);
 }
 
 .avatar-sm {
@@ -584,47 +607,47 @@ kbd {
 
 .seat-stack {
   font-variant-numeric: tabular-nums;
-  color: var(--gold);
-  font-weight: 700;
+  color: var(--brass);
+  font-weight: 600;
   font-size: 14px;
 }
 
+/* The player's last move, on a small tag at the plate's corner. */
 .seat-status {
   position: absolute;
   top: -10px;
   right: -8px;
   padding: 2px 8px;
-  border-radius: 999px;
+  border-radius: 6px;
   font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.3px;
-  background: #2a3442;
+  font-weight: 700;
+  background: #26332d;
   border: 1px solid var(--line-strong);
-  animation: pop-in 0.2s ease-out both;
+  animation: fade-in 150ms ease-out both;
   white-space: nowrap;
 }
 
 .status-fold,
 .status-out {
-  background: #3a2326;
-  color: #ff9a9a;
+  background: #3a2427;
+  color: #f2a29b;
 }
 
 .status-check,
 .status-call {
-  background: #183a2a;
-  color: #7ee2ad;
+  background: #173a29;
+  color: #8fdcb0;
 }
 
 .status-bet,
 .status-raise {
-  background: #3d3215;
-  color: var(--gold);
+  background: #3a3019;
+  color: #e3c47e;
 }
 
 .status-all-in {
-  background: linear-gradient(180deg, #f3d488, var(--gold-deep));
-  color: #1d1505;
+  background: var(--ivory);
+  color: var(--ink);
 }
 
 .thinking {
@@ -635,7 +658,7 @@ kbd {
   gap: 2px;
   padding: 3px 5px;
   border-radius: 999px;
-  background: #0d1218;
+  background: var(--bg);
   border: 1px solid var(--line-strong);
 }
 
@@ -643,8 +666,8 @@ kbd {
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: var(--gold);
-  animation: blink 1s infinite ease-in-out;
+  background: var(--brass);
+  animation: blink 1.2s infinite ease-in-out;
 }
 
 .thinking i:nth-child(2) {
@@ -655,76 +678,67 @@ kbd {
   animation-delay: 0.3s;
 }
 
-.win-float {
-  position: absolute;
-  top: -6px;
-  font-weight: 800;
-  font-size: 20px;
-  color: var(--gold);
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
-  animation: float-up 1.8s ease-out both;
-  pointer-events: none;
-}
-
 /* ---------- Result ---------- */
+/* The result is printed on the felt where the pot was, in the card serif. It is the one big
+   moment of a hand, so it is the one thing that rises into place. */
 .result-badge {
-  padding: 8px 16px;
-  border-radius: 12px;
-  background: rgba(6, 10, 14, 0.78);
-  border: 1px solid var(--line-strong);
-  box-shadow: var(--shadow);
   text-align: center;
-  animation: banner-in 0.35s ease-out both;
-}
-
-.result-badge.is-you {
-  border-color: rgba(233, 196, 106, 0.75);
-  box-shadow: var(--shadow), 0 0 28px rgba(233, 196, 106, 0.3);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  animation: enter 240ms var(--ease-out) both;
 }
 
 .result-line {
   display: flex;
   flex-direction: column;
-  line-height: 1.3;
+  gap: 3px;
+  line-height: 1.1;
 }
 
 .result-line + .result-line {
-  margin-top: 6px;
+  margin-top: 8px;
 }
 
 .result-who {
-  font-size: 16px;
-  font-weight: 700;
+  font-family: var(--display);
+  font-size: 27px;
+  font-weight: 600;
+  color: var(--ivory);
 }
 
 .result-who strong {
-  color: var(--gold);
+  font-weight: inherit;
 }
 
 .result-hand {
-  color: var(--muted);
-  font-size: 12px;
+  color: rgba(243, 238, 226, 0.78);
+  font-size: 13px;
 }
 
 .result-note {
-  margin-top: 4px;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--gold);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.next-bar.is-you {
-  border-color: rgba(233, 196, 106, 0.45);
+  margin-top: 6px;
+  font-family: var(--display);
+  font-style: italic;
+  font-size: 16px;
+  color: #e3c47e;
 }
 
 /* Its inline animation-delay waits for an all-in run-out; `hidden-until-shown` keeps the
    invisible buttons from being clicked during the wait. */
 .next-bar {
   animation:
-    banner-in 0.35s ease-out both,
-    hidden-until-shown 0.35s both;
+    fade-in 200ms ease-out both,
+    hidden-until-shown 200ms both;
+}
+
+/* The result is already on the felt, so this bar holds only the two buttons, where the move
+   buttons were. */
+.action-bar.next-bar {
+  grid-template-columns: 1fr;
+  grid-template-areas: "buttons";
+}
+
+.next-bar .action-buttons {
+  justify-content: center;
 }
 
 .next-btn {
@@ -741,16 +755,8 @@ kbd {
   align-items: center;
   gap: 12px 24px;
   padding: 16px 20px;
-  border-radius: var(--radius);
-  background: var(--panel);
-  border: 1px solid var(--line);
+  border: 1px solid transparent;
   min-height: 86px;
-  transition: border-color 0.25s, box-shadow 0.25s;
-}
-
-.action-bar.is-active {
-  border-color: rgba(233, 196, 106, 0.45);
-  box-shadow: 0 0 0 3px rgba(233, 196, 106, 0.08);
 }
 
 .action-info {
@@ -760,17 +766,13 @@ kbd {
   gap: 2px;
 }
 
-.strength-label {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1.2px;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
+/* Your hand's name, in the card serif, beside your cards. */
 .strength-value {
-  font-size: 18px;
-  font-weight: 700;
+  font-family: var(--display);
+  font-style: italic;
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.15;
 }
 
 .waiting {
@@ -815,20 +817,30 @@ kbd {
 
 .chip-btn {
   padding: 5px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--line-strong);
-  background: var(--panel-2);
+  border-radius: 6px;
+  border: 0;
+  background: rgba(236, 231, 219, 0.06);
+  color: var(--text);
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
+  transition:
+    transform 160ms var(--ease-out),
+    background-color 150ms ease;
 }
 
-.chip-btn:hover {
-  border-color: var(--gold);
+@media (hover: hover) and (pointer: fine) {
+  .chip-btn:hover:not(:disabled) {
+    background: rgba(236, 231, 219, 0.12);
+  }
+}
+
+.chip-btn:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 .chip-btn-allin {
-  color: var(--gold);
+  color: #e3c47e;
 }
 
 .slider-row {
@@ -859,26 +871,30 @@ kbd {
 .app-lobby {
   align-items: center;
   justify-content: center;
-  padding: 32px 16px;
+  padding: 48px 24px;
 }
 
+/* Two columns on a laptop: the game's name and two dealt cards on the left, and on the right,
+   who you play and how. One column on a narrow screen. */
 .lobby {
   width: 100%;
-  max-width: 460px;
-  display: flex;
-  flex-direction: column;
-  gap: 22px;
+  max-width: 1040px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 470px);
+  gap: 40px 88px;
+  align-items: start;
 }
 
 .lobby-hero {
-  text-align: center;
+  position: sticky;
+  top: 48px;
+  padding-top: 12px;
 }
 
 .hero-cards {
   display: flex;
-  justify-content: center;
   gap: 4px;
-  margin-bottom: 14px;
+  margin: 0 0 30px 8px;
 }
 
 .hero-cards .card:first-child {
@@ -891,25 +907,62 @@ kbd {
 
 .lobby h1 {
   margin: 0;
-  font-size: 40px;
-  font-weight: 800;
-  letter-spacing: -0.5px;
+  font-family: var(--display);
+  font-size: 76px;
+  font-weight: 600;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
 }
 
 .lobby-sub {
-  margin: 8px 0 0;
+  max-width: 26em;
+  margin: 20px 0 10px;
   color: var(--muted);
+  font-size: 17px;
+  line-height: 1.55;
+}
+
+.lobby-hero .btn-link {
+  padding: 6px 0;
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 4px;
 }
 
 .lobby-card {
   display: flex;
   flex-direction: column;
   gap: 18px;
-  padding: 24px;
-  border-radius: 18px;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  box-shadow: var(--shadow);
+}
+
+/* Section names on the setup side, in the card serif. */
+.lobby-section {
+  margin: 14px 0 -4px;
+  font-family: var(--display);
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.lobby-section:first-child {
+  margin-top: 0;
+}
+
+@media (max-width: 900px) {
+  .lobby {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 520px;
+    gap: 36px;
+  }
+
+  .lobby-hero {
+    position: static;
+  }
+
+  .lobby h1 {
+    font-size: 56px;
+  }
 }
 
 .field {
@@ -926,26 +979,28 @@ kbd {
 .segmented {
   display: flex;
   padding: 3px;
-  border-radius: 10px;
-  background: var(--bg-2);
+  border-radius: 9px;
+  background: rgba(0, 0, 0, 0.25);
   border: 1px solid var(--line);
 }
 
 .segmented button {
   min-width: 44px;
-  padding: 6px 12px;
+  padding: 6px 14px;
   border: 0;
-  border-radius: 7px;
+  border-radius: 6px;
   background: none;
   color: var(--muted);
   font-weight: 600;
   cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
 }
 
 .segmented button.on {
-  background: var(--panel-2);
-  color: var(--text);
-  box-shadow: inset 0 0 0 1px var(--line-strong);
+  background: var(--ivory);
+  color: var(--ink);
 }
 
 .seed-input {
@@ -953,7 +1008,7 @@ kbd {
   padding: 8px 10px;
   border-radius: 8px;
   border: 1px solid var(--line-strong);
-  background: var(--bg-2);
+  background: rgba(0, 0, 0, 0.25);
   color: var(--text);
   font: inherit;
   font-weight: 600;
@@ -983,15 +1038,12 @@ kbd {
 }
 
 .bot-slider-value {
-  min-width: 48px;
-  padding: 2px 8px;
-  border-radius: 7px;
-  background: var(--bg-2);
-  border: 1px solid var(--line);
-  color: var(--gold);
-  font-weight: 700;
+  font-family: var(--display);
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--text);
   font-variant-numeric: tabular-nums;
-  text-align: center;
 }
 
 .bot-slider input[type="range"] {
@@ -1057,14 +1109,14 @@ kbd {
   display: grid;
   place-items: center;
   padding: 24px 16px;
-  background: rgba(3, 6, 9, 0.7);
+  background: rgba(5, 9, 7, 0.7);
   backdrop-filter: blur(4px);
   z-index: 50;
   /* Game over waits (an inline animation-delay) for the last hand's result; until then the
      dialog is hidden, so it cannot catch clicks meant for the table. */
   animation:
-    fade-in 0.2s ease-out both,
-    hidden-until-shown 0.2s both;
+    fade-in 200ms var(--ease-out) both,
+    hidden-until-shown 200ms both;
 }
 
 .modal {
@@ -1074,28 +1126,35 @@ kbd {
   max-height: calc(100vh - 48px);
   overflow-y: auto;
   padding: 28px;
-  border-radius: 18px;
+  border-radius: 16px;
   background: var(--panel);
   border: 1px solid var(--line-strong);
-  box-shadow: var(--shadow);
-  animation: banner-in 0.25s ease-out both;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+  /* Rises from 97% with its backdrop; `inherit` takes the backdrop's delay, so Game Over
+     enters when it appears, not while it is still hidden. */
+  animation: enter 220ms var(--ease-out) both;
+  animation-delay: inherit;
 }
 
 .modal h2 {
   margin: 0 0 16px;
-  font-size: 24px;
+  font-family: var(--display);
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1.1;
 }
 
 .modal h3 {
-  margin: 18px 0 8px;
+  margin: 20px 0 8px;
   font-size: 15px;
-  color: var(--gold);
+  font-weight: 700;
+  color: var(--text);
 }
 
 .modal p,
 .modal li {
   line-height: 1.55;
-  color: #c9d2dc;
+  color: #d3d4ca;
 }
 
 .modal ol,
@@ -1112,13 +1171,29 @@ kbd {
   position: absolute;
   top: 14px;
   right: 16px;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  border: 1px solid var(--line-strong);
-  background: var(--panel-2);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
   font-size: 20px;
   cursor: pointer;
+  transition:
+    transform 160ms var(--ease-out),
+    background-color 150ms ease,
+    color 150ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .modal-close:hover {
+    background: rgba(236, 231, 219, 0.07);
+    color: var(--text);
+  }
+}
+
+.modal-close:active {
+  transform: scale(0.94);
 }
 
 .rules-grid {
@@ -1127,20 +1202,19 @@ kbd {
   gap: 28px;
 }
 
+/* The ten hands, best first: a ranked list, so plain rows with their rank, not boxes. */
 .rankings {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 0 32px;
 }
 
 .ranking {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: var(--bg-2);
-  border: 1px solid var(--line);
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
 }
 
 .ranking .card {
@@ -1148,9 +1222,11 @@ kbd {
 }
 
 .ranking-num {
-  width: 22px;
+  width: 24px;
   color: var(--muted);
-  font-weight: 800;
+  font-family: var(--display);
+  font-size: 20px;
+  font-weight: 600;
 }
 
 .ranking-text {
@@ -1176,30 +1252,28 @@ kbd {
   text-align: center;
 }
 
-.game-over-icon {
-  font-size: 46px;
-  margin-bottom: 6px;
-}
-
 .stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
-  margin: 20px 0;
+  margin: 22px 0;
+  padding: 16px 0;
+  border-block: 1px solid var(--line);
 }
 
 .stats div {
   display: flex;
   flex-direction: column;
-  padding: 12px 8px;
-  border-radius: 12px;
-  background: var(--bg-2);
-  border: 1px solid var(--line);
+  gap: 4px;
 }
 
 .stats b {
-  font-size: 22px;
-  color: var(--gold);
+  font-family: var(--display);
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
 }
 
 .stats span {
@@ -1215,18 +1289,23 @@ kbd {
   justify-content: center;
 }
 
-/* ---------- Animations ---------- */
+/* ---------- Animations ----------
+   One-shot entrances only; nothing on the page loops except the bot's "thinking" dots. The
+   distances and scales are variables, so reduced motion turns them into plain fades. */
 @keyframes deal {
   from {
     opacity: 0;
-    transform: translateY(-18px) scale(0.85);
+    transform: translateY(calc(var(--enter-y) * -1.5)) scale(var(--enter-scale));
   }
 }
 
-@keyframes pop-in {
+/* Uses `translate` and `scale` (not `transform`), so it composes with an element's own
+   transform, such as a centering translate(-50%, -50%). */
+@keyframes enter {
   from {
     opacity: 0;
-    transform: scale(0.8);
+    translate: 0 var(--enter-y);
+    scale: var(--enter-scale);
   }
 }
 
@@ -1236,24 +1315,11 @@ kbd {
   }
 }
 
-@keyframes banner-in {
-  from {
-    opacity: 0;
-    translate: 0 12px;
-  }
-}
-
 /* Hidden (so not clickable or focusable) during an animation delay, visible from the first frame
    of the animation on. Pair it with a fade that has the same delay. */
 @keyframes hidden-until-shown {
   from {
     visibility: hidden;
-  }
-}
-
-@keyframes turn-pulse {
-  50% {
-    box-shadow: 0 0 0 5px rgba(233, 196, 106, 0.15), 0 0 34px rgba(233, 196, 106, 0.45);
   }
 }
 
@@ -1267,26 +1333,26 @@ kbd {
   }
 }
 
-@keyframes float-up {
-  0% {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  20% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(-34px);
-  }
-}
-
+/* Reduced motion: entrances are plain fades (see --enter-y and --enter-scale above). Nothing
+   presses, flips, slides or loops. Animation delays stay, so a run-out still finishes before
+   the result shows. */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
+  .btn:active:not(:disabled),
+  .chip-btn:active:not(:disabled),
+  .modal-close:active {
+    transform: none;
+  }
+
+  .card,
+  .card-inner,
+  .dealer-button,
+  .seat-plate {
+    transition-duration: 0ms;
+  }
+
+  .thinking i {
+    animation: none;
+    opacity: 0.8;
   }
 }
 
@@ -1302,6 +1368,17 @@ kbd {
     width: 100%;
     gap: 14px;
     font-size: 13px;
+  }
+
+  /* The top bar's buttons wrap onto a second row instead of running off the screen. */
+  .topbar-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 2px 4px;
+  }
+
+  .peek-toggle {
+    white-space: nowrap;
   }
 
   .layout {
@@ -1350,10 +1427,6 @@ kbd {
     gap: 4px;
   }
 
-  .felt-mark {
-    display: none;
-  }
-
   .action-bar {
     grid-template-columns: 1fr;
     grid-template-areas:
@@ -1382,12 +1455,8 @@ kbd {
     grid-template-columns: 1fr;
   }
 
-  .result-badge {
-    padding: 6px 10px;
-  }
-
   .result-who {
-    font-size: 14px;
+    font-size: 20px;
   }
 }
 
@@ -1577,61 +1646,82 @@ kbd {
   margin: 0;
   background: #2a1b1c;
   box-shadow: var(--shadow);
+  animation: enter 200ms var(--ease-out) both;
 }
 
 /* Shown instead of the setup screen while a game or a practice hand is dealt. */
 .dealing {
   margin: auto;
-  padding: 18px 28px;
-  border-radius: var(--radius);
-  background: var(--panel);
-  border: 1px solid var(--line-strong);
+  font-family: var(--display);
+  font-style: italic;
+  font-size: 24px;
   color: var(--muted);
-  font-size: 16px;
-  font-weight: 600;
+  animation: fade-in 200ms ease-out both;
 }
 
-/* Named opponents on the start screen (presets for the Risk and Bluff sliders). */
+/* Named opponents on the start screen: a list of rows split by hairlines. The chosen one is
+   marked by a brass bar at its left edge and full-strength text. */
 .opponent-list {
   display: grid;
-  gap: 4px;
-  padding: 6px;
-  border-radius: 12px;
-  background: var(--bg-2);
-  border: 1px solid var(--line);
+  border-top: 1px solid var(--line);
 }
 
 .opponent {
-  display: flex;
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 64px minmax(0, 1fr);
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   width: 100%;
-  padding: 8px 10px;
-  border: 1px solid transparent;
-  border-radius: 10px;
+  padding: 10px 12px 10px 14px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
   background: none;
+  color: var(--muted);
   text-align: left;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
 }
 
-.opponent:hover {
-  background: rgba(255, 255, 255, 0.04);
+.opponent::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--brass);
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .opponent:hover {
+    background: rgba(236, 231, 219, 0.03);
+    color: var(--text);
+  }
 }
 
 .opponent.on {
-  border-color: rgba(233, 196, 106, 0.7);
-  background: rgba(233, 196, 106, 0.08);
+  background: rgba(236, 231, 219, 0.05);
+  color: var(--text);
+}
+
+.opponent.on::before {
+  opacity: 1;
 }
 
 .opponent-name {
   font-weight: 700;
+  color: var(--text);
 }
 
 .opponent-style {
-  margin-left: auto;
-  color: var(--muted);
   font-size: 13px;
+  line-height: 1.4;
 }
 
 div.opponent { cursor: default; }
@@ -1650,11 +1740,11 @@ div.opponent { cursor: default; }
 }
 
 .peek-toggle input {
-  accent-color: var(--gold);
+  accent-color: var(--brass);
 }
 
 .peek-toggle:has(input:checked) {
-  color: var(--gold);
+  color: #e3c47e;
 }
 
 /* The bot's cards, face up only because of a peek: dimmed (see .card.is-dim) and labeled. */
@@ -1668,10 +1758,10 @@ div.opponent { cursor: default; }
   left: 50%;
   transform: translateX(-50%);
   padding: 1px 8px;
-  border-radius: 999px;
-  background: rgba(10, 14, 19, 0.85);
+  border-radius: 6px;
+  background: rgba(14, 22, 19, 0.9);
   border: 1px solid var(--line-strong);
-  color: var(--gold);
+  color: #e3c47e;
   font-size: 11px;
   font-weight: 700;
   white-space: nowrap;
