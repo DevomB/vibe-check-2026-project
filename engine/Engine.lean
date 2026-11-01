@@ -8,6 +8,8 @@ import Engine.HandRankTests
 import Engine.Bot
 import Engine.BotTests
 import Engine.Equity
+import Engine.River
+import Engine.RiverTests
 import Engine.Slider
 import Engine.SliderTests
 import Engine.EquityTests
