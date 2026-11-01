@@ -118,3 +118,9 @@ def exRiverSpot : RiverSpot :=
 #guard (reviewRiver exRiverSpot .fold).label != .best
 -- Calling 50 to make a pot of 200 needs a quarter of the time.
 #guard (reviewRiver exRiverSpot .call).equityNeeded == ⟨50, 200⟩
+
+-- With 4-high on the same board, calling loses about 4.9 big blinds and folding is best.
+#guard
+  let weak := { exRiverSpot with hole := [card 3 .clubs, card 4 .diamonds] }
+  (reviewRiver weak .call).label == .mistake && (reviewRiver weak .fold).label == .best
+    && (reviewRiver weak .call).worthCall == ⟨-97200, 19800⟩
