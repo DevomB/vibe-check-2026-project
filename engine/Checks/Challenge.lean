@@ -115,7 +115,7 @@ theorem enumeration_exact (hole board : List Card) :
      (∀ r a b, TurnOutcomePossible hole board r a b →
        timesListedTurn (turnOutcomes hole board) r a b = 1) ∧
      turnCounts hole board =
-      countResults ((turnOutcomes hole board).map fun (r, opp) => showdown hole opp (board ++ [r]))) :=
+      countResults ((turnOutcomes hole board).map fun o => showdown hole o.2 (board ++ [o.1]))) :=
   sorry
 
 /-- With two hole cards and five board cards, all different, the opponent can hold 990 hands. -/

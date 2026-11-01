@@ -329,7 +329,7 @@ theorem turnOutcomes_length {hole board : List Card} (h2 : hole.length = 2)
 wins, ties and loses at showdown with that river card on the board. -/
 theorem turnCounts_spec (hole board : List Card) :
     turnCounts hole board =
-      countResults ((turnOutcomes hole board).map fun (r, opp) => showdown hole opp (board ++ [r])) := by
+      countResults ((turnOutcomes hole board).map fun o => showdown hole o.2 (board ++ [o.1])) := by
   have card (r : Card) : riverCardCounts hole board (unseenCards hole board) r =
       countResults ((pairs ((unseenCards hole board).erase r)).map
         fun (a, b) => showdown hole [a, b] (board ++ [r])) := by
@@ -365,7 +365,7 @@ theorem enumeration_exact (hole board : List Card) :
      (∀ r a b, TurnOutcomePossible hole board r a b →
        timesListedTurn (turnOutcomes hole board) r a b = 1) ∧
      turnCounts hole board =
-      countResults ((turnOutcomes hole board).map fun (r, opp) => showdown hole opp (board ++ [r]))) :=
+      countResults ((turnOutcomes hole board).map fun o => showdown hole o.2 (board ++ [o.1]))) :=
   ⟨⟨(river_enumeration_exact hole board).1, (river_enumeration_exact hole board).2,
      riverCounts_spec hole board⟩,
    ⟨(turn_enumeration_exact hole board).1, (turn_enumeration_exact hole board).2,
