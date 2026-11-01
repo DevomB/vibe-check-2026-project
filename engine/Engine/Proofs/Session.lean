@@ -48,7 +48,7 @@ accepts the move the slider bot picks, for any sliders, seed and cards.
 **(d) `viewOf_toCall_le_pot`.** In every state, the chips the bot must add to call are at
 most the pot it can win. No reachability is needed. So the condition `v.toCall ≤ v.pot` of
 `bot_calls_only_when_worth_it` and `bot_folds_only_when_not_worth_it` holds for every view
-the bot really gets. It is about the bot alone, so its proof goes in
+the bot really gets. It is about the bot alone, so it is proved in
 `Engine/Proofs/RiskUtility.lean`.
 
     theorem viewOf_toCall_le_pot (sl : Sliders) (hole board : List Card) (s : State) :

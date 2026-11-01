@@ -36,7 +36,8 @@
     "bot_hand_in_review",
     "bot_move_accepted",
     "handle_keeps_reachable",
-    "handle_error_unchanged"
+    "handle_error_unchanged",
+    "viewOf_toCall_le_pot"
   ],
   "permitted_axioms": [
     "propext",

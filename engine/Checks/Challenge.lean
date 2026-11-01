@@ -241,3 +241,9 @@ theorem handle_error_unchanged (cur : Option Session) (line : String) (j : Json)
         ("state", match cur with
           | some s => stateJson { s with events := #[] }
           | none => Json.null)]) := sorry
+
+/-- In every state, the chips the bot must add to call are at most the pot it can win. So
+`bot_calls_only_when_worth_it` and `bot_folds_only_when_not_worth_it` apply to every view
+the bot really gets. -/
+theorem viewOf_toCall_le_pot (sl : Sliders) (hole board : List Card) (s : State) :
+    (viewOf sl hole board s).toCall ≤ (viewOf sl hole board s).pot := sorry
