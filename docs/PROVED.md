@@ -2,8 +2,8 @@
 
 Sun Nov 1, 2026, main after the river-game merge (85 Comparator names). Every theorem named here is stated in
 [`engine/Checks/Challenge.lean`](../engine/Checks/Challenge.lean), proved under
-`engine/Engine/Proofs/`, listed in [`engine/comparator.json`](../engine/comparator.json) (69
-names since main at 6b9da7a and this update; see [GUARANTEES.md](GUARANTEES.md) for the full
+`engine/Engine/Proofs/`, listed in [`engine/comparator.json`](../engine/comparator.json) (79
+names since main at 6230d04, which added the ten bluff-catcher theorems; see [GUARANTEES.md](GUARANTEES.md) for the full
 table), and checked on every push to main by `checks/audit.sh`, `lake comparator` and
 `lake check`, using only the three standard axioms. The README's "What we trust" section lists
 the definitions a reader must still read. Most important first.
@@ -59,28 +59,31 @@ the definitions a reader must still read. Most important first.
    `exploreHand_risk_monotone`). The range viewer's numbers add up and are the review's own
    counts (`rangeOf_adds_up`, `rangeOf_counts`).
 
-7. **The river indifference facts (THEORY.md section 7).** Against a river bet from a
-   polarised set, a bluff-catcher's call adds up to `2 × (bluffs × prize − value × cost)`
-   half-chips (`bluff_catcher_call_total`); calling and folding are worth the same exactly when
-   `bluffs × prize = value × cost`, which for a pot-sized bet means one bet in three is a bluff
-   (`bluff_catcher_indifferent`, `one_third_bluffs_indifferent`, `more_bluffs_call_better`,
-   `fewer_bluffs_fold_better`), and the review itself grades both choices Best exactly then,
-   counting only the hands your cards do not block (`review_both_best_iff_one_third`). The
-   Risk 50 set is two bluffs short of exact indifference, and 33% is the closest share any
-   Risk can set (`risk50_two_bluffs_short`, `no_bluff_setting_is_exact`, `bluff_33_is_closest`);
-   against it a bluff-catcher's call loses `4 × bet` chips over 484 hands, under 1% of the bet
-   per call (`risk50_bluff_catcher_call_loses`); at Risk 100 calling gains 0.8 bets per call
-   (`maniac_bluff_catcher_total`); at Risk 0 every call loses the bet
-   (`rock_bluff_catcher_total`). More bluffs never lower the caller's total
-   (`more_bluffs_more_call_total`). A bluff breaks even exactly when the caller defends
-   `pot / (pot + bet)` of its hands, loses if the caller defends more and gains if less
-   (`bettor_indifferent_iff`, `defend_more_bluff_loses`, `defend_less_bluff_gains`). The
-   whole-set totals are counted before the hands your cards block are removed.
+7. **The one-street river model: both sides.** Say your hand beats every bluff and loses to
+   every value hand. Calling is worth `2 × (bluffs × prize − value × cost)` half-chips
+   (`bluff_catcher_call_total`); calling and folding are worth the same exactly when
+   `bluffs × prize = value × cost` (`bluff_catcher_indifferent`), and against a pot-sized bet
+   exactly when one bet in three is a bluff, with more bluffs favouring the call and fewer the
+   fold (`one_third_bluffs_indifferent`, `more_bluffs_call_better`, `fewer_bluffs_fold_better`);
+   for any bet size, more bluffs never make the call worth less (`more_bluffs_more_call_total`).
+   The review grades both choices Best exactly at one third of the hands you do not block
+   (`review_both_best_iff_one_third`). The real Risk 50 set is two bluffs short of one third,
+   160 against 162 (`risk50_two_bluffs_short`), so before your cards remove any hands calling
+   loses 1/121 of the bet (`risk50_bluff_catcher_call_loses`); no whole bluff percent hits one
+   third and 33 is the closest (`no_bluff_setting_is_exact`, `bluff_33_is_closest`). At Risk 100
+   calling it down gains 0.8 bets per call, at Risk 0 every call loses the bet
+   (`maniac_bluff_catcher_total`, `rock_bluff_catcher_total`). On the bot's side, a bluff breaks
+   even exactly when you call with `pot / (pot + bet)` of your bluff catchers, loses if you call
+   more and gains if you call less (`bettor_indifferent_iff`, `defend_more_bluff_loses`,
+   `defend_less_bluff_gains`). Both indifference equations of the one-street model, and only
+   that model: see THEORY.md section 7.
 
 ## Not proved, most important first
 
-1. **That the bot plays well.** No theorem about winning, exploitability or equilibrium. It
-   would need a best-response computation over the whole game. The bot is a fixed-rule bot;
+1. **That the bot plays well.** No theorem about winning or exploitability, and only the
+   one-street river model's two indifference equations (item 7 above); the bot as caller does
+   not defend at that frequency, and nothing is proved about earlier streets, bet sizing or
+   whole games. A real claim would need a best-response computation over the whole game. The bot is a fixed-rule bot;
    Risk 50 matches the textbook bluff ratio inside its own river set, which is not a claim of
    optimal play. See [THEORY.md](THEORY.md), sections 3 and 6.
 
@@ -103,9 +106,3 @@ the definitions a reader must still read. Most important first.
    that the quoted Risk does not change the move). The river bluff reason still quotes the
    internal share. Session state beyond the game, such as the hand logs, has no theorems. The
    turn counts run 46 parallel tasks; the compiler is trusted to run them.
-
-7. **Equilibrium beyond one street.** The river indifference facts (item 7 above) are
-   one-street arithmetic under A03's conditions: a polarised set, call or fold, chip payoffs. The
-   bot as caller does not defend at `pot / (pot + bet)`; it calls by `callPays` against a random
-   hand. Nothing is proved about earlier streets, bet sizing, or the whole game, and this is the
-   only equilibrium property we have. It is not a claim that any Risk setting is unexploitable.

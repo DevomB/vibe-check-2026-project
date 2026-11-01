@@ -8,7 +8,7 @@
  */
 
 /** The ids the drawer can be opened at. The review uses "review", "risk" and "hindsight". */
-export type GuaranteeId = "chips" | "cards" | "legal" | "risk" | "review" | "equity" | "bluff" | "hindsight" | "ends";
+export type GuaranteeId = "chips" | "cards" | "legal" | "risk" | "review" | "equity" | "bluff" | "bluffcatcher" | "hindsight" | "ends";
 
 export interface Guarantee {
   id: GuaranteeId;
@@ -217,10 +217,6 @@ export const GUARANTEES: readonly Guarantee[] = [
       "Every value hand is at least as strong as every hand the bot does not bet for value. Every bluff is no stronger than any hand that is not a bluff.",
       "With no bet to face on the river and a legal bet available, the bot bets exactly the hands in this set.",
       "A bigger bluff share never turns a river bet into a check: the value hands stay the same, and the bluffs only grow.",
-      "The textbook test, with the review's own arithmetic: if your hand beats every bluff and loses to every value hand, calling adds up to 2 × (bluffs × prize − value × cost) half-chips, and breaks even exactly when bluffs × prize = value × cost. For a pot-sized bet that is one bluff in three bets.",
-      "Against the Risk 50 set and a pot-sized bet, such a call loses 4 × bet chips in total over the 484 hands the bot bets: under 1% of the bet per call. The set is two bluffs short of exact indifference, and 33% is the closest share any Risk can set. At Risk 100 calling it down gains 0.8 bets per call. At Risk 0 every call loses the bet.",
-      "The review itself agrees: with a bluff-catcher against a pot-sized bet, it grades both calling and folding Best exactly when one bet in three is a bluff, counting only the hands your cards do not block.",
-      "More bluffs in the set never make that call worth less. On the bot's side, a bluff breaks even exactly when you call with pot / (pot + bet) of such hands; calling more makes every bluff lose, calling less makes it gain.",
     ],
     theorems: [
       "bluff_frequency",
@@ -233,6 +229,31 @@ export const GUARANTEES: readonly Guarantee[] = [
       "ofRisk_bluff_le_60",
       "ideal_river_set",
       "more_bluff_never_checks_a_bet",
+    ],
+    assumes: [
+      "The board has five different cards.",
+      "For a bigger bluff share: nothing to call, a bet allowed, and a share below 100%. Risk never sets more than 60%.",
+    ],
+    limits: [
+      "It is about the set of hands, not how often the bot bluffs in played games.",
+      "Your cards, the earlier betting and luck change what you see at the table.",
+    ],
+  },
+  {
+    id: "bluffcatcher",
+    code: "T7b",
+    title: "One bluff in three makes calling and folding equal",
+    says: [
+      "Say your hand beats every bluff the bot could hold and loses to every value hand. Against a pot-sized bet, calling and folding are worth the same exactly when one of the bot's bets in three is a bluff.",
+      "With more bluffs than that, calling is worth more. With fewer, folding is worth more.",
+      "For any bet size, they are equal exactly when the number of bluffs times the pot you would win equals the number of value hands times the call.",
+      "The review agrees: it grades both call and fold Best exactly when one third of the bot hands your cards do not block are bluffs.",
+      "At Risk 50 the bot's river set has 324 value hands and 160 bluffs, two short of one third. Before your cards remove any hands, calling a pot-sized bet with such a hand loses 1/121 of the bet on average.",
+      "No whole-number bluff share gives exactly one third beside 324 value hands. 33%, the Risk 50 share, is the closest.",
+      "At Risk 100 the set has 486 bluffs: calling such a bet down gains 0.8 bets per call. At Risk 0 it has none: every call loses the bet. For any bet size, more bluffs in the set never make your call worth less.",
+      "The bot's side of the same model: a bluff gains nothing exactly when you call with pot / (pot + bet) of your bluff-catchers, half against a pot-sized bet. Call more and every bluff loses; call less and every bluff gains.",
+    ],
+    theorems: [
       "bluff_catcher_call_total",
       "bluff_catcher_indifferent",
       "one_third_bluffs_indifferent",
@@ -251,15 +272,15 @@ export const GUARANTEES: readonly Guarantee[] = [
       "defend_less_bluff_gains",
     ],
     assumes: [
-      "The board has five different cards.",
-      "For a bigger bluff share: nothing to call, a bet allowed, and a share below 100%. Risk never sets more than 60%.",
-      "For the textbook test: one river bet, call or fold, chips at face value, and your hand a bluff-catcher (above every bluff, below every value hand). The bluff side is the model's formula; the engine never models how often you call.",
-      "The totals are over the whole betting set, before the hands your cards block are removed; the review's grade removes them, so the total at a real table differs by the blocked hands.",
+      "Your hand beats every bluff and loses to every value hand: no ties.",
+      "For the pot-sized results: the bet equals the pot before it, and you can afford the call.",
+      "For the Risk 0, 50 and 100 results: the board has five different cards, and the totals are over the whole set before your cards remove any hands.",
+      "The bot's side is the model's formula: the engine never models how often you call, and the bot's own calls do not use it.",
     ],
     limits: [
-      "It is about the set of hands, not how often the bot bluffs in played games.",
-      "Your cards, the earlier betting and luck change what you see at the table.",
-      "The textbook test is one street in the one-street model. It says nothing about earlier streets, about the bot as the caller, or about the bot playing well.",
+      "Your own cards remove some of the bot's hands, so the real share at the table moves a little either way. The review counts this exactly.",
+      "Both halves are about one street in the one-street model: your call or fold against the bot's bet, and the bot's bluff against your calling share. Nothing about the bot as caller or about whole hands.",
+      "It ignores the earlier betting, like the rest of the river model.",
     ],
   },
   {
