@@ -1,94 +1,71 @@
-# vibe-check-2026-project
-Vibecheck 2026 hackathon project (name to change)
+# Hold'em with a proved game review
 
-## Start here
+Build a poker bot with a slider, play heads-up Texas Hold'em against it in the browser, then
+get a chess.com-style review of your river calls and folds. The whole game runs in Lean, and
+Lean proofs check the rules, the bot and the review. The grades are proved to follow the
+review's stated rules, and they never look at the bot's cards.
 
-Read [MVP.txt](MVP.txt) first. It defines the scope, bot rules, proof targets,
-work status, checkpoints, and engine/web JSON messages. Use it when older
-research or a local prototype describes a different product.
+## Run it
 
-- [RULES.md](RULES.md): judging criteria and the required `make install && make run` entry point.
-- [SPEC.md](SPEC.md): the engine's correctness definitions and proof targets.
-- [CLAUDE.md](CLAUDE.md): toolchain, human-owned specifications, build discipline, and proof checks.
-- [Lean skill](.agents/skills/vibecheck-lean/SKILL.md): the existing setup and verification workflow for Claude Code or Codex.
-- [MVP review and decision log](docs/MVP_REVIEW.md): findings, confirmed choices and remaining gaps.
-- Engineering research: [toolchain](docs/research/sources/D01-lean-toolchain-v4.35/notes.md),
-  [Comparator](docs/research/sources/D02-comparator-lake-check/notes.md),
-  [GUI transport](docs/research/sources/D06-gui-shipping-http-json-wasm/notes.md),
-  and [exact arithmetic and performance](docs/research/sources/D07-performance-decide-rat/notes.md).
-  The [research synthesis](docs/research/SYNTHESIS.md) is available; its older
-  scope and implementation assumptions do not override the MVP.
+You need:
 
-## What is ready
+- git and curl.
+- GNU make and a POSIX shell. On Windows, use Git Bash.
+- Node 22.12 or newer, with npm. The test runner (vitest 5) needs 22.12.
+- Internet on the first install. It downloads elan, Lean 4.35.0 and the npm packages.
 
-Done or present:
+```bash
+make install && make run
+```
 
-- MVP, organizer rules, agent guidance, and published research with a synthesis.
-- A Next.js UI backed by the Lean game program through the Node JSON bridge.
-  Lean decides legal moves, bot actions, winners and review grades, and names each
-  made hand from the flop on. The preflop description (such as "Ace-King suited")
-  comes from the browser.
-- Heads-up 500-chip games, fixed 5/10 blinds, Risk/Bluff sliders, explicit Next Hand,
-  game-over handling and replay support. Random-game seeds remain private until
-  game over; entering a seed deliberately starts a replay.
-- Lean project under `engine/`, pinned to Lean 4.35.0: card/deck definitions,
-  reference hand ranking, seeded shuffle, betting, payouts and hand/game transitions.
-- The Lean slider bot, fixed preflop data, sampled flop counts, exact turn/river
-  counts, river betting sets and call/fold review against opening river bets.
-- Tier 1 T1-T5 and Tier 2 T6-T8 proofs, with standard-axiom audits, Comparator and
-  kernel re-checks in Linux CI, green on `main` at `df6904a`
-  ([run 41281639578](https://github.com/DevomB/vibe-check-2026-project/actions/runs/41281639578)).
-  Their scope and trusted definitions are listed below.
-- Lean examples, known-showdown checks and 300 simulated random games; JavaScript
-  unit tests and tests against the compiled Lean program. TypeScript game code remains
-  a test reference. Differential-test cases and recorded results are under `tests/diff/`.
-- Makefile targets build Lean before running the integration tests.
-- Integrated session proofs, T9's 200-move hand bound, and checked range/Risk panels.
-  See [the merge review](docs/INTEGRATION_REVIEW.md) for current evidence and remaining work.
-- Peek (off by default), the Proofs drawer, practice challenges and Mystery opponents.
-  Mystery reviews remain hidden until the guess/reveal.
+`make install` installs elan if it is missing, builds the Lean engine (which also checks
+every proof), and installs the web packages. `make run` builds the web app, starts it at
+http://localhost:3000 and opens the browser. The first Lean build took about 2 minutes on
+CI's Linux machine; allow a few minutes on a laptop. If port 3000 is busy, run
+`make run PORT=3001`.
 
-## Still needed
-
-- A final rehearsal on the demo machine; the integrated fresh-Linux-checkout Makefile
-  launch and production HTTP checks passed (see the merge review).
-- Final UI playthroughs covering folds, showdowns, short stacks, reviews, replay and
-  engine restart errors. The checklist, with seeds and moves, is in
-  [docs/DEMO.md](docs/DEMO.md), with the demo seeds, sliders, moves, turn mode and
-  engine commit. Recheck them on the final build.
-- Rehearse the five-minute pitch in [docs/PITCH.md](docs/PITCH.md). Its claim table
-  ties each spoken claim to its theorems. T9 is proved; T10 remains optional if a separate
-  fast evaluator is introduced.
-
-MVP section 11 records completed and remaining work without assigning people.
-The shipping game engine is Lean; browser rendering and transport are tested separately.
-
-When working in parallel:
-
-1. Work from `engine/` for Lean commands; `engine/lean-toolchain` and
-   `engine/lake-manifest.json` are committed. MVP section 15 lists the release checks
-   and the settled integration details.
-2. Use the shared card/action/state types in `src/lean/protocol.ts` and the JSON
-   messages in MVP section 13 and `engine/Engine/Protocol.lean`.
-   Bet/raise amounts and their bounds are street totals; call amounts are
-   additional chips paid. Keep those units consistent across the bridge and UI.
-3. Coordinate edits to shared files, including the Lake config, bridge protocol
-   and Makefile, before changing them.
-
-The integration target is a complete browser game against the Lean slider bot,
-with at least one graded river decision. MVP section 9 lists what to defer.
-
-On Windows, the Makefile needs a POSIX shell and GNU make. With Node and Lean
-already installed, the equivalent PowerShell launch is:
+On Windows without make, with Node and Lean already installed, run this in PowerShell:
 
 ```powershell
 npm ci
-Push-Location engine
-lake build
-Pop-Location
+Push-Location engine; lake build; Pop-Location
 npm run build
 npm start
 ```
+
+To check the proofs yourself: `checks/audit.sh` builds the engine and fails on any `sorry`
+or extra axiom. `lake comparator` and `lake check` (from `engine/`) need Linux.
+
+**Evidence.** The latest code commit on `main`, `2a908ef`, passed every CI check: the proof
+audit, Comparator, `lake check`, and a fresh Linux clone that runs `make install`, `make run`,
+296 tests and an HTTP smoke test
+([run 41340722581](https://github.com/DevomB/vibe-check-2026-project/actions/runs/41340722581)).
+Other documents link here rather than repeat this line. CI skips commits that change only
+docs, so the final commit gets a run started by hand.
+
+## What is proved
+
+The theorems name the engine's own functions (`step`, `shuffle`, `botDecide`,
+`reviewRiver`), not copies of them. Each statement is in [`engine/Checks/Challenge.lean`](engine/Checks/Challenge.lean), the file the team agreed
+on, and [`engine/comparator.json`](engine/comparator.json) lists all 46. CI checks that each
+proof proves exactly that statement, with only the three standard axioms.
+
+| # | In plain words | Lean theorems |
+| --- | --- | --- |
+| T1 | In every game the engine can reach, there are exactly 1,000 chips. Moves and new deals never create or destroy chips. | `step_keeps_chips`, `startHand_keeps_chips`, `chips_always_1000` |
+| T2 | The shuffle keeps exactly the 52 cards. In every reachable game, no card is dealt twice. | `shuffle_same_cards`, `shuffle_fair`, `no_card_dealt_twice` |
+| T3 | The engine accepts only legal moves. An illegal move is rejected and changes nothing. The player to act is allowed to act. The bot only picks legal moves. | `accepted_move_is_legal`, `illegal_move_rejected`, `player_to_act_may_act`, `botDecide_legal` |
+| T4 | In one spot, if the bot calls or raises at some Risk, it also does at every lower Risk. Facing a bet, if the bot does not raise, it calls exactly when the call is worth it, with a lost chip counted (1 + Risk/50) times. The call rule accepts, at every Risk, a call that can never lose chips. | `risk_monotone`, `botDecide_risk_monotone`, `more_risk_takes_fewer_gambles`, `callPays_iff_takes`, `bot_calls_only_when_worth_it`, `bot_folds_only_when_not_worth_it`, `no_loss_always_taken`, `viewOf_toCall_le_pot` |
+| T5 | For a graded river call or fold: the worths are exact averages over the hands the bot can hold, in big blinds. Best means the choice was worth at least as much as the other one. Losing fewer big blinds never gets a worse label. Calling is Best exactly when your equity is at least the equity needed. When the bot bets first on the river, the review's list of hands it can hold is never empty. | `review_worth`, `review_lost`, `review_best_iff`, `review_label_monotone`, `review_call_best_iff_equity`, `review_hands_ne_nil` |
+| T6 | On the turn and the river, the bot's win counts look at every possible outcome exactly once: 990 opponent hands on the river, 45,540 (river card, opponent hand) pairs on the turn. | `enumeration_exact`, `riverOpponentHands_length`, `turnOutcomes_length`, `countsFor_river`, `countsFor_turn` |
+| T7 | On any river board, at Bluff 0% to 60%, the bot's betting set has 324 value hands and the whole number of bluffs that comes nearest to making bluffs Bluff% of the set. No hand is both. With no bet to face and a legal bet available, the bot bets on the river exactly the hands in the set. The candidate hands are ranked strongest first. | `bluff_frequency`, `value_and_bluffs_apart`, `bot_bets_its_set`, `botDecide_river_follows_set`, `rankRiverHands_sorted` |
+| T8 | Two hands that look the same to you get the same review, whatever the bot really holds. The bot's real hand is always one of the hands the review counts. | `no_hindsight`, `bot_hand_in_review` |
+| T9 | Every hand ends: from any reachable game, a hand has at most 200 accepted moves. | `every_hand_ends` |
+| App | The game the app plays is always a reachable game, so T1, T2, T3 and T9 hold for it. A command the engine rejects leaves the game unchanged. While a hand is going, the engine always accepts the bot's move. | `app_game_reachable`, `handle_keeps_reachable`, `handle_error_unchanged`, `respond_keeps_session_unless_accepted`, `bot_move_accepted` |
+| Panels | The Risk explorer shows the real bot's move at each Risk, and never goes from fold back to call. The range viewer's counts add up and are the counts the grade uses. | `exploreHand_moves`, `exploreHand_risk_monotone`, `rangeOf_adds_up`, `rangeOf_counts` |
+
+[SPEC.md](SPEC.md) gives each rule in more detail. [docs/PITCH.md](docs/PITCH.md) ties each
+claim in the pitch to its theorems and says where each one stops.
 
 ## What we trust
 
@@ -96,20 +73,18 @@ A Lean proof shows that the code does what the theorem says. It does not show th
 theorem says the right thing, and it says nothing about code outside the proof. This
 section lists everything a reader must still trust.
 
-**How the proofs are checked.** On every push that changes Lean files, GitHub runs
+**How the proofs are checked.** On every push to `main` that changes the engine, the app or
+the build files, GitHub runs
 [`.github/workflows/lean-proofs.yml`](.github/workflows/lean-proofs.yml) on a fresh Linux
 machine:
 
 1. `checks/audit.sh`: builds the engine and fails if any `sorry`, `admit`,
    `native_decide`, `maxHeartbeats 0` or new `axiom` appears, or if a main theorem uses
    an axiom other than the three below.
-2. `lake comparator`: checks that each theorem listed in
-   [`engine/comparator.json`](engine/comparator.json) proves exactly the statement in
-   [`engine/Checks/Challenge.lean`](engine/Checks/Challenge.lean), the file of statements
-   the team agreed on.
+2. `lake comparator`: checks that each theorem listed in `engine/comparator.json` proves
+   exactly the statement in `engine/Checks/Challenge.lean`.
 3. `lake check`: Lean's kernel checks the whole engine again.
-
-Run the audit yourself with `checks/audit.sh`. Comparator and `lake check` need Linux.
+4. A fresh clone runs `make install`, `make run`, the tests and an HTTP smoke test.
 
 **We trust these tools:**
 
@@ -122,7 +97,7 @@ Run the audit yourself with `checks/audit.sh`. Comparator and `lake check` need 
 
 **We trust these definitions.** A theorem means only what its definitions mean, so a
 reader must check that each of these says the right thing. Each one is short and has a
-plain-English docstring and examples.
+plain-English docstring.
 
 - Rules of the game, in [`engine/Poker/Spec/`](engine/Poker/Spec/): `State.total` (where
   chips can be), `Legal` (which moves are allowed), `State.MayAct` (who may act),
@@ -130,14 +105,18 @@ plain-English docstring and examples.
 - Which hands and games can happen, in
   [`Engine/Proofs/Reachable.lean`](engine/Engine/Proofs/Reachable.lean):
   `Hand.Reachable`, `Game.Reachable`, `Hand.dealtCards`.
+- What "a hand ends" means, in
+  [`Engine/Proofs/EndsSpec.lean`](engine/Engine/Proofs/EndsSpec.lean): `RunsTo` and
+  `RunsWith` (a run of moves the engine accepts).
 - What Risk means, in [`Engine/Proofs/RiskSpec.lean`](engine/Engine/Proofs/RiskSpec.lean):
   `riskWeight` (a lost chip counts 1 + Risk/50 times), `Gamble.Takes`, `callGamble`.
 - What the bot and equity counts must do, in `Engine/Proofs/BotSpec.lean`
   (`AlwaysLegal`, `RiskMonotone`) and `Engine/Proofs/EquitySpec.lean`
   (`OpponentCanHold`, `TurnOutcomePossible`, `timesListed`, `timesListedTurn`,
   `countResults`).
-- What "nearest whole hand" means for Bluff, in
-  [`Engine/Proofs/BluffSpec.lean`](engine/Engine/Proofs/BluffSpec.lean): `NearestWhole`.
+- What Bluff means, in [`Engine/Proofs/BluffSpec.lean`](engine/Engine/Proofs/BluffSpec.lean):
+  `NearestWhole` (the nearest whole hand), `RanksAbove` (the order of the river ranking:
+  higher score first, then lower card IDs) and `cardId` (a card's place in a new deck).
 - What the review must compute, in
   [`Engine/Proofs/ReviewSpec.lean`](engine/Engine/Proofs/ReviewSpec.lean): `callResult`
   (what a call wins against one bot hand), `choiceTotal` and `RiverSpot.total` (what a
@@ -150,15 +129,24 @@ theorem statements name engine definitions directly. A reader must check that th
 the right thing too:
 
 - `Game.Reachable` is built from `newGame`, `Game.act` and `Game.nextHand`, and
-  `Hand.Reachable` from `startHand` and `step`. T1-T3 hold for the games these build.
-- `riverBettingSet` is the set T7 counts. The review's range is built from it too.
+  `Hand.Reachable` from `startHand` and `step`. T1-T3 and T9 hold for the games these build.
+- `riverBettingSet`, `rankRiverHands`, `riverRole` and `riverBets` (`Engine/River.lean`):
+  the set T7 counts, the ranking it is cut from, and the bot's river choice. The review's
+  range is built from the same set.
 - `RiverSpot.botHands` (the review's range: the betting set minus the hands that use
   the human's cards), `RiverSpot.prize` and `RiverSpot.cost` (the chips a call can win
   and costs) appear in `RiverSpot.total`, so they fix what T5's worths mean.
 - `riverSpotOf` is what the review sees of a hand (T8 `no_hindsight`).
 - `labelFor` sets the label bands (Good under 0.5 BB, Inaccuracy under 2, Mistake under
-  5, then Blunder). T5 proves that Best means nothing lost and that labels only get worse
-  as more is lost; the band edges themselves are only in `labelFor`.
+  5, then Blunder). The bands are the team's choice: no poker tool publishes cutoffs. T5
+  proves that Best means nothing lost and that labels only get worse as more is lost; the
+  band edges themselves are only in `labelFor`.
+- `viewOf` (`Engine/Slider.lean`): the bot's view of the table, used by T4.
+- The app layer, in `Engine/Session.lean` and `Engine/Protocol.lean`: `Session.handle`
+  (what each command does), `respond` (one request line in, one reply out),
+  `parseRequest`, `parsePeek` and `stateJson`. The "App" row above is about these.
+- The panels, in `Engine/Explain.lean`: `exploreHand` (the Risk explorer) and `rangeOf`
+  (the range viewer).
 
 One proof helper is built by a small Lean command instead of written by hand:
 `#make_dealFrom` in `Engine/Proofs/Chips.lean` makes `dealFrom` (the body of `dealHand`,
@@ -173,7 +161,7 @@ otherwise try to run the 52-card shuffle on an unknown seed inside a proof.
   20261031. Rebuild it with the command stored in the file
   (`npx --yes tsx@4.20.6 scripts/gen-preflop.ts`). These are estimates, not exact counts.
 - **Flop counts** are estimated from 1,000 seeded random deals. Turn and river counts are
-  exact (theorem T6).
+  exact (T6).
 
 **Not covered by any proof:**
 
@@ -181,33 +169,43 @@ otherwise try to run the 52-card shuffle on an unknown seed inside a proof.
   JSON between the browser and the Lean `poker` program (`src/lean/`,
   `src/app/api/game/`). If the bridge sent a different move than the player clicked, no
   theorem would catch it. The engine still rejects any illegal move it receives (T3).
-- **Turning the engine's state into JSON** (`engine/Engine/Protocol.lean`) and back.
-  `engine/Main.lean` only reads and writes the lines.
-- **Recorded review inputs**: the explorer is proved equal to the bot on its recorded inputs.
-  Faithful recording of the original inputs is checked by guards and route tests rather
-  than a recording-correctness theorem. Session reachability and rejection are now proved.
+- **The JSON text**: that `stateJson` and the review reply show the right numbers, and
+  that `parseRequest` reads requests correctly, is tested, not proved. What is proved is
+  how `respond` changes the game (the "App" row). `engine/Main.lean` only reads and writes
+  the lines.
+- **Recorded review inputs**: the Risk explorer is proved equal to the bot on the inputs
+  the session recorded. That the session records the right inputs, and the right river
+  spot for the review, is tested, not proved.
 - **The human's buttons**: `legalOptions` (which moves to offer, and the raise bounds)
   is never proved equal to `Legal`. The engine still rejects any illegal move (T3).
 - **`Task.spawn` in `turnCounts`**: the turn counts run 46 tasks in parallel. The proofs
   treat a task as the plain function it runs; the compiler is trusted to run them
   correctly.
 - **Whole games**: the bot theorems are about one decision at a time. They do not say
-  how often a bot wins.
+  how often a bot wins. The review grades only river calls and folds against the bot's
+  opening river bet, and its model ignores the earlier betting.
 
 **Functions without a body (`opaque`)**: none.
 
-## Working together
+## Where things are
 
-Use separate clones and a branch per task. Commit small changes; coordinate
-before editing files that someone else is changing. Run one Lake build at a
-time per checkout, and pull with rebase before pushing as specified in the MVP.
+| Path | What it holds |
+| --- | --- |
+| `engine/Poker/Spec/` | The rules, written by people: cards, deck, legal moves, hand ranking. |
+| `engine/Engine/` | The game the app runs: shuffle, betting, bot, equity counts, river set, review, session and JSON protocol. |
+| `engine/Engine/Proofs/` | The proofs, and the `*Spec.lean` definitions they rely on. |
+| `engine/Checks/` | `Challenge.lean` (the agreed statements) and `Solution.lean` (the proofs Comparator checks). |
+| `src/` | The Next.js app: `app/api/game/` (the server route), `lean/` (the bridge to the `poker` program), `components/`, `hooks/`, `lib/`. |
+| `checks/` | `audit.sh` (the proof audit) and `http-smoke.mjs` (the HTTP smoke test). |
+| `data/preflop.json` | The preflop table (estimates). |
+| `docs/` | [PITCH.md](docs/PITCH.md) (the pitch and its claim table), [DEMO.md](docs/DEMO.md) (the demo hands and checks), [research/](docs/research/) (background research). |
+| `tests/diff/` | Differential tests and recorded results. |
 
-For each delivered feature, include a small runnable check and the command
-used to run it. State which build and checks actually passed. Humans own
-the specs; changing a definition to make a proof pass changes the contract.
-Before calling a theorem complete, build it, inspect its axioms, and include
-a concrete valid example plus a known-bad case that the spec rejects. Use
-the Comparator workflow in CLAUDE.md for final verification.
+## More
 
-Before the demo, test `make install && make run` in a fresh clone. A working
-developer checkout alone does not establish that the shared repo is ready.
+- [SPEC.md](SPEC.md): what "correct" means, in plain words, for each theorem.
+- [MVP.txt](MVP.txt): the original plan and rule decisions. Sections 3-6 still define how
+  the game and the bot behave.
+- [RULES.md](RULES.md): the hackathon's judging criteria.
+- [CLAUDE.md](CLAUDE.md): the organizers' rules for Lean verification.
+- [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md): how the team worked in parallel.
