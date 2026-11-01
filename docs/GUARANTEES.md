@@ -2,14 +2,16 @@
 
 Each row is a promise about the game, the Lean theorems that prove it, and what it does not
 cover. The same list is shown in the app's Proofs drawer (`src/lib/guarantees.ts`). Every
-theorem named here is listed in [`engine/comparator.json`](../engine/comparator.json), and its
-exact statement is in [`engine/Checks/Challenge.lean`](../engine/Checks/Challenge.lean).
+theorem in the main table is one of the 109 listed in
+[`engine/comparator.json`](../engine/comparator.json), and its exact statement is in
+[`engine/Checks/Challenge.lean`](../engine/Checks/Challenge.lean). The Kuhn poker theorems
+(their own section below) are proved and checked by `checks/audit.sh`, but are not in that list.
 
 | # | Guarantee | Theorems | Not covered |
 | --- | --- | --- | --- |
 | **T1** | **Chips are never created or destroyed.** Every accepted move keeps the chip total, a new hand holds the chips the players brought, and every game always has exactly 1,000 chips. | `step_keeps_chips`, `startHand_keeps_chips`, `chips_always_1000`, `app_game_reachable` | The numbers the web page shows. |
 | **T1b** | **The right player wins the pot.** At a showdown, the result comes from the rules' own hand ranking on the real cards and board: the better hand ends with more chips than it started with, the other with fewer, and a tie leaves both where they started. A fold gives the hand to the player who did not fold, who ends with more chips, while the folder ends with fewer. | `showdown_pays_better_hand`, `fold_pays_other_player`, `fold_records_other_player`, `game_hand_from_deal` | — (`game_hand_from_deal` shows every hand the app plays is dealt to two players who both have chips, so this holds for every hand). |
-| **T2** | **No card is dealt twice, and the shuffle method is fair if its picks are.** The shuffle keeps exactly the 52 cards of a new deck, and the cards on the table are all different. The shuffle picks each next card from the cards left; with n different cards, each order comes from exactly one of the n! pick lists, so fair picks give every order the same chance. It reads only 64 bits of its seed, and 2^64 < 52!; together those two theorems mean most orders never come out. | `shuffle_same_cards`, `shuffle_fair`, `no_card_dealt_twice`, `shuffle_eq_pickWith`, `pickWith_perm`, `allValidPicks_length`, `mem_allValidPicks`, `allValidPicks_nodup`, `every_order_possible`, `picks_one_to_one`, `each_order_once`, `shuffle_uses_64_bits`, `fewer_seeds_than_orders` | That the generator's numbers are random: the same seed always deals the same cards. The small bias from taking a 64-bit number modulo the cards left. |
+| **T2** | **No card is dealt twice, and the shuffle method is fair if its picks are.** The shuffle keeps exactly the 52 cards of a new deck, and the cards on the table are all different. The shuffle picks each next card from the cards left; with n different cards, each order comes from exactly one of the n! pick lists, so fair picks give every order the same chance. It reads only 64 bits of its seed, and 2^64 < 52!; together those two theorems mean most orders never come out. The generator behind the picks spreads its numbers perfectly evenly over a full cycle: its step visits all 2^64 states once each, its scrambling never maps two states to the same number, so among the first 2^64 numbers from any seed every 64-bit number comes out exactly once. | `shuffle_same_cards`, `shuffle_fair`, `no_card_dealt_twice`, `shuffle_eq_pickWith`, `pickWith_perm`, `allValidPicks_length`, `mem_allValidPicks`, `allValidPicks_nodup`, `every_order_possible`, `picks_one_to_one`, `each_order_once`, `shuffle_uses_64_bits`, `fewer_seeds_than_orders`, `seedPicks_eq`, `genState_injective`, `genState_onto`, `mixSeed_injective`, `mixSeed_onto`, `every_number_once` | That the generator's numbers are random: the same seed always deals the same cards. The small bias from taking a 64-bit number modulo the cards left. |
 | **T2b** | **The board matches the street.** While a hand is played the board has 0 cards before the flop, 3 on the flop, 4 on the turn and 5 on the river, and a showdown always has all 5. | `board_matches_street`, `showdown_has_five_cards`, `game_hand_from_deal` | — |
 | **T3** | **Only legal moves.** An accepted move is legal; an illegal move is rejected and changes nothing; a legal move in a hand that is not over is always accepted; only a player who may act gets the turn; the bot always moves legally; bad or rejected commands leave the game unchanged; the buttons offered are exactly the legal moves, with the right call amount and raise range. | `accepted_move_is_legal`, `illegal_move_rejected`, `legal_move_accepted`, `player_to_act_may_act`, `botDecide_legal`, `bot_move_accepted`, `handle_error_unchanged`, `handle_keeps_reachable`, `respond_keeps_session_unless_accepted`, `legalOptions_exact` | The browser and Node bridge (tested, not proved). The engine still rejects any illegal move it gets. |
 | **T3b** | **The bot cannot see your cards.** Two games that differ only in your cards or the undealt deck get exactly the same bot move. Before the flop, on the turn and on the river, the bot does not even use the seed, so its move there cannot depend on the shuffle at all. | `bot_never_sees_your_cards`, `bot_ignores_seed_off_flop` | On the flop, the bot's random samples start from the hand's seed, which also shuffled the deck. It never reads the deck or your cards, but the two are not proved independent. |
@@ -22,6 +24,22 @@ exact statement is in [`engine/Checks/Challenge.lean`](../engine/Checks/Challeng
 | **T8** | **The grade ignores the bot's real cards.** Two hands that look the same to you get the same review, and the bot's real hand is always among the hands the review counts. | `no_hindsight`, `bot_hand_in_review` | A right decision can still lose chips. |
 | **T9** | **Every hand ends,** within 200 moves, **and the game can never freeze:** while a hand is going, the player to act always has a legal move the engine accepts. | `every_hand_ends`, `game_never_freezes` | How many hands a game lasts, or how long each move takes. |
 
+## Kuhn poker (the separate 3-card game at `/kuhn`)
+
+Kuhn poker is the smallest real poker game: three cards (Jack, Queen, King), an ante of 1 and
+one bet of 1. It is small enough to solve exactly, so here the bot is proved to play
+**perfectly**: a Nash equilibrium that nobody can beat on average. It is a separate game; none
+of this is a claim about the Hold'em bot. Play it at `/kuhn` in the app, or with
+`cd engine && lake exe kuhn` in a terminal.
+
+| # | Guarantee | Theorems | Not covered |
+| --- | --- | --- | --- |
+| **K1** | **The bot's strategy is a Nash equilibrium.** For every strategy you could use, with any probabilities: as player 1 the bot never averages worse than −1/18 of a chip a hand, as player 2 you never average better than −1/18 against it, the two strategies together give exactly −1/18 (the known value of the game), and neither player gains by changing only their own play. | `kuhn_bot_as_player1`, `kuhn_bot_as_player2`, `kuhn_value`, `kuhn_nash` (`Engine/Proofs/Kuhn.lean`) | It is one of a family of equilibria (player 1 may bluff a jack anywhere from 0 to 1/3 of the time); the proof covers the one the bot plays. |
+| **K2** | **The game follows the rules.** Every sequence of moves the game accepts is part of one of the five ways a hand can end, and the hand ends exactly there. The bot only ever makes allowed moves. | `kuhn_game_follows_rules`, `botP1_legal`, `botP2_legal` (`Engine/Proofs/KuhnGame.lean`) | — |
+| **K3** | **The deal is fair and the bot rolls the right odds.** The six random numbers 0 to 5 give the six deals once each. Of its three equally likely rolls, the bot takes each choice exactly as often as its strategy says: for example, it bluffs a jack on exactly one roll in three. | `kDeal_each_once`, `botP1_frequencies`, `botP2_frequencies` | That the random numbers themselves are fair: the game draws them with Lean's `IO.rand`, which is trusted, not proved. |
+| **K4** | **The playable game gives exactly what the theory predicts.** Against every way you can play (all 64 player 2 and 27 player 1 pure strategies), the game's average result over every deal and bot roll equals the theory's payoff. | `botP1Total_eq`, `botP2Total_eq` | The web page and terminal program that pass your moves to the game (tested, not proved). |
+| **K5** | **Nobody beats the bot.** Playing one hand in each seat, with any choices, your winnings are at most 0 on average; the same holds if you mix your choices at random. | `kuhn_bot_unbeatable`, `kuhn_game_unbeatable`, `kuhn_game_bot_p1`, `kuhn_game_bot_p2`, `kuhn_game_bot_p1_mix`, `kuhn_game_bot_p2_mix` | Short runs: over a few hands luck decides, and you can be ahead. The guarantee is about the average. |
+
 ## Why the rest of "Not covered" is not proved
 
 Some limits cannot be closed by a Lean proof. They are listed here so nobody reads the
@@ -30,7 +48,7 @@ table as claiming more than it does.
 | Limit | Why it is not proved |
 | --- | --- |
 | The web page's numbers, the browser and the Node bridge | They are JavaScript. Lean proves things only about Lean code. They are checked by the app's test suite instead. |
-| The shuffle being random | It is a seeded generator on purpose, so a game can be replayed. "Random" is not a property a fixed rule has. What is proved instead (T2): the picking method gives every order the same chance when the picks are fair, and the 64-bit seed limits which orders can come out. |
+| The shuffle being random | It is a seeded generator on purpose, so a game can be replayed. "Random" is not a property a fixed rule has. What is proved instead (T2): the picking method gives every order the same chance when the picks are fair, the generator's numbers are spread perfectly evenly over a full cycle, and the 64-bit seed limits which orders can come out. |
 | Whole games: how often the bot wins or bluffs in play | These are statistics over luck, not facts that are true or false. |
 | Flop and preflop odds are estimates | Exact flop odds need about 1.2 million showdowns per decision, about 25 times the turn's count, which already takes 0.67 to 0.93 s on 8 cores (`Engine/Equity.lean`). That is too slow to play, so it is a speed choice. |
 | The review grades only river call/fold and ignores earlier betting | That is the scope of the review, not a missing proof. Grading more would be a new feature. |
@@ -46,7 +64,10 @@ table as claiming more than it does.
   `Reachable`, `RunsTo`, `Street.boardCards`, the Risk definitions, the review model and the
   bluff-catcher definitions (`CatchesBluffs`, `RiverSpot.valueHands`, `RiverSpot.bluffHands`) and the
   bot's-side definitions (`bluffGain`, `bluffTotal`, `valueGain`, `valueTotal`, `callCount`,
-  `RiverEquilibrium`).
+  `RiverEquilibrium`), and the generator's definitions (`genStep`, `genState`, `genOutput`, in
+  `Engine/Proofs/GeneratorSpec.lean`). For Kuhn poker: the rules and payoffs in
+  `Engine/Proofs/KuhnSpec.lean` (`dealValue`, `kuhnPayoff`, how a strategy is written) and the
+  five ways a hand can end (`kuhnEndings`, in `Engine/KuhnGame.lean`).
   The README lists all of them under "What we trust".
 - **Trusted data, not proved:** the preflop table (`data/preflop.json`) and the flop odds.
 
