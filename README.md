@@ -28,8 +28,9 @@ Done or present:
   Lean decides legal moves, bot actions, winners and review grades, and names each
   made hand from the flop on. The preflop description (such as "Ace-King suited")
   comes from the browser.
-- Heads-up 500-chip games, fixed 5/10 blinds, Risk/Bluff sliders, explicit Next Hand,
-  game-over handling and replay support. Random-game seeds remain private until
+- Heads-up 500-chip games, fixed 5/10 blinds, one Risk slider (higher means more
+  risk-seeking, lower more risk-averse), explicit Next Hand, game-over handling and replay
+  support. Random-game seeds remain private until
   game over; entering a seed deliberately starts a replay.
 - Lean project under `engine/`, pinned to Lean 4.35.0: card/deck definitions,
   reference hand ranking, seeded shuffle, betting, payouts and hand/game transitions.
@@ -54,7 +55,7 @@ Done or present:
   launch and production HTTP checks passed (see the merge review).
 - Final UI playthroughs covering folds, showdowns, short stacks, reviews, replay and
   engine restart errors. The checklist, with seeds and moves, is in
-  [docs/DEMO.md](docs/DEMO.md), with the demo seeds, sliders, moves, turn mode and
+  [docs/DEMO.md](docs/DEMO.md), with the demo seeds, Risk, moves, turn mode and
   engine commit. Recheck them on the final build.
 - Rehearse the five-minute pitch in [docs/PITCH.md](docs/PITCH.md). Its claim table
   ties each spoken claim to its theorems. T9 is proved; T10 remains optional if a separate
@@ -130,8 +131,12 @@ plain-English docstring and examples.
 - Which hands and games can happen, in
   [`Engine/Proofs/Reachable.lean`](engine/Engine/Proofs/Reachable.lean):
   `Hand.Reachable`, `Game.Reachable`, `Hand.dealtCards`.
-- What Risk means, in [`Engine/Proofs/RiskSpec.lean`](engine/Engine/Proofs/RiskSpec.lean):
-  `riskWeight` (a lost chip counts 1 + Risk/50 times), `Gamble.Takes`, `callGamble`.
+- What the bot's internal caution means, in
+  [`Engine/Proofs/RiskSpec.lean`](engine/Engine/Proofs/RiskSpec.lean): `riskWeight` (a lost
+  chip counts 1 + caution/50 times), `Gamble.Takes`, `callGamble`. The spec files call this
+  internal number `risk`. The Risk the player sets (0 to 100, higher means more risk-seeking)
+  is mapped to it by `Sliders.ofRisk`: caution falls from 100 at Risk 0 to 0 at Risk 50 and
+  stays 0 above, while the bluff share rises. See [docs/THEORY.md](docs/THEORY.md).
 - What the bot and equity counts must do, in `Engine/Proofs/BotSpec.lean`
   (`AlwaysLegal`, `RiskMonotone`) and `Engine/Proofs/EquitySpec.lean`
   (`OpponentCanHold`, `TurnOutcomePossible`, `timesListed`, `timesListedTurn`,
