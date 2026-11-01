@@ -228,7 +228,7 @@ export function ReviewModal({ review, game = null, peeked = false, hideSliderInf
                   <p className={styles.coachNumbers}>
                     {coach.worths} <span className={styles.band}>{coach.band}</span>
                   </p>
-                  <WhyChip ideas={["pot-odds", "grade-bands"]} />
+                  <WhyChip ideas={["pot-odds", "exact-equity", "grade-bands"]} />
                 </>
               ) : row ? (
                 <>

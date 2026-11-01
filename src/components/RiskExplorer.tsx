@@ -2,6 +2,7 @@ import { useState } from "react";
 import { type LeanRiskExplorerEntry, RISK_MAX } from "@/lean/protocol";
 import type { GuaranteeId } from "@/lib/guarantees";
 import { RISK_MARKS } from "./Lobby";
+import { WhyChip } from "./WhyChip";
 import styles from "./review.module.css";
 
 interface Props {
@@ -120,13 +121,14 @@ export function RiskExplorer({ entries, selected, onSelect, onShowProof }: Props
         <p className="muted">Only this one move changes. The moves before it stay as they were played.</p>
       </div>
 
-      {onShowProof && (
-        <div className={styles.linkRow}>
+      <div className={styles.linkRow}>
+        <WhyChip ideas={["risk-weight"]} />
+        {onShowProof && (
           <button type="button" className={styles.proofLink} onClick={() => onShowProof("risk")}>
             Why can I trust the Risk explorer?
           </button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
