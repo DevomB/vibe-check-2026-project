@@ -49,7 +49,7 @@ interface Props {
 
 const STREET_NAME: Record<Street, string> = { preflop: "Preflop", flop: "Flop", turn: "Turn", river: "River" };
 
-const NOT_GRADED = "Not graded: Lean grades only your call or fold when the bot bets first on the river.";
+const NOT_GRADED = "Not graded: Lean grades only your call or fold after the bot makes the first bet on the river.";
 
 function Cards({ cards, slots = 0 }: { cards: readonly Card[]; slots?: number }) {
   return (
@@ -252,7 +252,7 @@ export function ReviewModal({ review, game = null, peeked = false, hideSliderInf
                   <p className={styles.coachHead}>
                     <b>No graded move in this hand.</b>
                   </p>
-                  <p>{noGradeReason(events)}</p>
+                  <p>{noGradeReason(events, human)}</p>
                   <p className="muted">Practice hands on the setup screen always reach that spot.</p>
                 </>
               )}

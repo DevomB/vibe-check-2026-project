@@ -200,9 +200,29 @@ export function gradedCoach(d: ReviewDecision): GradedCoach | null {
   return { headline: `${GERUND[mine]} is ${withArticle(d.label)}.`, chances, better, worths, band: `${info.label}: ${info.band}.` };
 }
 
-/** Why a hand has no grade. `events` are the hand's events, or null when they are not known. */
-export function noGradeReason(events: readonly LeanEvent[] | null): string {
-  const what = "Lean grades one decision: your call or fold when the bot bets first on the river.";
-  const river = events === null || events.some((e) => e.type === "street" && e.street === "river");
-  return `${what} ${river ? "This hand had no such decision." : "This hand ended before the river."}`;
+const NO_SUCH_DECISION = "This hand had no such decision.";
+
+/**
+ * Why a hand has no grade. `events` are the hand's events, or null when they are not known;
+ * `human` is your seat. Lean grades only a call or fold after the bot's first river bet, so
+ * the reason names the part of that the hand did not have.
+ */
+export function noGradeReason(events: readonly LeanEvent[] | null, human: number): string {
+  const what = "Lean grades one decision: your call or fold after the bot makes the first bet on the river.";
+  return `${what} ${events === null ? NO_SUCH_DECISION : missingRiverSpot(events, human)}`;
+}
+
+/** The part of the graded spot a hand did not have: the river, a river bet, or your call or fold after the bot's. */
+function missingRiverSpot(events: readonly LeanEvent[], human: number): string {
+  const riverAt = events.findIndex((e) => e.type === "street" && e.street === "river");
+  if (riverAt < 0) return "This hand ended before the river.";
+  const moves = events.slice(riverAt + 1).flatMap((e) => (e.type === "action" ? [e] : []));
+  if (moves.length === 0) return "A player was all-in before the river, so there was no betting on it.";
+  // A bet is a raise from nothing.
+  const firstBet = moves.findIndex((e) => e.action === "raise");
+  if (firstBet < 0) return "Nobody bet on the river.";
+  if (moves[firstBet]!.player === human) return "You made the first bet on the river.";
+  const answer = moves.slice(firstBet + 1).find((e) => e.player === human);
+  if (answer?.action === "raise") return "You raised the bot's bet instead of calling or folding.";
+  return NO_SUCH_DECISION;
 }

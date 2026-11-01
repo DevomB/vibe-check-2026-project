@@ -69,8 +69,8 @@ sets the bluff share from Risk: 0% for Ivy, 60% for Vex. The table shows both at
 - **The screen shows:**
   - Ivy folds. You win the blinds. Your stack is 510 (+10).
   - Click Review. "No graded move in this hand." "Lean grades one decision: your call or
-    fold when the bot bets first on the river. This hand ended before the river." Your
-    raise has no badge in the move list.
+    fold after the bot makes the first bet on the river. This hand ended before the river."
+    Your raise has no badge in the move list.
   - Why the bot played this way: "Fold: not worth calling 140 to win 160 at Risk 0, with
     win chance 58%."
 - **Optional contrast.** The same seed with Mia (Risk 50) or Vex (Risk 100) and the same
