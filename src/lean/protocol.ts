@@ -125,6 +125,8 @@ export interface ReviewDecision {
 export interface LeanReview {
   hand: number;
   decisions: ReviewDecision[];
+  /** The bot's detailed reason for each of its moves in this hand. Null while the hand is still being played. */
+  bot_reasons: string[] | null;
 }
 
 export type LeanReply =

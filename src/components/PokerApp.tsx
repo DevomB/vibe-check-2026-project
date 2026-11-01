@@ -177,7 +177,7 @@ export function PokerApp() {
         />
       )}
       {review && (
-        <ReviewModal review={review} botReasons={game.lean.botReasons} peeked={peekedHands.includes(review.hand)} onClose={closeReview} />
+        <ReviewModal review={review} peeked={peekedHands.includes(review.hand)} onClose={closeReview} />
       )}
       {rulesModal}
     </div>

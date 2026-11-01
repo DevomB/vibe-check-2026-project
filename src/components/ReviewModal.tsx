@@ -3,8 +3,6 @@ import type { LeanReview, ReviewDecision } from "@/lean/protocol";
 
 interface Props {
   review: LeanReview;
-  /** The bot's detailed reasons for this hand's moves, from Lean. */
-  botReasons: string[] | null;
   /** "Peek at bot's cards" was on while this hand was played. Display only. */
   peeked?: boolean;
   onClose: () => void;
@@ -77,13 +75,15 @@ function Decision({ d }: { d: ReviewDecision }) {
 }
 
 /** After a hand: Lean's grades for the human's river call/fold decisions, and the bot's reasons. */
-export function ReviewModal({ review, botReasons, peeked = false, onClose }: Props) {
+export function ReviewModal({ review, peeked = false, onClose }: Props) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
+  // The reasons come with the review, so they belong to the hand being reviewed.
+  const botReasons = review.bot_reasons;
   const graded = review.decisions.filter((d) => d.label !== null);
   const ungraded = review.decisions.filter((d) => d.label === null);
 

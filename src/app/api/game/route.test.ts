@@ -140,6 +140,7 @@ describe.skipIf(!existsSync(leanBinaryPath()))("/api/game with the Lean program"
     if (!("ok" in reply)) throw new Error(reply.error);
     expect(reply.review?.hand).toBe(s.hand);
     expect(reply.review?.decisions.length).toBeGreaterThan(0);
+    expect(reply.review?.bot_reasons).toEqual(s.botReasons);
   });
 
   it("adds the replay record: turn mode, engine build and server checkout", async () => {
