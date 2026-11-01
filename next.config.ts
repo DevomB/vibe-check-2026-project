@@ -7,6 +7,8 @@ process.env.NEXT_TELEMETRY_DISABLED ??= "1";
 const config: NextConfig = {
   reactStrictMode: true,
   experimental: {
+    // Bound build memory on the shared laptop; raise this on a larger build machine.
+    cpus: 2,
     // On by default in Next 16: `next build` asks the npm registry for security advisories.
     agentUpgrade: false,
   },

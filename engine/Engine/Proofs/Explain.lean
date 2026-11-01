@@ -18,7 +18,7 @@ What to review (the definitions these statements depend on): `exploreHand`, `exp
 `movesByRisk`, `countsIn`, `countsTable`, `BotMoveRecord`, `rangeOf`, `RangeSummary`, and,
 from earlier files, `botDecide`, `RiskMonotone`, `reviewRiver`.
 
-These theorems are not part of `Checks/` (Devom decides that).
+These statements are registered in `Checks/Challenge.lean` and `comparator.json`.
 -/
 
 /-! ## The counts table -/

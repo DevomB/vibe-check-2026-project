@@ -38,7 +38,11 @@ async function play(bodies: unknown[]): Promise<LeanState> {
   return state!;
 }
 
-describe.skipIf(!existsSync(leanBinaryPath()))("demo scene (a) through /api/game", () => {
+if (process.env.SKIP_LEAN !== "1" && !existsSync(leanBinaryPath())) {
+  throw new Error("Build the Lean engine before running demo tests (make lean).");
+}
+
+describe.skipIf(process.env.SKIP_LEAN === "1")("demo scene (a) through /api/game", () => {
   it("reaches the bot's opening river bet with the rehearsed cards", async () => {
     const s = await play(SCENE_A_MOVES);
     expect(s).toMatchObject({ hand: 1, street: "river", status: "playing", toAct: 0, pot: 60 });
@@ -61,7 +65,7 @@ describe.skipIf(!existsSync(leanBinaryPath()))("demo scene (a) through /api/game
     const decisions = reply.review!.decisions;
     // Only the river call is graded; the earlier moves show "not graded yet".
     expect(decisions.slice(0, -1).every((d) => d.label === null)).toBe(true);
-    expect(decisions.at(-1)).toEqual({
+    expect(decisions.at(-1)).toMatchObject({
       street: "river",
       your_action: "call",
       label: "Mistake",

@@ -165,7 +165,7 @@ example (line : String) (hjson : Json.parse line = .ok exCheckJson) :
       (some exSession, Json.mkObj [("error", toJson "illegal move"),
         ("state", stateJson { exSession with events := #[] })]) :=
   handle_error_unchanged (some exSession) line exCheckJson (.act .check) "illegal move"
-    hjson rfl rfl
+    false "unknown" hjson rfl rfl rfl
 
 /-- Known-bad outputs: answering that rejected check by dropping the game, or by keeping any
 other session. The theorem rules out both. -/
@@ -173,7 +173,7 @@ example (line : String) (hjson : Json.parse line = .ok exCheckJson) (s' : Sessio
     (hother : s' ≠ exSession) (r : Json) :
     respond (some exSession) line ≠ (none, r) ∧ respond (some exSession) line ≠ (some s', r) := by
   rw [handle_error_unchanged (some exSession) line exCheckJson (.act .check) "illegal move"
-    hjson rfl rfl]
+    false "unknown" hjson rfl rfl rfl]
   refine ⟨fun h => ?_, fun h => hother ?_⟩
   · simp only [Prod.mk.injEq, reduceCtorEq, false_and] at h
   · simp only [Prod.mk.injEq, Option.some.injEq] at h

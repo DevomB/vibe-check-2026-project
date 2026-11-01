@@ -35,7 +35,7 @@ export const GUARANTEES: readonly Guarantee[] = [
       "A new hand holds exactly the chips the two players brought to it.",
       "So every game always has exactly 1,000 chips.",
     ],
-    theorems: ["step_keeps_chips", "startHand_keeps_chips", "chips_always_1000"],
+    theorems: ["step_keeps_chips", "startHand_keeps_chips", "chips_always_1000", "app_game_reachable"],
     assumes: ["The game started as a new game and then changed only by moves and new hands that the engine accepted."],
     limits: ["It is about the engine's own game state. It does not check the numbers the web page shows."],
   },
@@ -65,14 +65,14 @@ export const GUARANTEES: readonly Guarantee[] = [
       "In every game, the player whose turn it is has chips and has not bet more than the other player.",
       "Whenever the player to act may act, the bot's move is legal, at every slider setting.",
     ],
-    theorems: ["accepted_move_is_legal", "illegal_move_rejected", "player_to_act_may_act", "botDecide_legal"],
+    theorems: ["accepted_move_is_legal", "illegal_move_rejected", "player_to_act_may_act", "botDecide_legal", "handle_error_unchanged", "bot_move_accepted", "handle_keeps_reachable"],
     assumes: [
       "The rules are the ones written in Legal, in engine/Poker/Spec/Basics.lean.",
       "For a rejection: the hand is not over yet.",
     ],
     limits: [
       "The buttons and raise limits on the page come from code that is not proved to match the rules. The engine still rejects any illegal move it gets.",
-      "The code that keeps the game between requests is not covered.",
+      "Session reachability and rejected commands are covered; browser behavior and the Node bridge are tested separately.",
     ],
   },
   {
@@ -150,7 +150,7 @@ export const GUARANTEES: readonly Guarantee[] = [
       "No hand is both a value hand and a bluff.",
       "With no bet to face on the river, the bot bets exactly the hands in this set.",
     ],
-    theorems: ["bluff_frequency", "value_and_bluffs_apart", "bot_bets_its_set"],
+    theorems: ["bluff_frequency", "value_and_bluffs_apart", "bot_bets_its_set", "botDecide_river_follows_set", "rankRiverHands_sorted"],
     assumes: ["The board has five different cards, and Bluff is 0 to 60."],
     limits: [
       "It is about the set of hands, not how often the bot bluffs in played games.",

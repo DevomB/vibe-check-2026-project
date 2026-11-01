@@ -269,13 +269,14 @@ open Lean (Json toJson) in
 the session exactly as it was, and replies with the error and the table as it was before,
 with no new events. -/
 theorem handle_error_unchanged (cur : Option Session) (line : String) (j : Json)
-    (c : Command) (e : String)
+    (c : Command) (e : String) (peek : Bool) (commit : String)
     (hjson : Json.parse line = .ok j) (hreq : parseRequest j = .ok (.game c))
+    (hpeek : parsePeek j = .ok peek)
     (hrej : Session.handle cur c = .error e) :
-    respond cur line =
+    respond cur line commit =
       (cur, Json.mkObj [("error", toJson e),
         ("state", match cur with
-          | some s => stateJson { s with events := #[] }
+          | some s => stateJson { s with events := #[] } peek commit
           | none => Json.null)]) := sorry
 
 /-- In every state, the chips the bot must add to call are at most the pot it can win. So
@@ -283,3 +284,33 @@ theorem handle_error_unchanged (cur : Option Session) (line : String) (j : Json)
 the bot really gets. -/
 theorem viewOf_toCall_le_pot (sl : Sliders) (hole board : List Card) (s : State) :
     (viewOf sl hole board s).toCall ≤ (viewOf sl hole board s).pot := sorry
+
+/-! ## App protocol and review panels: integration guarantees -/
+
+open Lean (Json toJson)
+
+theorem app_game_reachable (lines : List String) (s : Session) (commit : String)
+    (hs : lines.foldl (fun cur line => (respond cur line commit).1) none = some s) :
+    s.game.Reachable := sorry
+
+theorem respond_keeps_session_unless_accepted (cur : Option Session) (line : String) (commit : String) :
+    (respond cur line commit).1 = cur ∨
+    ∃ j c s, Json.parse line = .ok j ∧ parseRequest j = .ok (.game c) ∧
+      Session.handle cur c = .ok s ∧ (respond cur line commit).1 = some s := sorry
+
+theorem exploreHand_moves (sl : Sliders) (ms : List BotMoveRecord) (i r : Nat)
+    (hi : i < ms.length) (hr : r ≤ 100) :
+    ((exploreHand sl ms)[i]?.bind fun e => e.moves[r]?) =
+      some (botDecide ⟨r, sl.bluffPct⟩ ms[i].seed ms[i].hole ms[i].board ms[i].state).action := sorry
+
+theorem exploreHand_risk_monotone (sl : Sliders) (ms : List BotMoveRecord) (i : Nat)
+    (hi : i < ms.length) :
+    RiskMonotone fun r => ((exploreHand sl ms)[i]?.bind fun e => e.moves[r]?).getD .fold := sorry
+
+theorem rangeOf_adds_up (spot : RiverSpot) :
+    (rangeOf spot).value + (rangeOf spot).bluffs =
+      (rangeOf spot).blocked + ((rangeOf spot).beat + (rangeOf spot).tie + (rangeOf spot).lose) := sorry
+
+theorem rangeOf_counts (spot : RiverSpot) (choice : RiverChoice) :
+    (reviewRiver spot choice).counts =
+      ⟨(rangeOf spot).beat, (rangeOf spot).tie, (rangeOf spot).lose⟩ := sorry

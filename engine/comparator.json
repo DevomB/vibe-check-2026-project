@@ -41,7 +41,13 @@
     "bot_move_accepted",
     "handle_keeps_reachable",
     "handle_error_unchanged",
-    "viewOf_toCall_le_pot"
+    "viewOf_toCall_le_pot",
+    "app_game_reachable",
+    "respond_keeps_session_unless_accepted",
+    "exploreHand_moves",
+    "exploreHand_risk_monotone",
+    "rangeOf_adds_up",
+    "rangeOf_counts"
   ],
   "permitted_axioms": [
     "propext",

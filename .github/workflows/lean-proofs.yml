@@ -1,17 +1,17 @@
 # Checks the Lean proofs on a fresh Linux machine: build, audit, Comparator, lake check.
 # Comparator and `lake check` need Linux (they build the project in a bubblewrap sandbox).
 #
-# Safe by design: read-only access to the repo, no secrets, runs only when Lean files or
-# this file change, cancels an older run on the same branch, and stops after 30 minutes.
+# Read-only repo access, no secrets. Also checks the app from a fresh Linux checkout.
+# Runs on engine/app changes; cancels superseded pull-request runs.
 # It does not block merges; it only reports a pass or fail on the commit.
 name: Lean proofs
 
 on:
   push:
     branches: [main]
-    paths: ["engine/**", "checks/**", ".github/workflows/lean-proofs.yml"]
+    paths: ["engine/**", "checks/**", "src/**", "docs/demo/**", "Makefile", "package*.json", "next.config.ts", ".github/workflows/lean-proofs.yml"]
   pull_request:
-    paths: ["engine/**", "checks/**", ".github/workflows/lean-proofs.yml"]
+    paths: ["engine/**", "checks/**", "src/**", "docs/demo/**", "Makefile", "package*.json", "next.config.ts", ".github/workflows/lean-proofs.yml"]
   workflow_dispatch:
 
 permissions:
@@ -52,3 +52,33 @@ jobs:
       - name: lake check (the kernel re-checks the whole engine)
         working-directory: engine
         run: lake check
+
+  app:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install pinned Lean
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/leanprover/elan/v4.2.4/elan-init.sh \
+            | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      - name: Fresh-checkout install and tests
+        run: |
+          make install
+          npm run typecheck
+          npm test
+      - name: Required launcher and production HTTP checks
+        run: |
+          make run PORT=3001 > /tmp/poker-app.log 2>&1 &
+          launcher=$!
+          trap 'kill "$launcher" 2>/dev/null || true; cat /tmp/poker-app.log' EXIT
+          for i in $(seq 1 180); do
+            if curl --fail --silent http://localhost:3001/ >/dev/null; then break; fi
+            if ! kill -0 "$launcher" 2>/dev/null; then exit 1; fi
+            sleep 1
+          done
+          node checks/http-smoke.mjs
