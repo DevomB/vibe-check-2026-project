@@ -243,7 +243,8 @@ function withReply(base: Omit<Game, "lean" | "session" | "dealt" | "legal" | "bo
     dealt: { hand: toHandState(s, names), seatOf: [HUMAN_SEAT, BOT_SEAT] },
     legal: s.legal,
     boardBefore: newHand ? 0 : previous.lean.board.length,
-    botLine: lastBotLine(s.events, lines),
+    // A reply without events (Peek turned on or off, a Mystery reveal) keeps the bot's last move.
+    botLine: !newHand && s.events.length === 0 ? previous.botLine : lastBotLine(s.events, lines),
     log: appendLog(base.log, [...header, ...lines]),
     stats,
     lost: null,
