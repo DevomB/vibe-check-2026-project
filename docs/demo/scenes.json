@@ -3,8 +3,7 @@
     "id": "a",
     "title": "Review scene: a bad river call",
     "seed": "6",
-    "risk": 0,
-    "bluff_pct": 60,
+    "risk": 100,
     "moves": [
       {
         "action": "raise",
@@ -89,10 +88,9 @@
   },
   {
     "id": "b",
-    "title": "Risk 100, Bluff 0: the bot folds to a big bet",
+    "title": "Risk 0: the bot folds to a big bet",
     "seed": "1",
-    "risk": 100,
-    "bluff_pct": 0,
+    "risk": 0,
     "moves": [
       {
         "action": "raise",
@@ -103,10 +101,10 @@
       "3c",
       "8c"
     ],
-    "bot_reason": "Fold: not worth calling 140 to win 160 at Risk 100, with win chance 58%.",
+    "bot_reason": "Fold: not worth calling 140 to win 160 at Risk 0, with win chance 58%.",
     "bot_win_chance_percent": 58,
     "human_net_chips": 10,
-    "same_seed_at_risk_0": {
+    "same_seed_at_risk_100": {
       "bot_called": true,
       "events": [
         {
@@ -136,10 +134,9 @@
   },
   {
     "id": "c",
-    "title": "Risk 0, Bluff 60: the bot bets a designated bluff on the river",
+    "title": "Risk 100: the bot bets a designated bluff on the river",
     "seed": "1",
-    "risk": 0,
-    "bluff_pct": 60,
+    "risk": 100,
     "moves": [
       {
         "action": "call"

@@ -1,5 +1,7 @@
+import type { ReactNode } from "react";
 import type { Game } from "@/hooks/useGame";
 import { CHALLENGES, type Challenge, type PracticeVerdict, RIGHT_BUT_UNLUCKY, atRiverDecision } from "@/lib/challenges";
+import { ReviewBadge } from "./ReviewBadge";
 import styles from "./modes.module.css";
 
 /** The practice buttons on the setup screen. Each loads a rehearsed hand at its river decision. */
@@ -42,10 +44,15 @@ export function PracticeBar({ game, challenge, verdict, overReview, onRetry }: B
     );
   }
   if (game.lean.result === null) return null;
-  let text: string;
+  let text: ReactNode;
   if (verdict === null) text = "The hand is over. The review shows Lean's grade.";
   else if (verdict.choice === null || verdict.label === null) text = "Lean grades only a call or a fold here, so this hand has no grade.";
-  else text = `Lean graded your ${verdict.choice}: ${verdict.label}.${verdict.unlucky ? ` ${RIGHT_BUT_UNLUCKY}` : ""}`;
+  else
+    text = (
+      <>
+        Lean graded your {verdict.choice}: <ReviewBadge label={verdict.label} named size="sm" />.{verdict.unlucky ? ` ${RIGHT_BUT_UNLUCKY}` : ""}
+      </>
+    );
   return (
     <div className={`${styles.practiceBar} ${overReview ? styles.practiceFloat : ""}`} role="status">
       <span>

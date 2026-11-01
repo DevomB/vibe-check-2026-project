@@ -1,37 +1,35 @@
 import { useEffect, useState } from "react";
-import { BotSlider } from "./Lobby";
-import { BLUFF_PCT_MAX, type MysteryReveal, RISK_MAX } from "@/lean/protocol";
+import { BotSlider, RISK_HELP, RISK_MARKS } from "./Lobby";
+import { type LeanState, type MysteryReveal, RISK_IDEAL, RISK_MAX } from "@/lean/protocol";
 import styles from "./modes.module.css";
 
 interface Props {
   /** The server's answer, once the guess is in; null while guessing. */
   reveal: MysteryReveal | null;
+  /** Lean's settings for the bot, once revealed: what it derived from the real Risk. */
+  sliders: LeanState["sliders"] | null;
   /** True while the guess is being sent. */
   sending: boolean;
   /** Why the server refused the guess, if it did. */
   error: string | null;
-  onGuess: (risk: number, bluffPct: number) => void;
+  onGuess: (risk: number) => void;
   onClose: () => void;
   /** Open the review of the last finished hand; shown after the reveal. */
   onReview?: () => void;
 }
 
-/** Within this much, a guess counts as close: a tenth of each slider's range. */
-const CLOSE = { risk: 10, bluffPct: 6 };
+/** Within this much, a guess counts as close: a tenth of Risk's range. */
+const CLOSE = 10;
 
 function verdict(r: MysteryReveal): string {
-  const risk = r.off.risk <= CLOSE.risk;
-  const bluff = r.off.bluff_pct <= CLOSE.bluffPct;
-  if (risk && bluff) return "A sharp read: close on both.";
-  if (risk) return "Close on Risk, further off on Bluff.";
-  if (bluff) return "Close on Bluff, further off on Risk.";
+  if (r.off === 0) return "Exactly right.";
+  if (r.off <= CLOSE) return "A sharp read: close.";
   return "Not close this time. The review now shows the bot's reasons.";
 }
 
-/** "Guess the bot": two sliders for the hidden Risk and Bluff, then the real settings and how far off each guess was. */
-export function MysteryGuess({ reveal, sending, error, onGuess, onClose, onReview }: Props) {
-  const [risk, setRisk] = useState(50);
-  const [bluffPct, setBluffPct] = useState(30);
+/** "Guess the bot": one slider for the hidden Risk, then the real Risk and how far off the guess was. */
+export function MysteryGuess({ reveal, sliders, sending, error, onGuess, onClose, onReview }: Props) {
+  const [risk, setRisk] = useState(RISK_IDEAL);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -49,25 +47,10 @@ export function MysteryGuess({ reveal, sending, error, onGuess, onClose, onRevie
           <>
             <h2>Guess the bot</h2>
             <p className="muted">
-              The server picked this bot's Risk and Bluff at random. From how it played, what do you think they are? You get one guess.
+              The server picked this bot's Risk at random. From how it played, what do you think it is? You get one guess.
             </p>
             <div className={styles.guessSliders}>
-              <BotSlider
-                label="Risk"
-                value={risk}
-                max={RISK_MAX}
-                shown={String(risk)}
-                help="High Risk folds more to big bets; low Risk calls more."
-                onChange={setRisk}
-              />
-              <BotSlider
-                label="Bluff"
-                value={bluffPct}
-                max={BLUFF_PCT_MAX}
-                shown={`${bluffPct}%`}
-                help="The share of bluffs in the hands it bets on the river."
-                onChange={setBluffPct}
-              />
+              <BotSlider label="Risk" value={risk} max={RISK_MAX} shown={String(risk)} marks={RISK_MARKS} help={RISK_HELP} onChange={setRisk} />
             </div>
             {error && (
               <p className="engine-error" role="alert">
@@ -75,7 +58,7 @@ export function MysteryGuess({ reveal, sending, error, onGuess, onClose, onRevie
               </p>
             )}
             <div className="modal-actions">
-              <button className="btn btn-primary" onClick={() => onGuess(risk, bluffPct)} disabled={sending}>
+              <button className="btn btn-primary" onClick={() => onGuess(risk)} disabled={sending}>
                 {sending ? "Checking…" : "Reveal the bot"}
               </button>
               <button className="btn btn-ghost" onClick={onClose}>
@@ -99,18 +82,13 @@ export function MysteryGuess({ reveal, sending, error, onGuess, onClose, onRevie
               <tbody>
                 <tr>
                   <th>Risk</th>
-                  <td>{reveal.guess.risk}</td>
+                  <td>{reveal.guess}</td>
                   <td>{reveal.risk}</td>
-                  <td>{reveal.off.risk}</td>
-                </tr>
-                <tr>
-                  <th>Bluff</th>
-                  <td>{reveal.guess.bluff_pct}%</td>
-                  <td>{reveal.bluff_pct}%</td>
-                  <td>{reveal.off.bluff_pct} points</td>
+                  <td>{reveal.off}</td>
                 </tr>
               </tbody>
             </table>
+            {sliders && <p className="muted">At Risk {sliders.risk}, Lean set the bot's bluff share to {sliders.bluffPct}%.</p>}
             <p className="muted">Nothing is hidden now: the review and the bot's reasons show the real settings.</p>
             <p className="muted">
               Graded with the bot's real settings, which you did not know when you decided.

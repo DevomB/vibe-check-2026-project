@@ -4,9 +4,9 @@ import type { RouteReply, RouteState } from "@/lean/protocol";
 import { POST } from "./route";
 
 /**
- * Mystery games through the `/api/game` handler: the route picks the bot's settings, hides them
- * (and everything that would give them away) from every reply until a valid reveal, and then
- * shows everything again. Normal games must not change.
+ * Mystery games through the `/api/game` handler: the route picks the bot's Risk, hides it (and
+ * everything that would give it away) from every reply until a valid reveal, and then shows
+ * everything again. Normal games must not change.
  */
 
 async function post(body: unknown): Promise<{ status: number; reply: RouteReply }> {
@@ -24,8 +24,8 @@ async function ok(body: unknown): Promise<{ state: RouteState; reply: RouteReply
 /** The route keeps its game program here (see route.ts). */
 const holder = globalThis as typeof globalThis & { __leanProcess?: LeanProcess };
 
-/** Keys whose values depend on the hidden settings: the sliders, the bot's reasons, and the review. */
-const SECRET_KEYS = ["sliders", "botReasons", "bot_reasons", "review", "label", "worth_bb", "equity_had", "equity_needed", "range", "risk_explorer"];
+/** Keys whose values depend on the hidden Risk: the bot's settings, its reasons, and the review. */
+const SECRET_KEYS = ["sliders", "caution", "bluffPct", "botReasons", "bot_reasons", "review", "label", "worth_bb", "equity_had", "equity_needed", "range", "risk_explorer"];
 
 /** A reply from an unrevealed Mystery game: nothing in it may tell the settings or the seed. */
 function expectHidden(reply: RouteReply): void {
@@ -89,7 +89,7 @@ describe.skipIf(process.env.SKIP_LEAN === "1")("Mystery games through /api/game"
 
     // Two hands finished: too early to guess.
     if (s.status !== "gameOver") {
-      const early = await post({ cmd: "reveal", risk: 50, bluff_pct: 30 });
+      const early = await post({ cmd: "reveal", risk: 50 });
       seen.push(early.reply);
       expect(early.status).toBe(400);
       expect(early.reply).toMatchObject({ error: "Play 3 hands before you guess (2 finished so far)." });
@@ -101,13 +101,13 @@ describe.skipIf(process.env.SKIP_LEAN === "1")("Mystery games through /api/game"
 
     // Bad guesses are turned away, and still nothing is shown.
     for (const bad of [
-      { risk: 101, bluff_pct: 30 },
-      { risk: 50, bluff_pct: 61 },
-      { risk: -1, bluff_pct: 30 },
-      { risk: 50.5, bluff_pct: 30 },
-      { risk: "50", bluff_pct: 30 },
-      { bluff_pct: 30 },
-      { risk: 50 },
+      { risk: 101 },
+      { risk: -1 },
+      { risk: 50.5 },
+      { risk: "50" },
+      {},
+      // The old two-number guess: Bluff is no longer a setting.
+      { risk: 50, bluff_pct: 30 },
     ]) {
       const { status, reply } = await post({ cmd: "reveal", ...bad });
       expect(status, JSON.stringify(bad)).toBe(400);
@@ -115,18 +115,16 @@ describe.skipIf(process.env.SKIP_LEAN === "1")("Mystery games through /api/game"
     }
     expectHidden((await ok({ cmd: "state" })).reply);
 
-    // A good guess: the real settings, the guess, how far off it was, and the full state.
-    const { status, reply } = await post({ cmd: "reveal", risk: 40, bluff_pct: 20 });
+    // A good guess: the real Risk, the guess, how far off it was, and the full state.
+    const { status, reply } = await post({ cmd: "reveal", risk: 40 });
     expect(status).toBe(200);
     if (!("ok" in reply) || !reply.reveal) throw new Error(JSON.stringify(reply));
     const r = reply.reveal;
     expect(r.risk).toBeGreaterThanOrEqual(0);
     expect(r.risk).toBeLessThanOrEqual(100);
-    expect(r.bluff_pct).toBeGreaterThanOrEqual(0);
-    expect(r.bluff_pct).toBeLessThanOrEqual(60);
-    expect(r.guess).toEqual({ risk: 40, bluff_pct: 20 });
-    expect(r.off).toEqual({ risk: Math.abs(40 - r.risk), bluff_pct: Math.abs(20 - r.bluff_pct) });
-    expect(reply.state.sliders).toEqual({ risk: r.risk, bluffPct: r.bluff_pct });
+    expect(r.guess).toBe(40);
+    expect(r.off).toBe(Math.abs(40 - r.risk));
+    expect(reply.state.sliders?.risk).toBe(r.risk);
     expect(reply.state.botReasons).not.toBeNull();
 
     // After the reveal nothing is hidden: the review and the reasons are back.
@@ -135,10 +133,10 @@ describe.skipIf(process.env.SKIP_LEAN === "1")("Mystery games through /api/game"
     if (!("ok" in after.reply) || !after.reply.review) throw new Error("no review after the reveal");
     expect(after.reply.review.decisions.length).toBeGreaterThan(0);
     expect(after.reply.review.bot_reasons).toEqual(reply.state.botReasons);
-    expect(after.state.sliders).toEqual({ risk: r.risk, bluffPct: r.bluff_pct });
+    expect(after.state.sliders).toEqual(reply.state.sliders);
 
     // One guess per game.
-    const again = await post({ cmd: "reveal", risk: r.risk, bluff_pct: r.bluff_pct });
+    const again = await post({ cmd: "reveal", risk: r.risk });
     expect(again.status).toBe(400);
     expect(again.reply).toMatchObject({ error: "This Mystery bot was already revealed." });
   });
@@ -161,19 +159,19 @@ describe.skipIf(process.env.SKIP_LEAN === "1")("Mystery games through /api/game"
     expect(s.seed).toBeNull();
     expectHidden((await ok({ cmd: "review", hand: s.hand })).reply);
 
-    const { reply } = await ok({ cmd: "reveal", risk: 0, bluff_pct: 0 });
+    const { reply } = await ok({ cmd: "reveal", risk: 0 });
     if (!("ok" in reply) || !reply.reveal) throw new Error("no reveal");
     expect(reply.state.seed).toMatch(/^\d{1,20}$/);
-    expect(reply.state.sliders).toEqual({ risk: reply.reveal.risk, bluffPct: reply.reveal.bluff_pct });
+    expect(reply.state.sliders?.risk).toBe(reply.reveal.risk);
   });
 
-  it("turns away a Mystery game sent with a seed or sliders", async () => {
+  it("turns away a Mystery game sent with a seed, a Risk or a Bluff", async () => {
     for (const bad of [
       { mystery: true, seed: "42" },
       { mystery: true, risk: 50 },
       { mystery: true, bluff_pct: 30 },
-      { mystery: true, seed: "42", risk: 50, bluff_pct: 30 },
-      { mystery: false, seed: "42", risk: 50, bluff_pct: 30 },
+      { mystery: true, seed: "42", risk: 50 },
+      { mystery: false, seed: "42", risk: 50 },
       { mystery: "yes" },
     ]) {
       const { status } = await post({ cmd: "new_game", ...bad });
@@ -184,8 +182,8 @@ describe.skipIf(process.env.SKIP_LEAN === "1")("Mystery games through /api/game"
   });
 
   it("turns away a reveal outside a Mystery game", async () => {
-    await ok({ cmd: "new_game", seed: "5", risk: 50, bluff_pct: 33 });
-    const { status, reply } = await post({ cmd: "reveal", risk: 50, bluff_pct: 33 });
+    await ok({ cmd: "new_game", seed: "5", risk: 50 });
+    const { status, reply } = await post({ cmd: "reveal", risk: 50 });
     expect(status).toBe(400);
     expect(reply).toEqual({ error: "There is no Mystery game to reveal.", state: null });
   });
@@ -193,15 +191,15 @@ describe.skipIf(process.env.SKIP_LEAN === "1")("Mystery games through /api/game"
   it("drops the secret when a new game replaces it, but not when a new game is rejected", async () => {
     expectHidden((await ok({ cmd: "new_game", mystery: true })).reply);
     // Lean rejects this new game and keeps the Mystery game, which stays hidden.
-    const rejected = await post({ cmd: "new_game", seed: "1", risk: 101, bluff_pct: 33 });
+    const rejected = await post({ cmd: "new_game", seed: "1", risk: 101 });
     expect(rejected.reply).toMatchObject({ error: "risk must be 0-100" });
     expectHidden(rejected.reply);
     expectHidden((await ok({ cmd: "state" })).reply);
 
-    // An accepted normal game replaces it: its sliders are shown, and there is nothing to reveal.
-    const normal = await ok({ cmd: "new_game", seed: "1", risk: 20, bluff_pct: 10 });
-    expect(normal.state.sliders).toEqual({ risk: 20, bluffPct: 10 });
-    expect((await post({ cmd: "reveal", risk: 20, bluff_pct: 10 })).status).toBe(400);
+    // An accepted normal game replaces it: its settings are shown, and there is nothing to reveal.
+    const normal = await ok({ cmd: "new_game", seed: "1", risk: 20 });
+    expect(normal.state.sliders?.risk).toBe(20);
+    expect((await post({ cmd: "reveal", risk: 20 })).status).toBe(400);
   });
 
   it("drops the secret when the engine is lost", async () => {
@@ -209,17 +207,17 @@ describe.skipIf(process.env.SKIP_LEAN === "1")("Mystery games through /api/game"
     const crashed = holder.__leanProcess!;
     crashed.kill();
     await vi.waitFor(() => expect(crashed.alive).toBe(false));
-    const guess = await post({ cmd: "reveal", risk: 50, bluff_pct: 30 });
+    const guess = await post({ cmd: "reveal", risk: 50 });
     expect(guess.status).toBe(400);
     expect(guess.reply).toEqual({ error: "There is no Mystery game to reveal.", state: null });
     expect((await post({ cmd: "state" })).reply).toMatchObject({ lost: true, state: null });
-    const normal = await ok({ cmd: "new_game", seed: "3", risk: 60, bluff_pct: 0 });
-    expect(normal.state.sliders).toEqual({ risk: 60, bluffPct: 0 });
+    const normal = await ok({ cmd: "new_game", seed: "3", risk: 60 });
+    expect(normal.state.sliders?.risk).toBe(60);
   });
 
-  it("leaves normal games as they were: sliders, reasons, reviews and the game-over seed", { timeout: 120_000 }, async () => {
-    let { state: s } = await ok({ cmd: "new_game", seed: "2026", risk: 50, bluff_pct: 33 });
-    expect(s.sliders).toEqual({ risk: 50, bluffPct: 33 });
+  it("leaves normal games as they were: settings, reasons, reviews and the game-over seed", { timeout: 120_000 }, async () => {
+    let { state: s } = await ok({ cmd: "new_game", seed: "2026", risk: 50 });
+    expect(s.sliders?.risk).toBe(50);
     expect(s.seed).toBeNull();
     for (let guard = 0; s.status === "playing" && guard < 50; guard++) {
       ({ state: s } = await ok({ cmd: "act", action: s.legal!.check ? "check" : "call" }));
@@ -230,8 +228,9 @@ describe.skipIf(process.env.SKIP_LEAN === "1")("Mystery games through /api/game"
     if (!("ok" in reply) || !reply.review) throw new Error("no review");
     expect(reply.review.bot_reasons).toEqual(s.botReasons);
 
-    await ok({ cmd: "new_game", seed: "1", risk: 0, bluff_pct: 0 });
+    // At Risk 100 the bot calls the all-in with seed 1's cards, and loses: game over at once.
+    await ok({ cmd: "new_game", seed: "1", risk: 100 });
     const end = await ok({ cmd: "act", action: "raise", amount: 500 });
-    expect(end.state).toMatchObject({ status: "gameOver", seed: "1", sliders: { risk: 0, bluffPct: 0 } });
+    expect(end.state).toMatchObject({ status: "gameOver", seed: "1", sliders: { risk: 100 } });
   });
 });

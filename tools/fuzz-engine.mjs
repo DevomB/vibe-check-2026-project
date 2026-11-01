@@ -24,8 +24,8 @@ import { fileURLToPath } from "node:url";
 import { createInterface } from "node:readline";
 
 const TOTAL_CHIPS = 1000;
-const RISKS = [0, 25, 50, 75, 100];
-const BLUFFS = [0, 20, 33, 60];
+// The bot has one setting, Risk; Lean derives its caution and bluff share from it.
+const RISKS = [0, 25, 37, 50, 75, 100];
 const STATUSES = new Set(["playing", "handOver", "gameOver"]);
 const LABELS = new Set(["Best", "Good", "Inaccuracy", "Mistake", "Blunder"]);
 const REPLY_TIMEOUT_MS = 60_000; // a reply slower than this counts as a hang
@@ -300,10 +300,10 @@ function badRequest(s, r) {
   c.push(["review of hand 0", { cmd: "review", hand: 0 }]);
   c.push(["unknown command", { cmd: r.pick(["bot", "deal", "undo", ""]) }]);
   c.push(["broken JSON", null]);
-  c.push(["risk out of range", { cmd: "new_game", seed: "7", risk: 101 + r.int(50), bluff_pct: 20 }]);
-  c.push(["bluff out of range", { cmd: "new_game", seed: "7", risk: 50, bluff_pct: 61 + r.int(40) }]);
-  c.push(["negative slider", { cmd: "new_game", seed: "7", risk: -1, bluff_pct: 20 }]);
-  c.push(["seed not digits", { cmd: "new_game", seed: "12x", risk: 50, bluff_pct: 20 }]);
+  c.push(["risk out of range", { cmd: "new_game", seed: "7", risk: 101 + r.int(50) }]);
+  c.push(["the removed bluff_pct", { cmd: "new_game", seed: "7", risk: 50, bluff_pct: r.int(61) }]);
+  c.push(["negative risk", { cmd: "new_game", seed: "7", risk: -1 }]);
+  c.push(["seed not digits", { cmd: "new_game", seed: "12x", risk: 50 }]);
   const [what, o] = r.pick(c);
   const line = o ? req(o) : r.pick(['{"cmd":"act","action":', "not json", '{"cmd":"state"', "[1,2", "{}"]);
   return { what, line };
@@ -335,9 +335,9 @@ class Results {
     if (this.failures.filter((f) => f.kind === kind).length >= 5) return;
     const n = this.failures.length + 1;
     const file = join(this.out, `repro-${String(n).padStart(3, "0")}-${kind}.json`);
-    const repro = { kind, sentence, seed: game.seed, risk: game.risk, bluff_pct: game.bluff, requests: [...requests] };
+    const repro = { kind, sentence, seed: game.seed, risk: game.risk, requests: [...requests] };
     writeFileSync(file, JSON.stringify(repro, null, 1) + "\n");
-    this.failures.push({ kind, sentence, file, seed: game.seed, risk: game.risk, bluff_pct: game.bluff, requestCount: requests.length });
+    this.failures.push({ kind, sentence, file, seed: game.seed, risk: game.risk, requestCount: requests.length });
     if (SERIOUS.has(kind) && this.firstSeriousAt === null) this.firstSeriousAt = Date.now();
     console.log(`FAIL [${kind}] ${sentence}  (${file})`);
   }
@@ -352,8 +352,7 @@ async function playGame(ctx, prog, gameNo) {
   const r = rng((opts.seed * 1_000_003 + gameNo * 7919) >>> 0);
   const seed = (BigInt(r.int(2 ** 32)) * 4294967296n + BigInt(r.int(2 ** 32))).toString();
   const risk = RISKS[gameNo % RISKS.length];
-  const bluff = BLUFFS[Math.floor(gameNo / RISKS.length) % BLUFFS.length];
-  const game = { seed, risk, bluff };
+  const game = { seed, risk };
   const requests = [], replies = [];
   let crashed = false;
   let state = null;
@@ -385,7 +384,7 @@ async function playGame(ctx, prog, gameNo) {
   };
 
   // Start.
-  let reply = await send(req({ cmd: "new_game", seed, risk, bluff_pct: bluff }), () => "new_game");
+  let reply = await send(req({ cmd: "new_game", seed, risk }), () => "new_game");
   if (!reply) return { prog, requests, replies, crashed };
   if (!reply.ok) { res.fail("rejected-good", `new_game rejected: ${reply.error}`, game, requests); return { prog, requests, replies, crashed }; }
   checkAll(reply);
@@ -445,7 +444,7 @@ async function playGame(ctx, prog, gameNo) {
       if (canon(rv.state) !== canon(withoutEvents(state))) res.fail("review-changed-state", "a review returned a different state", game, requests);
       const { bad, notes } = checkReview(rv.review, handNo, expectedGraded);
       for (const [k, msg] of bad) res.fail(k, msg, game, requests);
-      for (const n of notes) res.notes.push({ ...n, seed, risk, bluff_pct: bluff });
+      for (const n of notes) res.notes.push({ ...n, seed, risk });
       for (const d of rv.review.decisions ?? []) if (d.label) { res.reviewsGraded++; res.labelCounts[d.label] = (res.labelCounts[d.label] ?? 0) + 1; }
     }
     // Sometimes look back at an older hand: still there, still the same shape.
@@ -557,7 +556,7 @@ async function fuzz(opts) {
 recheck what can be checked one reply at a time. */
 async function replay(opts) {
   const repro = JSON.parse(readFileSync(opts.replay, "utf8"));
-  console.log(`Replaying ${repro.requests.length} requests (seed ${repro.seed}, risk ${repro.risk}, bluff ${repro.bluff_pct}); recorded failure: [${repro.kind}] ${repro.sentence}`);
+  console.log(`Replaying ${repro.requests.length} requests (seed ${repro.seed}, risk ${repro.risk}); recorded failure: [${repro.kind}] ${repro.sentence}`);
   const p = new Program(pokerPath());
   let prev = null, problems = 0;
   for (const [i, line] of repro.requests.entries()) {

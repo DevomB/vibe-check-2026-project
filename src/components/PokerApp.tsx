@@ -100,9 +100,9 @@ export function PokerApp() {
     setGuessOpen(false);
     setNotice(null);
   }, [gameSettings]);
-  const submitGuess = async (risk: number, bluffPct: number) => {
+  const submitGuess = async (risk: number) => {
     setGuessSending(true);
-    setGuessError(await reveal(risk, bluffPct));
+    setGuessError(await reveal(risk));
     setGuessSending(false);
   };
   /** Review, unless the review must wait for the Mystery guess: then guess, or say when you may. */
@@ -231,9 +231,8 @@ export function PokerApp() {
 
   const challenge = game.mode.kind === "practice" ? game.mode.challenge : null;
   const mystery = game.mode.kind === "mystery" ? game.mode : null;
-  // The bot's sliders as the screen may show them: a Mystery bot's only from Lean's state,
-  // which has them once the guess is in.
-  const shownSliders = mystery ? (game.lean.sliders ?? null) : { risk: game.settings.risk, bluffPct: game.settings.bluffPct };
+  // The bot's settings as Lean sent them. An unrevealed Mystery game has none: the route removes them.
+  const shownSliders = game.lean.sliders ?? null;
   const reviewExtras: ReviewModalExtras = { hideSliderInfo: mysteryHidden, onShowProof: (id) => setProofs({ focus: id }) };
 
   let strength = "";
@@ -263,11 +262,11 @@ export function PokerApp() {
               Practice <b>{challenge.title}</b>
             </span>
           )}
-          <span title="The bot's sliders for this game">
+          <span title="The bot's Risk, and the bluff share Lean set from it">
             Bot{" "}
             <b>
               {mystery && "Mystery · "}
-              {shownSliders ? `Risk ${shownSliders.risk} · Bluff ${shownSliders.bluffPct}%` : "hidden until you guess"}
+              {shownSliders ? `Risk ${shownSliders.risk} · bluff share ${shownSliders.bluffPct}%` : "hidden until you guess"}
             </b>
           </span>
           {replaySeed !== null && (
@@ -289,7 +288,7 @@ export function PokerApp() {
               className="btn btn-primary btn-sm"
               onClick={openGuess}
               disabled={!mayGuess || lost !== null}
-              title={mayGuess ? "Guess the bot's Risk and Bluff" : `You can guess after ${REVEAL_AFTER_HANDS} finished hands`}
+              title={mayGuess ? "Guess the bot's Risk" : `You can guess after ${REVEAL_AFTER_HANDS} finished hands`}
             >
               Guess the bot{mayGuess ? "" : ` (${finished}/${REVEAL_AFTER_HANDS})`}
             </button>
@@ -381,8 +380,8 @@ export function PokerApp() {
           }}
           // A Mystery game's "New game" deals a new Mystery bot.
           onAgain={() => start({ ...game.settings, seed: null })}
-          // A replay is a normal game with the same seed and sliders (a revealed Mystery bot's real ones).
-          onReplay={() => start({ ...game.settings, ...(game.lean.sliders ?? {}), mystery: false, seed: replaySeed })}
+          // A replay is a normal game with the same seed and Risk (a revealed Mystery bot's real one).
+          onReplay={() => start({ ...game.settings, risk: game.lean.sliders?.risk ?? game.settings.risk, mystery: false, seed: replaySeed })}
           onReview={askReview}
           onLobby={quit}
           onGuess={mysteryHidden ? openGuess : undefined}
@@ -391,9 +390,10 @@ export function PokerApp() {
       {guessOpen && mystery && (
         <MysteryGuess
           reveal={mystery.reveal}
+          sliders={mystery.reveal ? (game.lean.sliders ?? null) : null}
           sending={guessSending}
           error={guessError}
-          onGuess={(risk, bluffPct) => void submitGuess(risk, bluffPct)}
+          onGuess={(risk) => void submitGuess(risk)}
           onClose={() => setGuessOpen(false)}
           onReview={
             status !== "playing"
@@ -406,7 +406,14 @@ export function PokerApp() {
         />
       )}
       {review && (
-        <ReviewModal {...reviewExtras} review={review} peeked={peekedHands.includes(review.hand)} onClose={closeReview} />
+        <ReviewModal
+          key={review.hand}
+          {...reviewExtras}
+          review={review}
+          game={game}
+          peeked={peekedHands.includes(review.hand)}
+          onClose={closeReview}
+        />
       )}
       {proofs && <ProofsDrawer focus={proofs.focus} onClose={closeProofs} />}
       {rulesModal}

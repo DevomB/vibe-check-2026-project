@@ -2,14 +2,16 @@ import type { LeanReview, LeanState, ReviewLabel } from "@/lean/protocol";
 
 /**
  * Practice challenges: rehearsed hands that stop at a river decision. Each is hand 1 of a new
- * game. The app starts the game with the spot's seed and sliders, sends `moves` through the
+ * game. The app starts the game with the spot's seed and Risk, sends `moves` through the
  * normal `act` command, and stops when the bot has opened the river with a bet. The player
  * then calls or folds, and Lean's review grades the choice. Nothing here decides the game:
  * `best`, `labels`, `worth_bb` and `result_if_best` are what Lean answered when the spots were
  * found, kept so `challenges.test.ts` can check that Lean still answers the same.
  *
- * The spot data is copied from `docs/demo/challenges.json` on branch `release-docs` (commit
- * f55a3ee). Job 3 found and replayed the spots there with `docs/demo/find-demo-hands.mjs`.
+ * The spot data is copied from `docs/demo/challenges.json`. Job 3 found the spots with
+ * `docs/demo/find-demo-hands.mjs` (branch `release-docs`, commit f55a3ee) when the bot had two
+ * sliders. They used Risk 0 and Bluff 60 there; that bot is Risk 100 now, and the spots replay
+ * the same on the one-slider engine (`find-demo-hands.mjs --check`).
  */
 
 export type ChallengeId = "catch-bluff" | "avoid-bad-call" | "right-and-lose";
@@ -26,8 +28,8 @@ export interface Challenge {
   prompt: string;
   /** An entered seed, so the cards are the rehearsed ones. */
   seed: string;
+  /** The bot's Risk, 0-100. */
   risk: number;
-  bluff_pct: number;
   moves: ChallengeMove[];
   /** The choice Lean grades Best. */
   best: "call" | "fold";
@@ -46,8 +48,7 @@ export const CHALLENGES: readonly Challenge[] = [
     about: "The bot bluffs a lot. Can you tell when it is bluffing on the river?",
     prompt: "The bot bets on the river. Is it bluffing? Call or fold.",
     seed: "1",
-    risk: 0,
-    bluff_pct: 60,
+    risk: 100,
     moves: [{ action: "call" }, { action: "check" }, { action: "check" }],
     best: "call",
     labels: { call: "Best", fold: "Inaccuracy" },
@@ -60,8 +61,7 @@ export const CHALLENGES: readonly Challenge[] = [
     about: "Not every river bet is a bluff. Know when to let your hand go.",
     prompt: "The bot bets on the river. Is your hand good enough to call? Call or fold.",
     seed: "6",
-    risk: 0,
-    bluff_pct: 60,
+    risk: 100,
     moves: [{ action: "raise", amount: 30 }, { action: "check" }, { action: "check" }],
     best: "fold",
     labels: { call: "Mistake", fold: "Best" },
@@ -74,8 +74,7 @@ export const CHALLENGES: readonly Challenge[] = [
     about: "A good decision can still lose chips. See how the review grades it.",
     prompt: "The bot bets on the river. Make the right choice: call or fold.",
     seed: "4",
-    risk: 0,
-    bluff_pct: 60,
+    risk: 100,
     moves: [{ action: "call" }, { action: "check" }, { action: "call" }],
     best: "call",
     labels: { call: "Best", fold: "Blunder" },

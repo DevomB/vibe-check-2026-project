@@ -4,7 +4,7 @@ This document explains, for every number the bot and the review use, the formula
 the Lean engine computes it, the source that supports it, and the exact conditions under
 which that source applies. It is written to be checked: each section names one Lean
 function and one or more sources from [the research index](research/INDEX.md). Line numbers
-refer to the engine as committed at `64b2e3d` on `sunday/one-slider`.
+refer to the engine as merged to `main` at `c2f4034`.
 
 Two rules for reading it. First, a Lean theorem says only what its statement says, and the
 README's "What we trust" section lists what a reader must still check. Second, nothing here

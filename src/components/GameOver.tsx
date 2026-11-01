@@ -9,8 +9,8 @@ interface Props {
   /** The game's seed, so it can be replayed. Null while a Mystery bot is not yet revealed. */
   seed: bigint | null;
   /**
-   * The rest of the replay record (MVP §5, §15). The same seed, sliders, moves and engine
-   * build play the same game again. `sliders` is null while a Mystery bot is not yet revealed.
+   * The rest of the replay record (MVP §5, §15). The same seed, Risk, moves and engine build
+   * play the same game again. `sliders` is Lean's, and null while a Mystery bot is not yet revealed.
    */
   replay: { sliders: { risk: number; bluffPct: number } | null; turnMode: string; engineCommit: string; serverCommit: string };
   onAgain: () => void;
@@ -40,7 +40,7 @@ export function GameOver({ won, stats, delay, seed, replay, onAgain, onReplay, o
           </div>
           <div>
             <b>{chips(stats.biggestPot)}</b>
-            <span>biggest pot</span>
+            <span>biggest pot won</span>
           </div>
         </div>
         <div className="modal-actions">
@@ -63,7 +63,7 @@ export function GameOver({ won, stats, delay, seed, replay, onAgain, onReplay, o
             </button>
           )}
           <button className="btn btn-ghost" onClick={onLobby}>
-            Change sliders
+            Change opponent
           </button>
         </div>
         <div className="replay-record" aria-label="Replay record">
@@ -73,18 +73,24 @@ export function GameOver({ won, stats, delay, seed, replay, onAgain, onReplay, o
           <span>
             Risk <b>{replay.sliders === null ? hidden : replay.sliders.risk}</b>
           </span>
-          <span>
-            Bluff <b>{replay.sliders === null ? hidden : `${replay.sliders.bluffPct}%`}</b>
+          <span title="Set by Lean from Risk">
+            Bluff share <b>{replay.sliders === null ? hidden : `${replay.sliders.bluffPct}%`}</b>
           </span>
-          <span>
-            Turn mode <b>{replay.turnMode}</b>
-          </span>
-          <span title="The commit the Lean game program was built from">
-            Engine build <b>{replay.engineCommit}</b>
-          </span>
-          <span title="The commit of the web server's checkout">
-            Server checkout <b>{replay.serverCommit}</b>
-          </span>
+          {/* For checking a replay against a build; folded so the player sees the seed and Risk first. */}
+          <details className="replay-details">
+            <summary>Replay details</summary>
+            <div className="replay-details-row">
+              <span>
+                Turn mode <b>{replay.turnMode}</b>
+              </span>
+              <span title="The commit the Lean game program was built from">
+                Engine build <b>{replay.engineCommit}</b>
+              </span>
+              <span title="The commit of the web server's checkout">
+                Server checkout <b>{replay.serverCommit}</b>
+              </span>
+            </div>
+          </details>
         </div>
       </div>
     </div>

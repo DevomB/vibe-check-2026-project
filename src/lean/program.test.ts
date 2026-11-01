@@ -78,7 +78,7 @@ describe.skipIf(skipLean)("Lean game program", () => {
     return reply;
   }
   const send = async (c: LeanCommand): Promise<LeanState> => (await call(c)).state;
-  const newGame = (seed: string, risk = 50, bluff_pct = 33) => send({ cmd: "new_game", seed, risk, bluff_pct });
+  const newGame = (seed: string, risk = 50) => send({ cmd: "new_game", seed, risk });
 
   it("rejects bad commands and leaves the game unchanged", async () => {
     const start = await newGame("42");
@@ -88,8 +88,9 @@ describe.skipIf(skipLean)("Lean game program", () => {
       { cmd: "act", action: "raise", amount: 501 },
       { cmd: "bot" },
       { cmd: "next_hand" },
-      { cmd: "new_game", seed: "1", risk: 101, bluff_pct: 33 },
-      { cmd: "new_game", seed: "1", risk: 50, bluff_pct: 61 },
+      { cmd: "new_game", seed: "1", risk: 101 },
+      // Bluff is no longer a setting: Lean derives it from Risk.
+      { cmd: "new_game", seed: "1", risk: 50, bluff_pct: 33 },
       { cmd: "review", hand: start.hand + 1 },
     ] as LeanCommand[]) {
       const reply = await lean.send(bad);
@@ -98,11 +99,18 @@ describe.skipIf(skipLean)("Lean game program", () => {
     }
   });
 
-  it("stores the sliders and accepts both ends of each range", async () => {
-    for (const [risk, bluff_pct] of [[0, 0], [100, 60], [37, 12]] as const) {
-      const s = await newGame("5", risk, bluff_pct);
-      expect(s.sliders).toEqual({ risk, bluffPct: bluff_pct });
-    }
+  it("refuses the old Bluff setting, in its own words", async () => {
+    const reply = await lean.send({ cmd: "new_game", seed: "1", risk: 50, bluff_pct: 33 } as LeanCommand);
+    expect(reply).toMatchObject({ error: "bluff_pct was removed; Risk sets both" });
+  });
+
+  it("stores Risk, accepts both ends of its range, and derives the bot's settings from it", async () => {
+    // The ends are the old two-slider bots the demo scenes use: Ivy and Vex.
+    expect((await newGame("5", 0)).sliders).toEqual({ risk: 0, caution: 100, bluffPct: 0 });
+    expect((await newGame("5", 100)).sliders).toEqual({ risk: 100, caution: 0, bluffPct: 60 });
+    // Risk 50 is plain chip profit with a 33% bluff share (`ideal_is_textbook`).
+    expect((await newGame("5", 50)).sliders).toEqual({ risk: 50, caution: 0, bluffPct: 33 });
+    expect((await newGame("5", 37)).sliders).toEqual({ risk: 37, caution: 26, bluffPct: 24 });
   });
 
   it("keeps the bot's cards and reasons hidden until the hand is over", async () => {
@@ -122,7 +130,7 @@ describe.skipIf(skipLean)("Lean game program", () => {
     for (let game = 0; game < 12; game++) {
       const pick = picker(game + 1);
       const seed = BigInt(1000 + game);
-      let s = await newGame(seed.toString(), (game * 37) % 101, (game * 13) % 61);
+      let s = await newGame(seed.toString(), (game * 37) % 101);
       // Stacks at the start of each hand: what the previous hand ended with.
       let startStacks = [500, 500];
 

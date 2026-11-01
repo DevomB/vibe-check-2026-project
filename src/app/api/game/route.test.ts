@@ -35,20 +35,27 @@ describe("/api/game input checks", () => {
   it.each([
     ["no command", {}],
     ["the removed bot command", { cmd: "bot" }],
-    ["a new game without sliders", { cmd: "new_game", seed: "42" }],
-    ["a slider that is not a whole number", { cmd: "new_game", seed: "42", risk: 50.5, bluff_pct: 33 }],
-    ["a negative slider", { cmd: "new_game", seed: "42", risk: -1, bluff_pct: 33 }],
-    ["a seed that is not digits", { cmd: "new_game", seed: "abc", risk: 50, bluff_pct: 33 }],
+    ["a new game without a Risk", { cmd: "new_game", seed: "42" }],
+    ["a Risk that is not a whole number", { cmd: "new_game", seed: "42", risk: 50.5 }],
+    ["a negative Risk", { cmd: "new_game", seed: "42", risk: -1 }],
+    ["a new game with the old Bluff setting", { cmd: "new_game", seed: "42", risk: 50, bluff_pct: 33 }],
+    ["a seed that is not digits", { cmd: "new_game", seed: "abc", risk: 50 }],
     ["a raise without an amount", { cmd: "act", action: "raise" }],
     ["a bet without an amount", { cmd: "act", action: "bet" }],
     ["a review without a hand", { cmd: "review" }],
     ["a peek that is a string", { cmd: "state", peek: "yes" }],
     ["a peek that is a number", { cmd: "act", action: "call", peek: 1 }],
-    ["a peek that is null", { cmd: "new_game", seed: "42", risk: 50, bluff_pct: 33, peek: null }],
+    ["a peek that is null", { cmd: "new_game", seed: "42", risk: 50, peek: null }],
   ])("turns away %s", async (_name, body) => {
     const { status, reply } = await post(body);
     expect(status).toBe(400);
     expect("error" in reply).toBe(true);
+  });
+
+  it("says why a new game with the old Bluff setting is turned away, in Lean's words", async () => {
+    const { status, reply } = await post({ cmd: "new_game", seed: "42", risk: 50, bluff_pct: 33 });
+    expect(status).toBe(400);
+    expect(reply).toEqual({ error: "bluff_pct was removed; Risk sets both", state: null });
   });
 });
 
@@ -68,7 +75,7 @@ describe("/api/game when the game program fails", () => {
 
   it("reports a lost game when the program stops, on that request and every later one", async () => {
     useStandIn("exits-at-once.mjs");
-    const first = await post({ cmd: "new_game", seed: "1", risk: 0, bluff_pct: 0 });
+    const first = await post({ cmd: "new_game", seed: "1", risk: 0 });
     expect(first.status).toBe(503);
     expect(first.reply).toEqual(ENGINE_STOPPED);
     for (const body of [{ cmd: "act", action: "check" }, { cmd: "state" }, { cmd: "review", hand: 1 }]) {
@@ -80,7 +87,7 @@ describe("/api/game when the game program fails", () => {
   it("stops a program that never answers, and reports a lost game", async () => {
     useStandIn("never-answers.mjs");
     process.env.POKER_REPLY_TIMEOUT_MS = "300";
-    const { status, reply } = await post({ cmd: "new_game", seed: "1", risk: 0, bluff_pct: 0 });
+    const { status, reply } = await post({ cmd: "new_game", seed: "1", risk: 0 });
     expect(status).toBe(503);
     expect(reply).toEqual(ENGINE_STOPPED);
   });
@@ -93,7 +100,7 @@ describe.skipIf(skipLean)("/api/game with the Lean program", () => {
   });
 
   it.each([undefined, ""])("keeps a server-generated seed private through hand end (%s)", async (seed) => {
-    const start = await post({ cmd: "new_game", seed, risk: 0, bluff_pct: 0 });
+    const start = await post({ cmd: "new_game", seed, risk: 0 });
     if (!("ok" in start.reply)) throw new Error(start.reply.error);
     expect(start.reply.state.seed).toBeNull();
     const illegal = await post({ cmd: "act", action: "check" });
@@ -110,8 +117,9 @@ describe.skipIf(skipLean)("/api/game with the Lean program", () => {
 
   it("reveals a finished game's seed and replays its cards", async () => {
     const finishes: ApiReply[] = [];
+    // At Risk 100 the bot calls the all-in with seed 1's cards, and loses: game over at once.
     for (let attempt = 0; attempt < 2; attempt++) {
-      const start = await post({ cmd: "new_game", seed: "1", risk: 0, bluff_pct: 0 });
+      const start = await post({ cmd: "new_game", seed: "1", risk: 100 });
       if (!("ok" in start.reply)) throw new Error(start.reply.error);
       expect(start.reply.state.seed).toBeNull();
       const { reply } = await post({ cmd: "act", action: "raise", amount: 500 });
@@ -124,7 +132,7 @@ describe.skipIf(skipLean)("/api/game with the Lean program", () => {
   });
 
   it("accepts bet as a street-total raise", { timeout: 30_000 }, async () => {
-    const start = await post({ cmd: "new_game", seed: "42", risk: 50, bluff_pct: 33 });
+    const start = await post({ cmd: "new_game", seed: "42", risk: 50 });
     if (!("ok" in start.reply)) throw new Error(start.reply.error);
     const { status, reply } = await post({ cmd: "act", action: "bet", amount: 20 });
     expect(status).toBe(200);
@@ -132,10 +140,10 @@ describe.skipIf(skipLean)("/api/game with the Lean program", () => {
   });
 
   it("plays a hand to the end by checking or calling, then reviews it", { timeout: 30_000 }, async () => {
-    let { reply } = await post({ cmd: "new_game", seed: "2026", risk: 50, bluff_pct: 33 });
+    let { reply } = await post({ cmd: "new_game", seed: "2026", risk: 50 });
     if (!("ok" in reply)) throw new Error(reply.error);
     let s = reply.state;
-    expect(s.sliders).toEqual({ risk: 50, bluffPct: 33 });
+    expect(s.sliders.risk).toBe(50);
     for (let guard = 0; s.status === "playing" && guard < 50; guard++) {
       ({ reply } = await post({ cmd: "act", action: s.legal!.check ? "check" : "call" }));
       if (!("ok" in reply)) throw new Error(reply.error);
@@ -157,7 +165,7 @@ describe.skipIf(skipLean)("/api/game with the Lean program", () => {
       serverCommit = execFileSync("git", ["rev-parse", "--short", "HEAD"], { encoding: "utf8" }).trim();
     } catch {}
     const commit = /^([0-9a-f]{4,40}|unknown)$/;
-    const start = await post({ cmd: "new_game", seed: "1", risk: 0, bluff_pct: 0 });
+    const start = await post({ cmd: "new_game", seed: "1", risk: 100 });
     if (!("ok" in start.reply)) throw new Error(start.reply.error);
     expect(start.reply.state.turnMode).toBe("exact");
     expect(start.reply.state.engineCommit).toMatch(commit);
@@ -167,12 +175,12 @@ describe.skipIf(skipLean)("/api/game with the Lean program", () => {
     const { reply } = await post({ cmd: "act", action: "raise", amount: 500 });
     if (!("ok" in reply)) throw new Error(reply.error);
     expect(reply.state.status).toBe("gameOver");
-    expect(reply.state).toMatchObject({ seed: "1", sliders: { risk: 0, bluffPct: 0 }, turnMode: "exact", serverCommit });
+    expect(reply.state).toMatchObject({ seed: "1", sliders: { risk: 100 }, turnMode: "exact", serverCommit });
     expect(reply.state.engineCommit).toBe(start.reply.state.engineCommit);
   });
 
   it("hides the bot's cards mid-hand, and shows them only when a command asks to peek", async () => {
-    const start = await post({ cmd: "new_game", seed: "7", risk: 50, bluff_pct: 33 });
+    const start = await post({ cmd: "new_game", seed: "7", risk: 50 });
     if (!("ok" in start.reply)) throw new Error(start.reply.error);
     expect(start.reply.state.status).toBe("playing");
     expect(start.reply.state.players[1].cards).toBeNull();
@@ -200,7 +208,7 @@ describe.skipIf(skipLean)("/api/game with the Lean program", () => {
         states.push(reply.state);
         return reply;
       };
-      let s = (await send({ cmd: "new_game", seed: "2026", risk: 50, bluff_pct: 33 })).state;
+      let s = (await send({ cmd: "new_game", seed: "2026", risk: 50 })).state;
       for (let hand = 0; hand < 2 && s.status !== "gameOver"; hand++) {
         for (let guard = 0; s.status === "playing" && guard < 50; guard++) {
           await send({ cmd: "state" });
@@ -222,14 +230,14 @@ describe.skipIf(skipLean)("/api/game with the Lean program", () => {
     expect(midHand(peeked.states).every((s) => s.players[1].cards?.length === 2)).toBe(true);
   });
 
-  it("passes slider values out of range to Lean, which rejects them", async () => {
-    const { status, reply } = await post({ cmd: "new_game", seed: "1", risk: 101, bluff_pct: 33 });
+  it("passes a Risk out of range to Lean, which rejects it", async () => {
+    const { status, reply } = await post({ cmd: "new_game", seed: "1", risk: 101 });
     expect(status).toBe(200);
     expect(reply).toMatchObject({ error: "risk must be 0-100" });
   });
 
   it("keeps the game after a malformed request", async () => {
-    const start = await post({ cmd: "new_game", seed: "9", risk: 50, bluff_pct: 33 });
+    const start = await post({ cmd: "new_game", seed: "9", risk: 50 });
     if (!("ok" in start.reply)) throw new Error(start.reply.error);
     const bad = await post({ cmd: "act", action: "raise" });
     expect(bad.status).toBe(400);
@@ -240,7 +248,7 @@ describe.skipIf(skipLean)("/api/game with the Lean program", () => {
   });
 
   it("reports a game lost to a crash on every later request, until a new game", async () => {
-    const start = await post({ cmd: "new_game", seed: "9", risk: 50, bluff_pct: 33 });
+    const start = await post({ cmd: "new_game", seed: "9", risk: 50 });
     if (!("ok" in start.reply)) throw new Error(start.reply.error);
     const crashed = holder.__leanProcess!;
     crashed.kill();
@@ -250,7 +258,7 @@ describe.skipIf(skipLean)("/api/game with the Lean program", () => {
       expect(status, JSON.stringify(body)).toBe(410);
       expect(reply, JSON.stringify(body)).toEqual(ENGINE_STOPPED);
     }
-    const again = await post({ cmd: "new_game", seed: "9", risk: 50, bluff_pct: 33 });
+    const again = await post({ cmd: "new_game", seed: "9", risk: 50 });
     expect("ok" in again.reply).toBe(true);
   });
 });

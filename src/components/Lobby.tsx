@@ -2,7 +2,7 @@ import { type CSSProperties, useState } from "react";
 import { ChallengePicker } from "./ChallengePicker";
 import { PlayingCard } from "./PlayingCard";
 import { type GameSettings, TABLE } from "@/hooks/useGame";
-import { BLUFF_PCT_MAX, RISK_MAX } from "@/lean/protocol";
+import { RISK_IDEAL, RISK_MAX } from "@/lean/protocol";
 import type { Challenge } from "@/lib/challenges";
 import { CUSTOM_BOT, OPPONENTS, presetFor } from "@/lib/roster";
 import styles from "./modes.module.css";
@@ -15,10 +15,23 @@ interface SliderProps {
   shown: string;
   /** One plain sentence on what the slider changes. */
   help: string;
+  /** Names for points on the scale, shown under the slider, like "Ideal" at 50. */
+  marks?: readonly { at: number; label: string }[];
   onChange: (v: number) => void;
 }
 
-export function BotSlider({ label, value, max, shown, help, onChange }: SliderProps) {
+/** The names on the Risk scale: a Rock at 0, the ideal at 50, a Maniac at 100. */
+export const RISK_MARKS = [
+  { at: 0, label: "Rock" },
+  { at: RISK_IDEAL, label: "Ideal" },
+  { at: RISK_MAX, label: "Maniac" },
+] as const;
+
+/** What Risk does, in plain words; shared by the setup screen and the Mystery guess. */
+export const RISK_HELP =
+  "The bot's appetite for risk. At 0 (Rock) it folds unless a call clearly pays, and never bluffs. At 50 it plays the textbook way: it calls when the pot odds say so, and a third of the hands it bets on the river are bluffs. Above 50 it calls the same way but bluffs more, the most at 100 (Maniac).";
+
+export function BotSlider({ label, value, max, shown, help, marks, onChange }: SliderProps) {
   return (
     <div className="bot-slider">
       <div className="bot-slider-head">
@@ -35,13 +48,22 @@ export function BotSlider({ label, value, max, shown, help, onChange }: SliderPr
         aria-label={label}
         aria-valuetext={shown}
       />
+      {marks && (
+        <div className={styles.sliderMarks} aria-hidden>
+          {marks.map((m) => (
+            <span key={m.at} style={{ left: `${(m.at / max) * 100}%` }}>
+              {m.label}
+            </span>
+          ))}
+        </div>
+      )}
       <p className="bot-slider-help">{help}</p>
     </div>
   );
 }
 
-/** Start screen: pick a named opponent or set the bot's Risk and Bluff sliders yourself, and
- * optionally a seed to replay a game. Or play a Mystery opponent, or load a practice challenge. */
+/** Start screen: pick a named opponent or set the bot's Risk slider yourself, and optionally a
+ * seed to replay a game. Or play a Mystery opponent, or load a practice challenge. */
 export function Lobby({
   initial,
   onStart,
@@ -54,22 +76,17 @@ export function Lobby({
   onPractice: (c: Challenge, fast: boolean) => void;
   onRules: () => void;
 }) {
-  const [risk, setRisk] = useState(initial?.risk ?? 50);
-  const [bluffPct, setBluffPct] = useState(initial?.bluffPct ?? 33);
+  const [risk, setRisk] = useState(initial?.risk ?? RISK_IDEAL);
   const [seedText, setSeedText] = useState("");
-  const preset = presetFor(risk, bluffPct);
-  const pick = (risk: number, bluffPct: number) => {
-    setRisk(risk);
-    setBluffPct(bluffPct);
-  };
+  const preset = presetFor(risk);
   const [fast, setFast] = useState(initial?.fast ?? false);
-  /** Mystery opponent: the server picks the sliders and the seed, so neither is shown here. */
+  /** Mystery opponent: the server picks Risk and the seed, so neither is shown here. */
   const [mystery, setMystery] = useState(initial?.mystery ?? false);
 
   const seedValid = mystery || /^\d{0,20}$/.test(seedText.trim());
   const start = () => {
     const trimmed = seedText.trim();
-    onStart({ risk, bluffPct, seed: !mystery && trimmed ? BigInt(trimmed) : null, fast, mystery });
+    onStart({ risk, seed: !mystery && trimmed ? BigInt(trimmed) : null, fast, mystery });
   };
 
   return (
@@ -92,8 +109,8 @@ export function Lobby({
         </label>
         {mystery ? (
           <p className={styles.mysteryNote}>
-            The server picks the bot's Risk and Bluff at random and keeps them secret. Play at least 3 hands, then guess them. The
-            reveal shows how close you were. Reviews open after your guess.
+            The server picks the bot's Risk at random and keeps it secret. Play at least 3 hands, then guess it. The reveal
+            shows how close you were. Reviews open after your guess.
           </p>
         ) : (
           <>
@@ -106,13 +123,15 @@ export function Lobby({
                   role="radio"
                   aria-checked={preset === o}
                   className={`opponent ${preset === o ? "on" : ""}`}
-                  onClick={() => pick(o.risk, o.bluffPct)}
+                  onClick={() => setRisk(o.risk)}
                 >
                   <span className="avatar avatar-sm" style={{ "--avatar": o.color } as CSSProperties}>
                     {o.name[0]}
                   </span>
                   <span className="opponent-name">{o.name}</span>
-                  <span className="opponent-style">{o.style}</span>
+                  <span className="opponent-style">
+                    {o.tier}, Risk {o.risk}. {o.style}
+                  </span>
                 </button>
               ))}
               <div className={`opponent ${preset ? "" : "on"}`} role="radio" aria-checked={!preset} aria-disabled>
@@ -120,7 +139,7 @@ export function Lobby({
                   ?
                 </span>
                 <span className="opponent-name">Custom</span>
-                <span className="opponent-style">Move a slider to build your own</span>
+                <span className="opponent-style">Move the slider to build your own</span>
               </div>
             </div>
 
@@ -130,17 +149,13 @@ export function Lobby({
               value={risk}
               max={RISK_MAX}
               shown={String(risk)}
-              help="How much the bot hates losing chips: at 0 it calls whenever calling pays off on average, and at 100 it needs a much stronger hand to call."
+              marks={RISK_MARKS}
+              help={RISK_HELP}
               onChange={setRisk}
             />
-            <BotSlider
-              label="Bluff"
-              value={bluffPct}
-              max={BLUFF_PCT_MAX}
-              shown={`${bluffPct}%`}
-              help="Target bluff share in the bot's river betting range, from 0% to 60%. The share in played hands can differ."
-              onChange={setBluffPct}
-            />
+            <p className={styles.derivedNote}>
+              Lean sets the bot's bluff share from Risk when the game starts. The table shows it at the top, next to Risk.
+            </p>
           </>
         )}
 

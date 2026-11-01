@@ -6,13 +6,17 @@ import type { Card } from "@/lib/cards";
  * bot's moves itself: every reply is a state where the human is to act or the hand is over.
  */
 
-/** The bot's two settings. Risk is 0-100, Bluff is a whole percentage, 0-60. */
+/**
+ * The bot's one setting, Risk: its appetite for risk, a whole number 0-100. 0 is a "Rock",
+ * 50 is the ideal, 100 is a "Maniac". Lean derives everything else from it (see `sliders`).
+ */
 export const RISK_MAX = 100;
-export const BLUFF_PCT_MAX = 60;
+/** The Risk of the ideal bot, and the setup screen's starting value. */
+export const RISK_IDEAL = 50;
 
 export type LeanCommand = (
   /** At the HTTP boundary, an empty seed requests a private server-generated game. */
-  | { cmd: "new_game"; seed: string; risk: number; bluff_pct: number }
+  | { cmd: "new_game"; seed: string; risk: number }
   | { cmd: "act"; action: "fold" | "check" | "call" }
   /** A bet or raise to `amount` chips this round. Lean treats "bet" and "raise" the same. */
   | { cmd: "act"; action: "bet" | "raise"; amount: number }
@@ -81,8 +85,12 @@ export interface LeanState {
   result: { showdown: boolean; outcome: "player0" | "player1" | "tie" | "fold"; winnings: [number, number] } | null;
   /** What happened since the previous reply, in order, including each bot move. */
   events: LeanEvent[];
-  /** The bot's settings for this game. */
-  sliders: { risk: number; bluffPct: number };
+  /**
+   * The bot's settings for this game: the Risk it was started with, and the two values Lean
+   * derives from it. `caution` (0-100) is how heavily the bot weighs a lost chip when it
+   * decides to call. `bluffPct` is the share of bluffs in its river betting set, in percent.
+   */
+  sliders: { risk: number; caution: number; bluffPct: number };
   /** The bot's reason for each of its moves this hand. Null until the hand is over. */
   botReasons: string[] | null;
   /**
@@ -168,16 +176,30 @@ export interface ReviewDecision {
 }
 
 /**
- * How Risk affects one bot move. `noBet`: no bet to face, so the bot does not look at Risk.
- * `raises`: facing a bet with a win chance of 75% or more, it raises at every Risk.
- * `callsAlways` / `foldsAlways`: facing a bet, the same at every Risk. `callsUpTo`: calls up
- * to `continuesUpTo`, folds above it.
+ * How Risk affects one bot move, over the player's Risk 0-100.
+ * - `noBet`: no bet to face before the river, so the bot does not look at Risk.
+ * - `raises`: facing a bet with a win chance of 75% or more, it raises at every Risk.
+ * - `callsAlways` / `foldsAlways`: facing a bet, the same at every Risk.
+ * - `callsFrom`: facing a bet, folds below `continuesFrom` and calls from it up.
+ * - `betsAlways` / `checksAlways`: the river with no bet to face, the same at every Risk.
+ * - `bluffsFrom`: the river with no bet to face, checks below `continuesFrom` and bets a bluff
+ *   from it up (more Risk, more bluffs).
+ * - `varies`: any other pattern.
  */
-export type LeanRiskEffect = "noBet" | "raises" | "callsAlways" | "foldsAlways" | "callsUpTo";
+export type LeanRiskEffect =
+  | "noBet"
+  | "raises"
+  | "callsAlways"
+  | "foldsAlways"
+  | "callsFrom"
+  | "betsAlways"
+  | "checksAlways"
+  | "bluffsFrom"
+  | "varies";
 
 /**
- * One bot move in the Risk explorer (`exploreHand` in `engine/Engine/Explain.lean`): the move
- * at every Risk from 0 to 100, with everything else about the decision kept the same.
+ * One bot move in the Risk explorer (`exploreHandAt` in `engine/Engine/Explain.lean`): the
+ * move at every Risk from 0 to 100, with everything else about the decision kept the same.
  */
 export interface LeanRiskExplorerEntry {
   street: "preflop" | "flop" | "turn" | "river";
@@ -187,18 +209,18 @@ export interface LeanRiskExplorerEntry {
   toCall: number;
   /** The bot's win, tie and loss counts for this move. */
   counts: { win: number; tie: number; loss: number };
-  /** The bot's Risk in this game. */
+  /** The Risk set in this game. */
   risk: number;
   /** The move the bot made, as the table names it ("Call", "Bet 60", "Raise to 120"). */
   action: string;
   /** The move at each Risk: 101 entries, entry r for Risk r. */
   actions: string[];
-  /** The highest Risk at which the bot calls or raises; null if it does neither. */
-  continuesUpTo: number | null;
+  /** The lowest Risk at which the bot calls, raises or bets; null if it does none of them. */
+  continuesFrom: number | null;
   /** Whether Risk changes this move at all. */
   riskMatters: boolean;
   effect: LeanRiskEffect;
-  /** One sentence, such as "Calls at Risk 0-37, folds at 38-100." */
+  /** One sentence, such as "Folds at Risk 0-35, calls at 36-100." */
   summary: string;
 }
 
@@ -214,8 +236,8 @@ export interface LeanReview {
  */
 
 /**
- * Start a Mystery game. The route picks Risk (0-100), Bluff (0-60) and a private seed at
- * random, and keeps them secret until the reveal. It must not carry a seed or sliders.
+ * Start a Mystery game. The route picks Risk (0-100) and a private seed at random, and keeps
+ * them secret until the reveal. It must not carry a seed or a Risk.
  */
 export interface MysteryNewGame {
   cmd: "new_game";
@@ -223,24 +245,22 @@ export interface MysteryNewGame {
   peek?: boolean;
 }
 
-/** The player's one guess at the Mystery bot's settings. Allowed after 3 finished hands, or at game over. */
+/** The player's one guess at the Mystery bot's Risk. Allowed after 3 finished hands, or at game over. */
 export interface RevealCommand {
   cmd: "reveal";
   risk: number;
-  bluff_pct: number;
   peek?: boolean;
 }
 
 /** Everything the browser may send to `/api/game`. */
 export type ApiCommand = LeanCommand | MysteryNewGame | RevealCommand;
 
-/** The reveal: the real settings, the guess, and how far off each guess was. */
+/** The reveal: the real Risk, the guess, and how far off the guess was. */
 export interface MysteryReveal {
   risk: number;
-  bluff_pct: number;
-  guess: { risk: number; bluff_pct: number };
-  /** How far each guess was from the real setting (never negative). */
-  off: { risk: number; bluff_pct: number };
+  guess: number;
+  /** How far the guess was from the real Risk (never negative). */
+  off: number;
 }
 
 /**

@@ -17,32 +17,31 @@ import { CUSTOM_BOT, HUMAN_COLOR, botFor } from "@/lib/roster";
 export const TABLE = { startingStack: 500, smallBlind: 5, bigBlind: 10 } as const;
 
 export interface GameSettings {
-  /** How heavily the bot weighs a lost chip when deciding to call, 0 to 100. */
+  /** The bot's one setting: its appetite for risk, 0 to 100 (50 is the ideal). Lean derives the rest. */
   risk: number;
-  /** Target bluff share in the bot's defined river betting range, 0 to 60 (percent). */
-  bluffPct: number;
   /** Game seed to replay; null deals a new random game. */
   seed: bigint | null;
   fast: boolean;
   /**
-   * A Mystery opponent: the server picks Risk, Bluff and the seed, and hides them until the
-   * player guesses. `risk`, `bluffPct` and `seed` above are then not sent; they only keep the
-   * setup screen's sliders for next time.
+   * A Mystery opponent: the server picks Risk and the seed, and hides them until the player
+   * guesses. `risk` and `seed` above are then not sent; they only keep the setup screen's
+   * slider for next time.
    */
   mystery: boolean;
 }
 
 /**
  * What kind of game this is. The kinds never mix: starting any game sets exactly one.
- * - normal: the player set the sliders (or picked a named opponent).
+ * - normal: the player set Risk (or picked a named opponent).
  * - practice: a rehearsed hand from `@/lib/challenges`, loaded up to its river decision.
  * - mystery: the server picked the bot's settings and hides them; `reveal` is null until the
- *   player's guess is in.
+ *   player's guess is in. `handsBeforeReveal` counts the hands finished when the guess went in:
+ *   the player decided those without knowing the bot's Risk.
  */
 export type GameMode =
   | { kind: "normal" }
   | { kind: "practice"; challenge: Challenge }
-  | { kind: "mystery"; reveal: MysteryReveal | null };
+  | { kind: "mystery"; reveal: MysteryReveal | null; handsBeforeReveal?: number };
 
 export interface Player {
   name: string;
@@ -75,6 +74,8 @@ export interface Game {
   boardBefore: number;
   /** Hand history, one line per event. Not shown on screen; kept for testing and checking games afterwards. */
   log: string[];
+  /** Lean's events for the current hand so far, in order. The review's move list is built from them. */
+  handEvents: LeanEvent[];
   stats: Stats;
   /**
    * Why the game is gone (the engine stopped, hung or restarted), or null while it is live.
@@ -104,13 +105,32 @@ const MYSTERY_BOT = { name: "Mystery bot", color: CUSTOM_BOT.color } as const;
 /** Oldest lines are dropped beyond this, so a very long session can't grow without bound. */
 const LOG_LIMIT = 5000;
 
+/** No reply from the game server: it is stopped or restarting, or it sent a page that is not a reply. */
+class NoReplyError extends Error {
+  constructor() {
+    super("The game server did not send a reply. Check that it is still running, then try again.");
+  }
+}
+
+/** Send one command through the game server. Throws a NoReplyError if no reply comes back. */
 async function sendToLean(command: ApiCommand): Promise<RouteReply> {
-  const response = await fetch("/api/game", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(command),
-  });
-  return (await response.json()) as RouteReply;
+  try {
+    const response = await fetch("/api/game", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(command),
+    });
+    return (await response.json()) as RouteReply;
+  } catch {
+    // The browser's own message ("Failed to fetch") tells the player nothing.
+    throw new NoReplyError();
+  }
+}
+
+/** The message for a request that failed outside Lean: no reply from the server, or a fault in this page. */
+function failureText(e: unknown): string {
+  if (e instanceof NoReplyError) return e.message;
+  return `Something went wrong in this page: ${e instanceof Error ? e.message : String(e)}`;
 }
 
 /** How long the bot "thinks" before its moves appear, in milliseconds. Display only: Lean already chose the moves. */
@@ -172,7 +192,7 @@ function streetName(street: string) {
  * Turns Lean's events into readable log lines. `startBet` is the round's highest bet before
  * these events, so the first chips of a round read as a bet ("Bot bets 40"), not a raise.
  */
-function describeEvents(events: readonly LeanEvent[], names: string[], startBet: number): string[] {
+export function describeEvents(events: readonly LeanEvent[], names: string[], startBet: number): string[] {
   let roundBet = startBet;
   return events.map((e): string => {
     const name = "player" in e ? names[e.player]! : "";
@@ -215,7 +235,11 @@ function appendLog(log: string[], entries: string[]): string[] {
 }
 
 /** The game after a reply from Lean. `previous` is null for a new game. */
-function withReply(base: Omit<Game, "lean" | "session" | "dealt" | "legal" | "botLine" | "boardBefore" | "lost" | "peeked">, previous: Game | null, s: RouteState): Game {
+function withReply(
+  base: Omit<Game, "lean" | "session" | "dealt" | "legal" | "botLine" | "boardBefore" | "handEvents" | "lost" | "peeked">,
+  previous: Game | null,
+  s: RouteState,
+): Game {
   const names = base.players.map((p) => p.name);
   const newHand = !previous || previous.lean.hand !== s.hand;
   const header = newHand ? [`Hand #${s.hand}`] : [];
@@ -246,6 +270,7 @@ function withReply(base: Omit<Game, "lean" | "session" | "dealt" | "legal" | "bo
     // A reply without events (Peek turned on or off, a Mystery reveal) keeps the bot's last move.
     botLine: !newHand && s.events.length === 0 ? previous.botLine : lastBotLine(s.events, lines),
     log: appendLog(base.log, [...header, ...lines]),
+    handEvents: newHand ? s.events : previous.handEvents.concat(s.events),
     stats,
     lost: null,
     peeked: false,
@@ -348,7 +373,7 @@ export function useGame() {
         failed(reply);
       }
     } catch (e) {
-      if (gen === generation.current) setError(`Could not reach the game engine: ${e instanceof Error ? e.message : String(e)}`);
+      if (gen === generation.current) setError(failureText(e));
     } finally {
       if (gen === generation.current) {
         setThinking(false);
@@ -407,8 +432,8 @@ export function useGame() {
       resetPeek();
       const players: Player[] = [
         { name: "You", color: HUMAN_COLOR },
-        // A preset's name would tell the hidden sliders, so a Mystery bot gets a plain one.
-        settings.mystery ? MYSTERY_BOT : botFor(settings.risk, settings.bluffPct),
+        // A preset's name would tell the hidden Risk, so a Mystery bot gets a plain one.
+        settings.mystery ? MYSTERY_BOT : botFor(settings.risk),
       ];
       // A Mystery game's seed is private (the server picks it), so none is kept here.
       const seed = settings.mystery ? null : settings.seed;
@@ -416,14 +441,14 @@ export function useGame() {
       const base = { settings, mode, seed, players, log: [], stats: { handsPlayed: 0, handsWon: 0, biggestPot: 0 } };
       const command: ApiCommand = settings.mystery
         ? { cmd: "new_game", mystery: true }
-        : { cmd: "new_game", seed: seed?.toString() ?? "", risk: settings.risk, bluff_pct: settings.bluffPct };
+        : { cmd: "new_game", seed: seed?.toString() ?? "", risk: settings.risk };
       void request(command, (s) => withReply(base, null, s));
     },
     [request, resetPeek],
   );
 
   /**
-   * Start a practice challenge: a new game with the spot's seed and sliders, then its moves
+   * Start a practice challenge: a new game with the spot's seed and Risk, then its moves
    * through the normal `act` command, without the bot's "thinking" pauses. The table appears
    * only once Lean's reply is the spot's river decision; if it is not, the challenge stops
    * with an error instead of going on from a different spot.
@@ -439,14 +464,14 @@ export function useGame() {
       resetPeek();
       setGame(null);
       setLoading(challenge);
-      const settings: GameSettings = { risk: challenge.risk, bluffPct: challenge.bluff_pct, seed: BigInt(challenge.seed), fast, mystery: false };
+      const settings: GameSettings = { risk: challenge.risk, seed: BigInt(challenge.seed), fast, mystery: false };
       const mode: GameMode = { kind: "practice", challenge };
-      const players: Player[] = [{ name: "You", color: HUMAN_COLOR }, botFor(challenge.risk, challenge.bluff_pct)];
+      const players: Player[] = [{ name: "You", color: HUMAN_COLOR }, botFor(challenge.risk)];
       const base = { settings, mode, seed: settings.seed, players, log: [], stats: { handsPlayed: 0, handsWon: 0, biggestPot: 0 } };
       let g: Game | null = null;
       try {
         const commands: LeanCommand[] = [
-          { cmd: "new_game", seed: challenge.seed, risk: challenge.risk, bluff_pct: challenge.bluff_pct },
+          { cmd: "new_game", seed: challenge.seed, risk: challenge.risk },
           ...challenge.moves.map((m): LeanCommand => ({ cmd: "act", ...m })),
         ];
         for (const command of commands) {
@@ -459,12 +484,12 @@ export function useGame() {
           g = withReply(g ?? base, g, reply.state);
         }
         if (!g || !atRiverDecision(g.lean)) {
-          setError(`"${challenge.title}" did not reach its river decision, so it was stopped. The engine may have changed since the spot was recorded.`);
+          setError(`"${challenge.title}" did not play out as recorded, so it was stopped before its river decision.`);
           return;
         }
         setGame(g);
       } catch (e) {
-        if (gen === generation.current) setError(`Could not reach the game engine: ${e instanceof Error ? e.message : String(e)}`);
+        if (gen === generation.current) setError(failureText(e));
       } finally {
         if (gen === generation.current) {
           setLoading(null);
@@ -523,7 +548,7 @@ export function useGame() {
         failed(reply);
       }
     } catch (e) {
-      if (gen === generation.current) setError(`Could not reach the game engine: ${e instanceof Error ? e.message : String(e)}`);
+      if (gen === generation.current) setError(failureText(e));
     } finally {
       if (gen === generation.current) release();
     }
@@ -532,11 +557,11 @@ export function useGame() {
   const closeReview = useCallback(() => setReview(null), []);
 
   /**
-   * Send the player's guess at the Mystery bot. On success the game shows everything again:
-   * the reply has the real settings and the full state. Returns the server's refusal, or null.
+   * Send the player's guess at the Mystery bot's Risk. On success the game shows everything
+   * again: the reply has the real Risk and the full state. Returns the server's refusal, or null.
    */
   const reveal = useCallback(
-    async (risk: number, bluffPct: number): Promise<string | null> => {
+    async (risk: number): Promise<string | null> => {
       const g = gameRef.current;
       if (!g || g.lost !== null || g.mode.kind !== "mystery" || g.mode.reveal !== null) return "There is no Mystery bot to reveal.";
       if (busy.current) return "Wait for the table to finish, then try again.";
@@ -544,7 +569,7 @@ export function useGame() {
       const gen = generation.current;
       const asked = peekRef.current;
       try {
-        const command: ApiCommand = { cmd: "reveal", risk, bluff_pct: bluffPct };
+        const command: ApiCommand = { cmd: "reveal", risk };
         const reply = await sendToLean(asked ? { ...command, peek: true } : command);
         if (gen !== generation.current) return null;
         if (!("ok" in reply)) {
@@ -554,13 +579,14 @@ export function useGame() {
         }
         if (!reply.reveal) return "The server sent no reveal.";
         const now = gameRef.current ?? g;
-        const mode: GameMode = { kind: "mystery", reveal: reply.reveal };
+        const handsBeforeReveal = reply.state.status === "playing" ? reply.state.hand - 1 : reply.state.hand;
+        const mode: GameMode = { kind: "mystery", reveal: reply.reveal, handsBeforeReveal };
         const shown = withReply({ ...now, mode }, now, reply.state);
         setError(null);
         setGame(withPeek(shown, asked, peekRef.current));
         return null;
       } catch (e) {
-        return `Could not reach the game engine: ${e instanceof Error ? e.message : String(e)}`;
+        return failureText(e);
       } finally {
         if (gen === generation.current) release();
       }

@@ -239,3 +239,34 @@
   color: var(--gold);
   font-weight: 700;
 }
+
+/* ---------- The Risk slider's scale names (setup screen and Mystery guess) ---------- */
+.sliderMarks {
+  position: relative;
+  height: 16px;
+  margin: -2px 8px 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.sliderMarks span {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.sliderMarks span:first-child {
+  transform: none;
+}
+
+.sliderMarks span:last-child {
+  transform: translateX(-100%);
+}
+
+.derivedNote {
+  margin: -4px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
