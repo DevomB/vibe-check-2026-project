@@ -23,7 +23,13 @@
     "bot_bets_its_set",
     "step_keeps_chips",
     "startHand_keeps_chips",
-    "chips_always_1000"
+    "chips_always_1000",
+    "review_worth",
+    "review_best_iff",
+    "review_label_monotone",
+    "review_call_best_iff_equity",
+    "no_hindsight",
+    "bot_hand_in_review"
   ],
   "permitted_axioms": [
     "propext",
