@@ -194,8 +194,8 @@ theorem value_strongest (bluffPct : Nat) (board : List Card) :
       h ∉ (riverBettingSet bluffPct board).value → h.score ≤ v.score := sorry
 
 /-- T7: bluffs are the weakest. Every bluff in the river betting set scores no better than
-every candidate hand that is not a bluff, so no better than any value hand or any hand
-outside the set. -/
+every candidate hand that is not a bluff. So, when the value hands and the bluffs are apart
+(`value_and_bluffs_apart`), no bluff scores better than any value hand. -/
 theorem bluffs_weakest (bluffPct : Nat) (board : List Card) :
     ∀ b ∈ (riverBettingSet bluffPct board).bluffs, ∀ h ∈ rankRiverHands board,
       h ∉ (riverBettingSet bluffPct board).bluffs → b.score ≤ h.score := sorry
@@ -308,10 +308,10 @@ theorem viewOf_toCall_le_pot (sl : Sliders) (hole board : List Card) (s : State)
 
 open Lean (Json toJson)
 
-/-- The game the app plays is reachable. Start with no session and answer any request lines
-in order, as `Main.lean` does: whenever a session exists, its game is one the engine can
-reach. So the reachable-game theorems (`chips_always_1000`, `no_card_dealt_twice`,
-`player_to_act_may_act`, `every_hand_ends`) hold for the game on screen. -/
+/-- The game the engine's session plays is reachable. Start with no session and answer any
+request lines in order: whenever a session exists, its game is one the engine can reach. So
+the reachable-game theorems (`chips_always_1000`, `no_card_dealt_twice`,
+`player_to_act_may_act`, `every_hand_ends`) hold for the engine's session. -/
 theorem app_game_reachable (lines : List String) (s : Session) (commit : String)
     (hs : lines.foldl (fun cur line => (respond cur line commit).1) none = some s) :
     s.game.Reachable := sorry
@@ -325,23 +325,24 @@ theorem respond_keeps_session_unless_accepted (cur : Option Session) (line : Str
       Session.handle cur c = .ok s ∧ (respond cur line commit).1 = some s := sorry
 
 /-- The Risk explorer shows the real bot. For move number `i` of a hand's recorded bot moves
-and every Risk `r` from 0 to 100, the explorer's entry at `r` is exactly the action
-`botDecide` returns at Risk `r`, with the game's Bluff and the move's recorded seed, cards,
-board and betting state. -/
+and every internal Risk number `r` from 0 to 100 (the caution, with the game's Bluff kept),
+the explorer's entry at `r` is exactly the action `botDecide` returns at that setting, with
+the move's recorded seed, cards, board and betting state. -/
 theorem exploreHand_moves (sl : Sliders) (ms : List BotMoveRecord) (i r : Nat)
     (hi : i < ms.length) (hr : r ≤ 100) :
     ((exploreHand sl ms)[i]?.bind fun e => e.moves[r]?) =
       some (botDecide ⟨r, sl.bluffPct⟩ ms[i].seed ms[i].hole ms[i].board ms[i].state).action := sorry
 
 /-- The explorer never goes from fold back to call. For each recorded move, if the explorer
-shows a call or raise at some Risk, it shows a call or raise at every lower Risk too. (Past
-Risk 100 there is no entry; that counts as a fold.) -/
+shows a call or raise at some internal Risk number (caution), it shows one at every lower
+number too. (Past 100 there is no entry; that counts as a fold.) -/
 theorem exploreHand_risk_monotone (sl : Sliders) (ms : List BotMoveRecord) (i : Nat)
     (hi : i < ms.length) :
     RiskMonotone fun r => ((exploreHand sl ms)[i]?.bind fun e => e.moves[r]?).getD .fold := sorry
 
-/-- The range viewer's numbers add up. The value hands and bluffs in the bot's river betting
-set are exactly the hands your cards block, plus the hands you beat, tie with and lose to. -/
+/-- The range viewer's numbers add up. The number of value hands plus bluffs in the bot's
+river betting set equals the number your cards block plus the numbers of hands you beat, tie
+with and lose to. -/
 theorem rangeOf_adds_up (spot : RiverSpot) :
     (rangeOf spot).value + (rangeOf spot).bluffs =
       (rangeOf spot).blocked + ((rangeOf spot).beat + (rangeOf spot).tie + (rangeOf spot).lose) := sorry
