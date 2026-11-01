@@ -73,11 +73,13 @@ the river, Vex bets 60 into 60. I hold jack-high.
 
 > "Vex bluffs a lot. Maybe this is a bluff. So I call."
 
-Click "Call 60". The bot shows 6s 4c, a straight. Open the review: **Mistake**. "Call was
-worth −2.7 BB", "Your equity 19% · needed to call 33%".
+Click "Call 60". The bot shows 6s 4c, a straight. Open the review. "You call 60" has the
+Mistake badge: "Calling is a Mistake. You win 18.5% against the hands the bot bets here (a
+tie counts half). Calling needed 33.3% to break even." "Calling was worth −2.67 BB; folding
+was worth 0.00 BB."
 
-Point at the range viewer under the grade: 324 value hands and 486 bluffs, 73 blocked by my
-cards; of the rest I beat 132, tie 9 and lose to 596.
+Point at the box below, "The hands the grade counts": 324 value hands and 486 bluffs, 73
+blocked by my cards; of the 737 left I beat 132, tie 9 and lose to 596.
 
 > "The review looks at every hand Vex bets on this board, its strong hands and its bluffs,
 > minus the hands my cards block. Against those, jack-high wins only 18.5% of the time,
@@ -88,15 +90,16 @@ cards; of the rest I beat 132, tie 9 and lose to 596.
 > psychologists call that outcome bias. This grade can't: it never depends on the bot's
 > cards."
 
-Click the review's proof link ("Why can I trust this?"). The Proofs drawer opens at the
-review's guarantee; leave it open for the next part.
+Click "Why can I trust this grade?". The Proofs drawer opens at the review's guarantee;
+leave it open for the next part. (The link next to it, "Does the grade use the bot's cards?
+No. See the proof.", opens T8.)
 
 The review ignores the earlier betting. If asked: "It's exact for that set of hands. That set
 is a simple model of what the bot holds, and we say so."
 
-Optional, instead of the range viewer, if time allows: Practice, "Make the right decision and
-still lose". Call 60. The bot wins, and the review says **Best** (+10.3 BB) with "Right
-decision, unlucky result".
+Optional, instead of the hand counts, if time allows: Practice, "Make the right decision and
+still lose". Call 60. The bot wins, yet the call is graded **Best** (+10.32 BB), with "Right
+decision, unlucky result."
 
 > "Same lost chips as before, opposite grade: this time the call was right."
 
@@ -147,7 +150,7 @@ Comparator, `lake check`, fresh-clone launch) is the one line in the
 | "The review compares call and fold under its stated model. Best means you lost nothing against the better choice. A worse label always means more chips lost." (T5) | `review_worth`, `review_lost`, `review_best_iff`, `review_label_monotone`, `review_call_best_iff_equity`, `review_hands_ne_nil`, `botHands_ne_nil_of_board` | The worth of calling is the exact average over the bot's possible hands, in big blinds; Best means the choice was worth at least the other; fewer big blinds lost never gets a worse label; calling is Best exactly when your equity is at least the equity needed; the list of hands the bot can hold is never empty. | The model is every hand the bot's river rule bets on that board, minus your cards. It ignores the earlier betting. Only river calls and folds against the bot's opening bet are graded. The label bands (0.5, 2, 5 BB) are the team's choice, in `labelFor`, which a reader must check. |
 | "18.5% against 33% needed: a Mistake." (scene a) | `review_call_best_iff_equity`, `review_lost` | 0.185 < 0.333, so the call is not Best; it lost 2.67 BB, which is in the Mistake band (2 to 5). | The decimals are rounded for display. The engine compares exact fractions. |
 | "The grade never depends on the bot's real cards." (T8) | `no_hindsight`, `bot_hand_in_review` | Two hands that look the same to you get the same review, whatever the bot holds; the bot's real hand is always one of the hands the review counts. | "Look the same" means the same Bluff setting, chips, board and your cards (`SameForHuman`). That the session records the right river spot for the review is tested, not proved. |
-| Range viewer (scene a): "324 value hands and 486 bluffs; of the hands left I beat 132, tie 9, lose 596." | `rangeOf_counts`, `rangeOf_adds_up` | The range viewer's beat, tie and lose numbers are the counts the grade uses, and value + bluffs = blocked + beat + tie + lose. | The 324 and 486 come from T7. The bar's drawing is browser code. |
+| Range viewer, the box "The hands the grade counts" (scene a): "324 value hands and 486 bluffs; of the hands left I beat 132, tie 9, lose 596." | `rangeOf_counts`, `rangeOf_adds_up` | The range viewer's beat, tie and lose numbers are the counts the grade uses, and value + bluffs = blocked + beat + tie + lose. | The 324 and 486 come from T7. The bar's drawing is browser code. |
 | Not spoken; say it if asked: "The Risk explorer shows what this same bot would have done at every other Risk." | `exploreHandAt_moves`, `exploreHandAt_more_risk_continues` | Each entry is exactly `botDecide`'s move at that Risk (through `Sliders.ofRisk`), on the recorded inputs; facing a bet, it never goes from call back to fold as Risk rises. | That the session recorded the bot's real inputs is tested, not proved. Only one move changes; earlier moves stay as played. |
 | Not spoken; say it if asked: "Every hand ends." (T9) | `every_hand_ends` | From any reachable game, a hand has at most 200 accepted moves. | It does not bound a whole match. |
 | Not spoken; say it if asked: "On the turn and river, the win chance counts every outcome exactly once." (T6) | `enumeration_exact`, `riverOpponentHands_length`, `turnOutcomes_length`, `countsFor_river`, `countsFor_turn` | The river counts each of the 990 opponent hands once; the turn counts each of the 45,540 (river card, opponent hand) pairs once. | The flop is an estimate from 1,000 deals; preflop uses a table of estimates (`data/preflop.json`). The compiler is trusted to run the turn's 46 parallel tasks. |
