@@ -2,8 +2,8 @@
 
 Sun Nov 1, 2026, main at 3e01c5b. Every theorem named here is stated in
 [`engine/Checks/Challenge.lean`](../engine/Checks/Challenge.lean), proved under
-`engine/Engine/Proofs/`, listed in [`engine/comparator.json`](../engine/comparator.json) (100
-names since the bluff-catcher, equilibrium, Risk 0 and 100, and shuffle-fairness theorems were added; see [GUARANTEES.md](GUARANTEES.md) for the full
+`engine/Engine/Proofs/`, listed in [`engine/comparator.json`](../engine/comparator.json) (106
+names since the bluff-catcher, equilibrium, Risk 0 and 100, shuffle-fairness and generator theorems were added; see [GUARANTEES.md](GUARANTEES.md) for the full
 table), and checked on every push to main by `checks/audit.sh`, `lake comparator` and
 `lake check`, using only the three standard axioms. The README's "What we trust" section lists
 the definitions a reader must still read. Most important first.
@@ -109,6 +109,14 @@ the definitions a reader must still read. Most important first.
    together, most of the 52! deck orders can never come out (a consequence of the two, not a
    separate theorem).
 
+10. **The generator spreads its numbers evenly (randomness, part 2).** The numbers the shuffle
+    uses are the SplitMix64 generator's numbers (`seedPicks_eq`). Its step visits all 2^64
+    states, each once, before repeating (`genState_injective`, `genState_onto`), and its
+    scrambling never maps two states to the same number and reaches every 64-bit number
+    (`mixSeed_injective`, `mixSeed_onto`; the proof writes down the exact inverse). So among the
+    first 2^64 numbers from any seed, every 64-bit number comes out exactly once
+    (`every_number_once`): no number is favoured.
+
 ## Not proved, most important first
 
 1. **That the bot plays well.** No theorem about winning or exploitability over whole
@@ -126,9 +134,10 @@ the definitions a reader must still read. Most important first.
    seeded deals. Only the turn and river counts are exact.
 
 4. **Randomness.** The shuffle method is proved fair (item 9): fair picks give every deck order
-   the same chance. What is not proved is that the picks are fair. They come from a fixed rule
-   (SplitMix64) on purpose, so a game can be replayed; "random" is not something a fixed rule
-   can be proved to be. Two smaller gaps: each pick is the generator's 64-bit number modulo
+   the same chance. The generator's numbers are proved perfectly even over a
+   full cycle (item 10). What is not proved is that they look unpredictable: that one number
+   gives no hint about the next. That is a statistical property of a fixed rule (SplitMix64,
+   chosen so a game can be replayed), which tests check and proofs cannot. Two smaller gaps: each pick is the generator's 64-bit number modulo
    the cards left, which favours some places by at most one part in 2^64 / 52 (not proved),
    and with only 2^64 seeds most deck orders never come out (proved, item 9).
 

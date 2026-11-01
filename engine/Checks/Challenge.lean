@@ -7,6 +7,7 @@ import Engine.Proofs.ReviewSpec
 import Engine.Proofs.BluffCatcherSpec
 import Engine.Proofs.EquilibriumSpec
 import Engine.Proofs.ShuffleSpec
+import Engine.Proofs.GeneratorSpec
 import Engine.Proofs.EndsSpec
 import Engine.Proofs.BoardSpec
 import Engine.Protocol
@@ -740,3 +741,34 @@ theorem shuffle_uses_64_bits {α : Type} (seed : Nat) (l : List α) :
 `shuffle_uses_64_bits`, at most 2^64 of the 52! orders of a deck can ever come out of the
 shuffle, so most orders never do. -/
 theorem fewer_seeds_than_orders : 2 ^ 64 < factorial 52 := sorry
+
+/-! ## T2: how evenly the generator spreads its numbers (see `Engine/Proofs/Generator.lean`)
+
+The definitions (`genStep`, `genState`, `genOutput`) are in `Engine/Proofs/GeneratorSpec.lean`. -/
+
+/-- **The shuffle's numbers are the generator's numbers.** `seedPicks`, which the shuffle uses
+(`shuffle_eq_pickWith`), gives `genOutput seed 0`, `genOutput seed 1`, and so on. -/
+theorem seedPicks_eq (n seed : Nat) : seedPicks n seed = (List.range n).map (genOutput seed) := sorry
+
+/-- **The step visits a different state each time, for 2^64 steps.** -/
+theorem genState_injective (s a b : Nat) (h : genState s a = genState s b) :
+    a % 2 ^ 64 = b % 2 ^ 64 := sorry
+
+/-- **The step reaches every state.** From any seed, every state below 2^64 is reached within
+2^64 steps. -/
+theorem genState_onto (s t : Nat) (ht : t < 2 ^ 64) : ∃ a, a < 2 ^ 64 ∧ genState s a = t := sorry
+
+/-- **The scrambling loses nothing.** Two states below 2^64 with the same scrambled number
+are the same state. -/
+theorem mixSeed_injective (s t : Nat) (hs : s < 2 ^ 64) (ht : t < 2 ^ 64)
+    (h : mixSeed s = mixSeed t) : s = t := sorry
+
+/-- **Every 64-bit number is the scramble of some state.** -/
+theorem mixSeed_onto (y : Nat) (hy : y < 2 ^ 64) : ∃ s, s < 2 ^ 64 ∧ mixSeed s = y := sorry
+
+/-- **Every number once per cycle.** Among the first 2^64 numbers the generator gives from any
+seed, every number below 2^64 comes out exactly once. -/
+theorem every_number_once (seed y : Nat) (hy : y < 2 ^ 64) :
+    (∃ k, k < 2 ^ 64 ∧ genOutput seed k = y) ∧
+      ∀ k k', k < 2 ^ 64 → k' < 2 ^ 64 → genOutput seed k = y → genOutput seed k' = y →
+        k = k' := sorry
