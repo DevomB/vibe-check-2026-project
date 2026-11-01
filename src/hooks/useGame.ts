@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { type Action, type DealtHand, type HandState, type LegalActions, type Session, randomGameSeed } from "@/engine";
+import { type Action, type DealtHand, type HandState, type LegalActions, type Session } from "@/engine";
 import type { LeanCommand, LeanEvent, LeanReply, LeanReview, LeanState } from "@/lean/protocol";
 import { cardText, chips } from "@/lib/format";
 import { HUMAN_COLOR, botFor } from "@/lib/roster";
@@ -38,8 +38,8 @@ export interface Stats {
 
 export interface Game {
   settings: GameSettings;
-  /** Every hand's cards follow from this seed, in the Lean engine. */
-  seed: bigint;
+  /** Known for an entered replay, or revealed by the server once the game ends. */
+  seed: bigint | null;
   /** Seat 0 is the human, seat 1 the bot. Same numbering as Lean's players. */
   players: Player[];
   /** Lean's latest reply. */
@@ -208,6 +208,7 @@ function withReply(base: Omit<Game, "lean" | "session" | "dealt" | "legal" | "bo
     : base.stats;
   return {
     ...base,
+    seed: s.seed === null ? base.seed : BigInt(s.seed),
     lean: s,
     session: {
       seats: s.players.map((p, i) => ({ id: String(i), name: names[i]!, stack: p.stack })),
@@ -286,9 +287,9 @@ export function useGame() {
         { name: "You", color: HUMAN_COLOR },
         botFor(settings.risk, settings.bluffPct),
       ];
-      const seed = settings.seed ?? randomGameSeed();
+      const seed = settings.seed;
       const base = { settings, seed, players, log: [], stats: { handsPlayed: 0, handsWon: 0, biggestPot: 0 } };
-      void request({ cmd: "new_game", seed: seed.toString(), risk: settings.risk, bluff_pct: settings.bluffPct }, (s) =>
+      void request({ cmd: "new_game", seed: seed?.toString() ?? "", risk: settings.risk, bluff_pct: settings.bluffPct }, (s) =>
         withReply(base, null, s),
       );
     },

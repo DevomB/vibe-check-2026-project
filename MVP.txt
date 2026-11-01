@@ -198,6 +198,11 @@ Working together: use separate clones and coordinate before editing the same fil
 
 
 13. JSON MESSAGES (engine <-> Node server), MVP
+The browser may omit the seed or send an empty seed string to request a private,
+server-generated 64-bit seed. Node supplies that seed to Lean. Public HTTP state replies
+set seed to null until gameOver, including between hands, in reviews and in error states.
+An entered seed is an intentional replay and may be displayed because the player already
+knows it. A finished game's seed is revealed for replay; card and action rules stay in Lean.
 Requests, one per line:
   {"cmd":"new_game","seed":42,"risk":50,"bluff_pct":33}
   {"cmd":"act","action":"call"}                              (action: fold, check, call, bet, raise)
