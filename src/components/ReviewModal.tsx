@@ -143,7 +143,8 @@ export function ReviewModal({ review, game = null, peeked = false, hideSliderInf
   const street = fromEvents ? streetAt(streets, at) : (row?.decision?.street ?? null);
   const yourCards = sameHand ? (game.lean.players[human]?.cards ?? []) : [];
   const shownBotCards = sameHand && game.lean.result?.showdown ? (game.lean.players[1 - human]?.cards ?? null) : null;
-  const mysteryRevealed = game?.mode.kind === "mystery" && game.mode.reveal !== null;
+  // Mystery: hands finished before the guess were decided without knowing the bot's Risk.
+  const decidedBeforeReveal = game?.mode.kind === "mystery" && game.mode.reveal !== null && review.hand <= (game.mode.handsBeforeReveal ?? 0);
 
   const coach = row?.decision ? gradedCoach(row.decision) : null;
   const reasons = hideSliderInfo ? null : review.bot_reasons;
@@ -263,7 +264,7 @@ export function ReviewModal({ review, game = null, peeked = false, hideSliderInf
                   The grade counts every hand the bot bets on this river as equally likely, minus the hands your cards rule out. It ignores how
                   the bot played earlier.
                 </p>
-                {mysteryRevealed && <p>Graded with the bot&apos;s real settings, which you did not know when you decided.</p>}
+                {decidedBeforeReveal && <p>Graded with the bot&apos;s real settings, which you did not know when you decided.</p>}
               </div>
             )}
 

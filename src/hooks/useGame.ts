@@ -35,12 +35,13 @@ export interface GameSettings {
  * - normal: the player set Risk (or picked a named opponent).
  * - practice: a rehearsed hand from `@/lib/challenges`, loaded up to its river decision.
  * - mystery: the server picked the bot's settings and hides them; `reveal` is null until the
- *   player's guess is in.
+ *   player's guess is in. `handsBeforeReveal` counts the hands finished when the guess went in:
+ *   the player decided those without knowing the bot's Risk.
  */
 export type GameMode =
   | { kind: "normal" }
   | { kind: "practice"; challenge: Challenge }
-  | { kind: "mystery"; reveal: MysteryReveal | null };
+  | { kind: "mystery"; reveal: MysteryReveal | null; handsBeforeReveal?: number };
 
 export interface Player {
   name: string;
@@ -559,7 +560,8 @@ export function useGame() {
         }
         if (!reply.reveal) return "The server sent no reveal.";
         const now = gameRef.current ?? g;
-        const mode: GameMode = { kind: "mystery", reveal: reply.reveal };
+        const handsBeforeReveal = reply.state.status === "playing" ? reply.state.hand - 1 : reply.state.hand;
+        const mode: GameMode = { kind: "mystery", reveal: reply.reveal, handsBeforeReveal };
         const shown = withReply({ ...now, mode }, now, reply.state);
         setError(null);
         setGame(withPeek(shown, asked, peekRef.current));
