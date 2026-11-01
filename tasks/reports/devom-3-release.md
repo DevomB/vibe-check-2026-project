@@ -78,7 +78,8 @@ Risk 100 and bluffs at Bluff 60.
 | `src/app/api/game/demo.test.ts`: replays scene (a) through the route; checks the cards, the bot's bet, the Mistake label and its numbers, and that folding is Best | `bc016db` |
 | `docs/DEMO.md`: engine identity, turn mode (exact), scenes, scene (a) as `/api/game` bodies with a curl script, the practice spots, the UI checklist with seeds, moves and pass/fail boxes, after-merge, Sunday and build-path notes | `469b9b5` |
 | `docs/PITCH.md`: the 5-minute script on the demo seeds, scene (c) with and without Peek, the claim table | `469b9b5` |
-| Doc fixes (below) and this report | later commits on this branch |
+| Doc fixes (below) | `6ef2b5c` |
+| This report | `639bd0a` and the commit after it |
 
 **Checks I saw pass:**
 
