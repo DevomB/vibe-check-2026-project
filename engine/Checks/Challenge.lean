@@ -5,6 +5,7 @@ import Engine.Proofs.EquitySpec
 import Engine.Proofs.BluffSpec
 import Engine.Proofs.ReviewSpec
 import Engine.Proofs.EndsSpec
+import Engine.Protocol
 
 /-!
 # The main theorems, as agreed by the team (the Comparator "challenge")
@@ -248,3 +249,37 @@ theorem review_hands_ne_nil (h : Hand) (sl : Sliders) (seed n : Nat) (s : State)
 most 200 moves, the bot loop's `botFuel`. So no hand goes on forever. -/
 theorem every_hand_ends (g : Game) (hg : g.Reachable) (as : List Action) (h' : Hand)
     (hrun : RunsTo g.hand as h') : as.length ≤ 200 := sorry
+/-! ## The game session the app runs (see `Engine/Proofs/Session.lean`) -/
+
+/-- In a reachable game where the hand is not over, the engine accepts the move the slider
+bot picks, for any sliders, seed and cards. -/
+theorem bot_move_accepted (g : Game) (hg : g.Reachable) (hnot : g.hand.ended = none)
+    (sl : Sliders) (seed : Nat) (hole board : List Card) :
+    ∃ h', step g.hand (botDecide sl seed hole board g.hand.chips).action = .ok h' := sorry
+
+/-- If the session's game is reachable (or there is no game yet), then after any command
+`Session.handle` accepts, the new session's game is reachable. -/
+theorem handle_keeps_reachable (cur : Option Session) (c : Command) (s' : Session)
+    (hcur : ∀ s, cur = some s → s.game.Reachable)
+    (hok : Session.handle cur c = .ok s') :
+    s'.game.Reachable := sorry
+
+open Lean (Json toJson) in
+/-- If a request line holds a game command and `Session.handle` rejects it, `respond` keeps
+the session exactly as it was, and replies with the error and the table as it was before,
+with no new events. -/
+theorem handle_error_unchanged (cur : Option Session) (line : String) (j : Json)
+    (c : Command) (e : String)
+    (hjson : Json.parse line = .ok j) (hreq : parseRequest j = .ok (.game c))
+    (hrej : Session.handle cur c = .error e) :
+    respond cur line =
+      (cur, Json.mkObj [("error", toJson e),
+        ("state", match cur with
+          | some s => stateJson { s with events := #[] }
+          | none => Json.null)]) := sorry
+
+/-- In every state, the chips the bot must add to call are at most the pot it can win. So
+`bot_calls_only_when_worth_it` and `bot_folds_only_when_not_worth_it` apply to every view
+the bot really gets. -/
+theorem viewOf_toCall_le_pot (sl : Sliders) (hole board : List Card) (s : State) :
+    (viewOf sl hole board s).toCall ≤ (viewOf sl hole board s).pot := sorry

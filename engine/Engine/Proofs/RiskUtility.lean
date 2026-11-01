@@ -84,6 +84,15 @@ theorem bot_folds_only_when_not_worth_it (v : View) (c : Counts) (h : v.toCall �
   rw [← callPays_iff_takes _ _ _ _ h, decideView_fold_not_pays v c hfold]
   simp
 
+/-- **The call is never more than the pot.** In every state, the chips the bot must add to
+call are at most the pot it can win: that pot holds the bet being called, up to what the
+bot can match. So the condition `v.toCall ≤ v.pot` of `bot_calls_only_when_worth_it` and
+`bot_folds_only_when_not_worth_it` holds for every view the bot really gets (`viewOf`). -/
+theorem viewOf_toCall_le_pot (sl : Sliders) (hole board : List Card) (s : State) :
+    (viewOf sl hole board s).toCall ≤ (viewOf sl hole board s).pot := by
+  simp only [viewOf, State.potToWin, State.toCall]
+  omega
+
 /-! ## 3. More Risk takes fewer gambles (Pratt's order of cautiousness) -/
 
 /-- A higher Risk never makes any outcome count for more. -/
@@ -176,3 +185,4 @@ example : exFlopView.toCall ≤ exFlopView.pot := by decide
 #print axioms bot_folds_only_when_not_worth_it
 #print axioms more_risk_takes_fewer_gambles
 #print axioms no_loss_always_taken
+#print axioms viewOf_toCall_le_pot

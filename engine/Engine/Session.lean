@@ -164,12 +164,10 @@ def Session.runBot : Nat → Session → Session
     if !s.botToAct then s else
     let h := s.game.hand
     let c := s.botChoice
-    -- Whenever the bot may act, its move is legal (T3). If one were ever rejected, it
-    -- checks or calls instead (`botMove`, also legal then, by `botMove_legal`).
-    let c := if (s.move c.action).toBool then c
-      else ⟨botMove h.chips, "Check or call: the planned move was not allowed."⟩
     match s.move c.action with
-    | .error _ => s   -- never happens: see above
+    -- Never happens in the app: there the session's game is always reachable, and then the
+    -- engine accepts the bot's move (`Session.botChoice_accepted`, Engine/Proofs/Session.lean).
+    | .error _ => s
     | .ok next =>
       let next := next.logHand fun l => { l with reasons := l.reasons.push c.reason }
       let h' := next.game.hand

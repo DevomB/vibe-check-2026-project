@@ -34,3 +34,5 @@ import Engine.Proofs.Review
 import Engine.Proofs.RiverBot
 import Engine.Proofs.EndsSpec
 import Engine.Proofs.Ends
+import Engine.Proofs.Session
+import Engine.Proofs.Examples
