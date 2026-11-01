@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { type CSSProperties, useState } from "react";
 import { PlayingCard } from "./PlayingCard";
 import { type GameSettings, TABLE } from "@/hooks/useGame";
 import { BLUFF_PCT_MAX, RISK_MAX } from "@/lean/protocol";
+import { CUSTOM_BOT, OPPONENTS, presetFor } from "@/lib/roster";
 
 interface SliderProps {
   label: string;
@@ -36,7 +37,8 @@ function BotSlider({ label, value, max, shown, help, onChange }: SliderProps) {
   );
 }
 
-/** Start screen: set the bot's Risk and Bluff sliders, and optionally a seed to replay a game. */
+/** Start screen: pick a named opponent or set the bot's Risk and Bluff sliders yourself, and
+ * optionally a seed to replay a game. */
 export function Lobby({
   initial,
   onStart,
@@ -49,6 +51,11 @@ export function Lobby({
   const [risk, setRisk] = useState(initial?.risk ?? 50);
   const [bluffPct, setBluffPct] = useState(initial?.bluffPct ?? 33);
   const [seedText, setSeedText] = useState("");
+  const preset = presetFor(risk, bluffPct);
+  const pick = (risk: number, bluffPct: number) => {
+    setRisk(risk);
+    setBluffPct(bluffPct);
+  };
   const [fast, setFast] = useState(initial?.fast ?? false);
 
   const seedValid = /^\d{0,20}$/.test(seedText.trim());
@@ -71,6 +78,33 @@ export function Lobby({
       </div>
 
       <div className="lobby-card">
+        <div className="field-label">Your opponent</div>
+        <div className="opponent-list" role="radiogroup" aria-label="Opponent">
+          {OPPONENTS.map((o) => (
+            <button
+              key={o.name}
+              type="button"
+              role="radio"
+              aria-checked={preset === o}
+              className={`opponent ${preset === o ? "on" : ""}`}
+              onClick={() => pick(o.risk, o.bluffPct)}
+            >
+              <span className="avatar avatar-sm" style={{ "--avatar": o.color } as CSSProperties}>
+                {o.name[0]}
+              </span>
+              <span className="opponent-name">{o.name}</span>
+              <span className="opponent-style">{o.style}</span>
+            </button>
+          ))}
+          <div className={`opponent ${preset ? "" : "on"}`} role="radio" aria-checked={!preset} aria-disabled>
+            <span className="avatar avatar-sm" style={{ "--avatar": CUSTOM_BOT.color } as CSSProperties}>
+              ?
+            </span>
+            <span className="opponent-name">Custom</span>
+            <span className="opponent-style">Move a slider to build your own</span>
+          </div>
+        </div>
+
         <div className="field-label">Set up the bot</div>
         <BotSlider
           label="Risk"

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { type Action, type DealtHand, type HandState, type LegalActions, type Session, randomGameSeed } from "@/engine";
 import type { LeanCommand, LeanEvent, LeanReply, LeanReview, LeanState } from "@/lean/protocol";
 import { cardText, chips } from "@/lib/format";
-import { BOT, HUMAN_COLOR } from "@/lib/roster";
+import { HUMAN_COLOR, botFor } from "@/lib/roster";
 
 /**
  * Runs a game against the Lean game program. Every rule decision (dealing, which moves are
@@ -284,7 +284,7 @@ export function useGame() {
       setReview(null);
       const players: Player[] = [
         { name: "You", color: HUMAN_COLOR },
-        { name: BOT.name, color: BOT.color },
+        botFor(settings.risk, settings.bluffPct),
       ];
       const seed = settings.seed ?? randomGameSeed();
       const base = { settings, seed, players, log: [], stats: { handsPlayed: 0, handsWon: 0, biggestPot: 0 } };
