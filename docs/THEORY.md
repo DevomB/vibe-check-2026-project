@@ -4,7 +4,7 @@ This document explains, for every number the bot and the review use, the formula
 the Lean engine computes it, the source that supports it, and the exact conditions under
 which that source applies. It is written to be checked: each section names one Lean
 function and one or more sources from [the research index](research/INDEX.md). Line numbers
-refer to the engine as committed at `34e7886` on `sunday/one-slider`.
+refer to the engine as committed at `64b2e3d` on `sunday/one-slider`.
 
 Two rules for reading it. First, a Lean theorem says only what its statement says, and the
 README's "What we trust" section lists what a reader must still check. Second, nothing here
@@ -41,15 +41,15 @@ bluffing rises. The direction flips from the old UI, where higher Risk meant mor
 Every proved theorem is stated over an arbitrary `Sliders` value, so all of them keep holding
 for every value `ofRisk` can produce. The theorems about the map itself are in section 1.1.
 
-### 1.1 The nine theorems of the one-slider change, in plain words
+### 1.1 The ten theorems of the one-slider change, in plain words
 
-All nine are registered in `engine/Checks/Challenge.lean` and `engine/comparator.json`
-(58 names in all, with the three merged from `sunday/review-fixes`), so Comparator checks
-each statement. Seven are in
-`engine/Engine/Proofs/OneSlider.lean`, two in `engine/Engine/Proofs/Explain.lean`.
+All ten are registered in `engine/Checks/Challenge.lean` and `engine/comparator.json`
+(59 names in all, with the three merged from `sunday/review-fixes`), so Comparator checks
+each statement. Seven are in `engine/Engine/Proofs/OneSlider.lean`, three in
+`engine/Engine/Proofs/Explain.lean`.
 
-- `botDecide_action_shown` (OneSlider.lean, line 43). The bot now takes the user's Risk
-  number only to print it in its reasons. Changing that number never changes the move.
+- `botDecide_action_shown` (OneSlider.lean, line 43). The extra Risk number the bot is handed
+  to print in its reasons (`shownRisk`) never changes the move.
 - `ofRisk_bluff_le_60` (line 51). At every Risk the bluff share is at most 60, so
   `bluff_frequency` (T7) applies at every Risk.
 - `ofRisk_bluff_monotone` (line 56). More Risk never bluffs less.
@@ -62,15 +62,18 @@ each statement. Seven are in
 - `ideal_is_textbook` (line 104). Risk 50 maps to caution 0 and bluff share 33.
 - `ideal_river_set` (line 109). At Risk 50, on every river board with no card twice, the
   betting set has 324 value hands and 160 bluffs.
-- `exploreHandAt_moves` (Explain.lean, line 149). The Risk explorer's move at Risk r is exactly
+- `botDecide_no_bet_off_river` (Explain.lean, line 100). With no bet to face before the river,
+  the bot reads neither setting: any two settings give the same move. So before the river,
+  Risk changes the bot's play only when it faces a bet.
+- `exploreHandAt_moves` (Explain.lean, line 157). The Risk explorer's move at Risk r is exactly
   what `botDecide` returns with the settings a new game at Risk r would use (`Sliders.ofRisk r`)
   and the move's recorded seed, cards, board and chips. This covers river moves too, where the
   bluff share changes with Risk.
-- `exploreHandAt_more_risk_continues` (line 158). For a recorded move that faced a bet, if the
+- `exploreHandAt_more_risk_continues` (line 166). For a recorded move that faced a bet, if the
   explorer shows a call or raise at Risk r, it shows one at every higher Risk up to 100. The
   "up to 100" is a hypothesis because past 100 the explorer has no entry.
 
-None of the nine says the bot plays well. They say what the map does, what the bot does at one
+None of the ten says the bot plays well. They say what the map does, what the bot does at one
 decision, and that the explorer shows the real bot.
 
 ## 2. The formulas, where they live, and what supports them
@@ -80,9 +83,9 @@ decision, and that the explorer shows the real bot.
 **Formula.** A call that pays `cost` chips to win `prize` chips breaks even when the share of
 the bot's hands you beat (ties counting half) is at least `cost / (prize + cost)`.
 
-**Where.** `gradeRiver` in `engine/Engine/Review.lean` (line 144) sets `equityNeeded` to
-`cost / (prize + cost)` and `equityHad` to `(2 × wins + ties) / (2 × hands)` (lines 155 and
-156). `RiverSpot.prize` (line 105) and `RiverSpot.cost` (line 101) take back any part of the
+**Where.** `gradeRiver` in `engine/Engine/Review.lean` (line 146) sets `equityNeeded` to
+`cost / (prize + cost)` and `equityHad` to `(2 × wins + ties) / (2 × hands)` (lines 157 and
+158). `RiverSpot.prize` (line 107) and `RiverSpot.cost` (line 103) take back any part of the
 bet you cannot match.
 
 **Source.** A03 records the caller's required equity as S / (P + 2S) for a bet S into a pot P;
@@ -102,7 +105,7 @@ chips really at stake.
 bluffs in the bettor's range is bet / (pot + 2 × bet) = 1/3. In general it is s / (1 + 2s) with
 s = bet / pot.
 
-**Where.** `riverBetOrCheck` (line 177) with `View.potBetTarget` (line 164) in
+**Where.** `riverBetOrCheck` (line 178) with `View.potBetTarget` (line 165) in
 `engine/Engine/Slider.lean` makes the river bet pot-sized (cut down to the legal range when
 needed); this sizing is code with no theorem about it. In `engine/Engine/River.lean`, `valueCount` (line 70) takes the top `valuePct` = 30%
 (line 22) of the 1,081 candidate hands, rounded down, so 324 value hands; `bluffCount values b`
@@ -144,7 +147,7 @@ Neumann's model".
 ### 2.4 The loss weight: what caution means
 
 **Formula.** Each lost chip counts (1 + caution / 50) times a won chip. In whole numbers,
-`callPays` in `engine/Engine/Slider.lean` (line 97) calls when
+`callPays` in `engine/Engine/Slider.lean` (line 98) calls when
 
 ```
 100 × (2 × win × pot + tie × (pot − toCall)) ≥ 2 × (100 + 2 × caution) × loss × toCall
@@ -152,7 +155,7 @@ Neumann's model".
 
 where win, tie and loss are the counts of the bot's possible outcomes. At caution 0 this is
 plain chip profit. Against a pot-sized bet the bot needs a 1/3 win chance at caution 0, 1/2 at
-50 and 3/5 at 100. The examples at lines 102 to 105 check caution 0 and 50; caution 100
+50 and 3/5 at 100. The examples at lines 103 to 106 check caution 0 and 50; caution 100
 follows from the formula, which with no ties needs a win share of at least
 (100 + 2 × caution) / (300 + 2 × caution).
 
@@ -196,7 +199,7 @@ against what your betting says you hold.
 the two: Best = 0, Good under 0.5, Inaccuracy under 2, Mistake under 5, Blunder from 5. Exact
 fractions, compared before any rounding.
 
-**Where.** `labelFor` in `engine/Engine/Review.lean` (line 130); MVP section 6.
+**Where.** `labelFor` in `engine/Engine/Review.lean` (line 132); MVP section 6.
 
 **Source.** None sets these numbers. **The bands are our own choice.** E01 (Chess.com) shows
 the convention of labelling a move by what it lost against the best move, with fixed bands and
@@ -240,7 +243,7 @@ the engine, and this section is a reading, not a theorem.
 - **Glosten and Milgrom (F02).** A customer who agrees to trade at your quote may know
   something, so the quote must be the expected value *given that they accepted it*. The review
   does this: it grades your call against the hands the bot would have bet with
-  (`RiverSpot.botHands`, Review.lean line 117, built from `riverBettingSet`), not against a
+  (`RiverSpot.botHands`, Review.lean line 119, built from `riverBettingSet`), not against a
   random hand. The bluffs are their liquidity
   traders, the trades that make dealing pay. Their market shuts down when there are too many
   insiders; against a bot that never bluffs (Risk 0), no bluff-catching call pays, and folding is
@@ -303,13 +306,13 @@ The README's "What we trust" section is the list of record. The items that bear 
 | Number | Lean function | File and line | Theorems |
 |---|---|---|---|
 | One slider to two numbers | `Sliders.ofRisk` | `engine/Engine/Slider.lean` 39 | `ofRisk_bluff_le_60`, `ofRisk_bluff_monotone`, `ofRisk_caution_antitone`, `ideal_is_textbook` |
-| Loss weight 1 + caution/50 | `callPays` | `engine/Engine/Slider.lean` 97 | `callPays_iff_takes`, `risk_monotone`, `more_risk_takes_fewer_gambles`, `more_risk_never_folds_a_call` |
-| Pot-sized river bet | `View.potBetTarget`, `riverBetOrCheck` | `engine/Engine/Slider.lean` 164, 177 | none about the size: `bot_bets_its_set` says which hands bet; the pot sizing (`clampTo v.potBetTarget`) is code with no theorem |
-| The bot's move | `decideView`, `botDecide` | `engine/Engine/Slider.lean` 194, 229 | `botDecide_legal`, `botDecide_risk_monotone`, `botDecide_action_shown` |
+| Loss weight 1 + caution/50 | `callPays` | `engine/Engine/Slider.lean` 98 | `callPays_iff_takes`, `risk_monotone`, `more_risk_takes_fewer_gambles`, `more_risk_never_folds_a_call` |
+| Pot-sized river bet | `View.potBetTarget`, `riverBetOrCheck` | `engine/Engine/Slider.lean` 165, 178 | none about the size: `bot_bets_its_set` says which hands bet; the pot sizing (`clampTo v.potBetTarget`) is code with no theorem |
+| The bot's move | `decideView`, `botDecide` | `engine/Engine/Slider.lean` 195, 230 | `botDecide_legal`, `botDecide_risk_monotone`, `botDecide_action_shown`, `botDecide_no_bet_off_river` |
 | Value hands (30%) and bluff count | `valuePct`, `valueCount`, `bluffCount`, `riverBettingSet` | `engine/Engine/River.lean` 22, 70, 75, 81 | `bluff_frequency`, `value_and_bluffs_apart`, `value_strongest`, `bluffs_weakest`, `ideal_river_set` |
 | Exact counts | `riverCounts`, `turnCounts`, `countsFor` | `engine/Engine/Equity.lean` 79, 112, 175 | `enumeration_exact`, `countsFor_river`, `countsFor_turn` |
-| Review's model of the bot's hands | `riverSpotOf`, `RiverSpot.cost`, `RiverSpot.prize`, `RiverSpot.botHands` | `engine/Engine/Review.lean` 94, 101, 105, 117 | `no_hindsight`, `bot_hand_in_review`, `botHands_ne_nil_of_board` |
-| Grade bands | `labelFor` | `engine/Engine/Review.lean` 130 | `review_best_iff`, `review_label_monotone` |
-| Equity needed, equity had | `gradeRiver` | `engine/Engine/Review.lean` 144 (fields at 155 and 156) | `review_call_best_iff_equity`, `review_worth` |
+| Review's model of the bot's hands | `riverSpotOf`, `RiverSpot.cost`, `RiverSpot.prize`, `RiverSpot.botHands` | `engine/Engine/Review.lean` 96, 103, 107, 119 | `no_hindsight`, `bot_hand_in_review`, `botHands_ne_nil_of_board` |
+| Grade bands | `labelFor` | `engine/Engine/Review.lean` 132 | `review_best_iff`, `review_label_monotone` |
+| Equity needed, equity had | `gradeRiver` | `engine/Engine/Review.lean` 146 (fields at 157 and 158) | `review_call_best_iff_equity`, `review_worth` |
 | Range viewer | `rangeOf` | `engine/Engine/Explain.lean` 46 | `rangeOf_adds_up`, `rangeOf_counts` |
 | Risk explorer | `exploreHandAt` | `engine/Engine/Explain.lean` 296 | `exploreHandAt_moves`, `exploreHandAt_more_risk_continues` |
