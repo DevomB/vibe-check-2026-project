@@ -113,8 +113,9 @@ theorem value_bet_never_worse (answers : List RiverChoice) (bet : Nat) :
 /-! ## Both sides together -/
 
 /-- **The river equilibrium.** You hold a bluff catcher and the bot bets `pot` into `pot`.
-Neither of you can gain by changing your own play alone exactly when one of the bot's bets in
-three is a bluff and you call with half of your hands. -/
+Neither of you can gain by changing your own play alone, in the three ways `RiverEquilibrium`
+lists, exactly when one of the bot's bets in three is a bluff and you call with half of your
+hands. -/
 theorem river_equilibrium_iff (mine : List Nat) (value bluffs : List RankedHand)
     (answers : List RiverChoice) (pot : Nat) (hpot : 0 < pot)
     (hc : CatchesBluffs mine value bluffs) :
@@ -133,8 +134,7 @@ theorem river_equilibrium_iff (mine : List Nat) (value bluffs : List RankedHand)
 
 /-- **The bot's river bet is pot-sized.** On the river with nothing to call, if the bot bets
 (street total `n`) and the pot-sized total, its street bet plus the pot it can win, is a legal
-size, then `n` is exactly that pot-sized total. (When the pot is not a legal size, the bot
-bets the nearest legal size instead: all-in if it has less than the pot.) -/
+size, then `n` is exactly that pot-sized total. -/
 theorem bot_river_bet_is_pot_sized (sl : Sliders) (seed : Nat) (hole board : List Card)
     (s : State) (shown : Option Nat) (h5 : board.length = 5) (h0 : s.toCall = 0)
     (lo hi : Nat) (hr : s.raiseBounds = some (lo, hi))

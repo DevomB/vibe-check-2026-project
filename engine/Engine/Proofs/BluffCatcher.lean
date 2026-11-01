@@ -14,8 +14,9 @@ The spec, in plain words, is in `Engine/Proofs/BluffCatcherSpec.lean`. These the
 3. `one_third_bluffs_indifferent`: for a pot-sized bet, that is exactly when one bet in three
    is a bluff. With more bluffs, calling is better (`more_bluffs_call_better`). With fewer,
    folding is better (`fewer_bluffs_fold_better`).
-4. `review_both_best_iff_one_third`: the app's review grades both call and fold Best exactly
-   when one third of the bot hands you do not block are bluffs.
+4. `review_both_best_iff_one_third`: for a pot-sized bet you can afford, with a hand that
+   catches bluffs against the bot hands you do not block, the app's review grades both call
+   and fold Best exactly when one third of those hands are bluffs.
 5. The real bot at Risk 50: its river set has 324 value hands and 160 bluffs, two short of
    the 162 that one third needs (`risk50_two_bluffs_short`). So, before your own cards
    remove any hands, a bluff catcher loses a little by calling a pot-sized bet: 1/121 of the
@@ -188,8 +189,8 @@ set, no whole-number Bluff share from 0 to 60 gives 162 bluffs. -/
 theorem no_bluff_setting_is_exact : ∀ b ≤ 60, 2 * bluffCount 324 b ≠ 324 := by
   decide
 
-/-- **33% is the closest.** Every Bluff share from 0 to 60 is at least 4 hands away from
-value = 2 × bluffs, and 33% (Risk 50) is exactly 4 away. -/
+/-- **No setting is closer than 33%.** Every Bluff share from 0 to 60 is at least 4 hands away
+from value = 2 × bluffs, and 33% (Risk 50) is exactly 4 away. -/
 theorem bluff_33_is_closest :
     (∀ b ≤ 60, 4 ≤ ((324 : Int) - 2 * bluffCount 324 b).natAbs) ∧
       ((324 : Int) - 2 * bluffCount 324 33).natAbs = 4 := by

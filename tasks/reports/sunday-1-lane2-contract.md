@@ -17,7 +17,7 @@ What the engine does on lane 1's branch, and what lane 1's next commit (Explain.
 | Bot reasons facing a bet | "... at Risk 100 ..." (the internal number) | "... at Risk 0 ..." (the player's number). |
 | Bot reason for a river bluff | "Bet 20: a bluff, picked at Bluff 60%." | **Unchanged in the working tree** (`Slider.lean:190` still prints the internal `bluffPct`). See open point 3. |
 | Risk explorer entry | `risk`, `actions[0..100]` by internal risk, `continuesUpTo`, `effect` in noBet, raises, callsAlways, foldsAlways, callsUpTo; summary "Calls at Risk 0-37, folds at 38-100." | `risk` = the player's Risk, `actions[r]` = the move at player Risk `r`, `continuesFrom` (lowest Risk at which the bot calls, raises or bets, or null) replaces `continuesUpTo`; `effect` in noBet, raises, callsAlways, foldsAlways, callsFrom, betsAlways, checksAlways, bluffsFrom, varies; summaries flip: "Folds at Risk 0-7, calls at 8-100." and river ones like "Checks at Risk 0-40, bluffs at 41-100: more Risk, more bluffs." |
-| Mystery reveal (route, not Lean) | `{"cmd":"reveal","risk":n,"bluff_pct":m}` → `reveal: {risk, bluff_pct, guess:{risk,bluff_pct}, off:{risk,bluff_pct}}` | `{"cmd":"reveal","guess":{"risk":n}}` → `reveal: {risk, off}` with one number each. The route picks one hidden Risk, not a pair. |
+| Mystery reveal (route, not Lean) | `{"cmd":"reveal","risk":n,"bluff_pct":m}` → `reveal: {risk, bluff_pct, guess:{risk,bluff_pct}, off:{risk,bluff_pct}}` | `{"cmd":"reveal","guess":{"risk":n}}` → `reveal: {risk, off}` with one number each. The route picks one hidden Risk, not a pair. (Shipped by lane 2 as `{"cmd":"reveal","risk":n}` → `{risk, guess, off}` with `guess` a number; see §5 point 1.) |
 | Presets | Ivy (100, 0), Rook (0, 0), Mia (50, 33), Dex (25, 45), Vex (0, 60) | Mia 50, Dex 40, Rook 25, Ivy 0, Vex 100 (the brief's ladder, by distance from 50). |
 
 The mapping, `Sliders.ofRisk r` = (caution, bluffPct), with the values the inventory below uses:
@@ -346,8 +346,11 @@ Line 8: "The bot has two sliders" → one slider mapped to two internal numbers.
 1. **Does the reveal reply keep `guess`?** The brief says `{risk, off}`. `MysteryGuess.tsx:102`
    shows "Your guess" from `reveal.guess.risk`; `mystery.test.ts:127` asserts it. Either keep
    `guess: { risk }` in the reply (smallest change) or have the component show its own slider
-   state. Lane 2's call, since `route.ts` is theirs.
-2. **A stray `bluff_pct` at the HTTP route.** Today the route builds the Lean command from
+   state. Lane 2's call, since `route.ts` is theirs. **Decided:** `guess` is kept, as a
+   number, and the request is flat: `{"cmd":"reveal","risk":n}` → `{risk, guess, off}`
+   (`route.ts`, `protocol.ts`, `MysteryGuess.tsx`, `mystery.test.ts` agree).
+2. **A stray `bluff_pct` at the HTTP route.** **Decided:** the route answers 400 with the
+   engine's text; `route.test.ts` asserts it. Today the route builds the Lean command from
    named fields, so an old client's `bluff_pct` would be silently dropped and the game would
    start. To keep "fails loudly" at the HTTP level, either turn it away with 400 in
    `parseGameCommand` or forward it so Lean answers "bluff_pct was removed; Risk sets both".

@@ -21,8 +21,9 @@ same engine.
   `3a392d797dac0ba47e19164482fc136cf6f244a7d91d337e917851c8e313f9d6`. It was linked on
   Nov 1, 2026 at 12:09 PM PST, from branch `sunday/one-slider-web` at commit `f81df9d`,
   which holds lane 1's one-slider engine (`sunday/one-slider` at `073e2e5`, with
-  `sunday/review-fixes`). Lane 1's later engine commits, up to `71ee280`, change only
-  comments and proofs, not the code the program runs.
+  `sunday/review-fixes`). Later commits, up to `c11cf65`, change only comments, proofs and
+  proof imports, not the code the program runs. If the demo machine rebuilds, record the new
+  SHA here.
 - **Checked on** Nov 1, 2026, 12:48 PM PST. Each river spot was replayed twice from
   `new_game`, with the same seed and moves: once ending in a call, once in a fold. Both
   replays reached the same river state and the same `worth_bb`.

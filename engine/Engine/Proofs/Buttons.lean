@@ -5,8 +5,9 @@ import Engine.Bot
 
 The app builds the human's buttons from `legalOptions` (`Engine/Protocol.lean` sends it as
 `legal`): whether Fold and Check work, how much a call costs, and the smallest and largest
-raise. `legalOptions_exact` shows these say exactly what the rules (`Legal`) say. So the page
-never offers an illegal move, and never hides a legal one.
+raise. `legalOptions_exact` shows these say exactly what the rules (`Legal`) say. So the
+engine's list never includes an illegal move and never leaves out a legal one. What the page
+does with that list is JavaScript, tested and not proved.
 -/
 
 /-- **The buttons match the rules.** In any state:

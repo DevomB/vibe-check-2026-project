@@ -286,7 +286,7 @@ export const GUARANTEES: readonly Guarantee[] = [
       "The bot bets the pot on the river. A bluff gains nothing over checking exactly when you call with half of your hands. Call more and its bluffs lose chips; call less and they win.",
       "For any bet size, a bluff breaks even exactly when your calls times the bet equal your folds times the pot.",
       "Betting a value hand never gains less than checking it.",
-      "Together with T7b: if your hand beats every bluff and loses to every value hand, neither you nor the bot can gain by changing only your own play exactly when one bet in three is a bluff and you call half the time. That is the river equilibrium.",
+      "Together with T7b: if your hand beats every bluff and loses to every value hand, neither you nor the bot can gain by checking instead of betting, or by calling instead of folding, exactly when one bet in three is a bluff and you call half the time. That is the river equilibrium.",
       "The real bot's river bet is pot-sized: when it opens the river with a bet and the pot is a legal size, it bets exactly the pot.",
     ],
     theorems: [
@@ -301,13 +301,14 @@ export const GUARANTEES: readonly Guarantee[] = [
     ],
     assumes: [
       "A bluff loses every showdown and a value hand wins every one.",
-      "Your possible hands are equally likely; calling with half of them is how 'call half the time' is counted.",
-      "For the bot's bet size: the river, nothing to call, and the pot is a legal bet. If the bot has less than the pot, it bets all-in instead.",
+      "Your answers, one per hand you might hold, are equally likely; calling with half of them is how 'call half the time' is counted.",
+      "For the bot's bet size: the river, nothing to call, and the pot is a legal bet. What it bets when the pot is not a legal size is not covered.",
     ],
     limits: [
       "It is about one river decision, not whole hands or games. The earlier betting is ignored.",
       "The bot's Risk 50 set is two bluffs short of one third (T7b), so the real bot is close to this equilibrium, not exactly on it.",
       "It does not say the bot's play on earlier streets is in equilibrium.",
+      "Your half, calling half the time, is your choice; the app neither enforces nor measures it.",
     ],
   },
   {

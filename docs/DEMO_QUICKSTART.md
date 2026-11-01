@@ -1,5 +1,36 @@
 # Live demo walkthrough — November 1, 10:45 AM Pacific
 
+> **Record of the morning build.** The checkmarks below were earned on the two-slider build
+> (`507b21c`, UI `0b62296`). The one-slider build that the 6:30 PM demo shows (main at
+> `c11cf65` or later) still needs its own click-through; the Mystery row's two-number guess
+> cannot happen in the one-slider UI. [DEMO.md](DEMO.md)'s scenes are already recorded on the
+> one-slider engine.
+
+## One-slider click-through (build: ____, time: ____, tester: ____)
+
+Expected values are from [DEMO.md](DEMO.md)'s recorded scenes (checked on the one-slider
+engine) and its checklist rows. One tab, Peek off except row 6. Fill in build, time and tester
+above, and tick "Seen" only for what you saw.
+
+| # | Check | Opponent, seed | Moves | Expect | Seen |
+| --- | --- | --- | --- | --- | --- |
+| 1 | Setup screen | — | — | One Risk slider, 0 to 100, no Bluff slider anywhere. Five presets: Ivy 0 (Rock), Rook 25, Dex 40, Mia 50 (Ideal), Vex 100 (Maniac); clicking one moves the slider. The table header shows the Risk and the bluff share Lean reports: 0% for Ivy, 33% for Mia, 60% for Vex. | [ ] |
+| 2 | Scene (b), fold to a big bet | Ivy (Risk 0), seed 1 | Type 150, "Raise to 150" | Ivy folds; you 510. Review: "No graded move in this hand." The reason: "Fold: not worth calling 140 to win 160 at Risk 0, with win chance 58%." | [ ] |
+| 3 | Risk explorer on that fold | same, open the review | move the explorer slider | "Folds at Risk 0-35, calls at 36-100." The move flips at 36 and nowhere else. | [ ] |
+| 4 | Contrast | Mia (Risk 50), seed 1 | "Raise to 150" | The bot calls 140 (same cards as row 2; more Risk turned the fold into a call). | [ ] |
+| 5 | Scene (c), the river bluff | Vex (Risk 100), seed 1 | Call 5, Check, Check, Call 20 | Showdown: your pair of eights beats king-high; you 530. Review opens on "You call 20" with the Best badge: 59.6% against 33.3% needed, +1.57 BB. Last reason: "Bet 20: a bluff, picked at Bluff 60%." | [ ] |
+| 6 | Peek | Vex (Risk 100), seed 1, Peek on from the start | as row 5 | Ks 9d shown and marked as peeked while the bot bets 20; same moves, showdown and review as row 5. | [ ] |
+| 7 | Scene (a), the graded mistake | Vex (Risk 100), seed 6 | Type 30, "Raise to 30", Check, Check, Call 60 | Bot shows 6s 4c, a straight; you 410. Review opens on "You call 60" with the Mistake badge: 18.5% against 33.3%, −2.67 BB; earlier moves have no badge. "The hands the grade counts": 324 value hands and 486 bluffs, your cards block 73, of the 737 left you beat 132, tie 9, lose to 596. Last reason: "Bet 60: a value hand, among the strongest 30% on this board." | [ ] |
+| 8 | Fold at once | Mia (Risk 50), seed 1 | Fold | You 495, bot 505. Review: "No graded move in this hand." Next Hand deals hand 2. | [ ] |
+| 9 | All-in and Game Over | Mia (Risk 50), seed 1 | All-in chip, "All-in 500" | Bot calls 490; board runs out to 8d; your pair of eights wins; Game Over at 1,000; seed 1 shown with Replay. All Game Over buttons visible without horizontal scrolling. | [ ] |
+| 10 | Replay by seed | from row 9 | "Replay these cards", then All-in 500 | Same cards (3c 8c), same result. Typing seed 1 at setup gives the same cards. | [ ] |
+| 11 | Rejected input | any, seed 1 | type 15 in the raise box, click away | The box snaps back to 20; nothing is sent. | [ ] |
+| 12 | Engine loss | any | start a game, stop this server's poker.exe, click any action | "Game lost" dialog offers New game; no live action buttons remain. | [ ] |
+| 13 | Proofs drawer | any | "What is guaranteed?" | Rows T1 to T9 (and T1b, T2b if the drawer has them), each with Lean names. T4 reads "More Risk never turns a call into a fold, or a bet into a check"; T7 "Risk sets the bluffs in the river betting set" and, after the river-game push, its textbook-test lines. | [ ] |
+| 14 | Practice challenges | the three buttons on setup | load each, then call or fold | Each stops at the river bet; labels as in docs/DEMO.md's practice table; right-and-lose says "Right decision, unlucky result". | [ ] |
+| 15 | Mystery | Mystery on | play 3 hands, guess, reveal | No Risk, bluff share or bot reasons before the reveal; the guess is one Risk slider; the reveal shows the true Risk and how far off you were, once. | [ ] |
+| 16 | Showdown label | Vex (Risk 100), seed 1 | as row 5 | The showdown names both hands: "Pair beats High Card". | [ ] |
+
 Open **http://localhost:3000**. Use one tab. The production server is running the integrated
 implementation from `507b21c`; all required MVP features are implemented. The open release
 work is the visual walkthrough, any fixes it reveals, and a timed pitch rehearsal.

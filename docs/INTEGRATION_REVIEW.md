@@ -143,8 +143,9 @@ the range viewer and Risk explorer. No additional features are required for acce
 - Node, React, browser rendering, secrecy/redaction and transport correctness are tested,
   not formally verified. Conditional protocol invariants do not prove JSON parser accuracy
   or every serialized field's correctness.
-- `legalOptions` and displayed raise bounds are not proved equivalent to `Legal`; the
-  engine still rejects illegal actions it receives.
+- `legalOptions` is proved equal to `Legal` (`legalOptions_exact`, ccba65c); the browser's
+  rendering of it and the displayed raise bounds are tested, not proved, and the engine still
+  rejects illegal actions it receives.
 - Explorer calculations match the bot on recorded inputs. Faithful capture of those
   original inputs is tested, not proved.
 - The board-only review range ignores earlier betting. Its EVs are exact for that model,
