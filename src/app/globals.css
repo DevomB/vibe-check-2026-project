@@ -719,8 +719,12 @@ kbd {
   border-color: rgba(233, 196, 106, 0.45);
 }
 
+/* Its inline animation-delay waits for an all-in run-out; `hidden-until-shown` keeps the
+   invisible buttons from being clicked during the wait. */
 .next-bar {
-  animation: banner-in 0.35s ease-out both;
+  animation:
+    banner-in 0.35s ease-out both,
+    hidden-until-shown 0.35s both;
 }
 
 .next-btn {
@@ -1033,7 +1037,11 @@ kbd {
   background: rgba(3, 6, 9, 0.7);
   backdrop-filter: blur(4px);
   z-index: 50;
-  animation: fade-in 0.2s ease-out both;
+  /* Game over waits (an inline animation-delay) for the last hand's result; until then the
+     dialog is hidden, so it cannot catch clicks meant for the table. */
+  animation:
+    fade-in 0.2s ease-out both,
+    hidden-until-shown 0.2s both;
 }
 
 .modal {
@@ -1306,6 +1314,14 @@ kbd {
   from {
     opacity: 0;
     translate: 0 12px;
+  }
+}
+
+/* Hidden (so not clickable or focusable) during an animation delay, visible from the first frame
+   of the animation on. Pair it with a fade that has the same delay. */
+@keyframes hidden-until-shown {
+  from {
+    visibility: hidden;
   }
 }
 
