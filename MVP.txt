@@ -11,14 +11,14 @@ CHANGED FROM v2 (decisions confirmed during the MVP review)
 - Value hands use floor(30%); bluff hands round their target count half upward. Pot sizing has explicit legal bounds and fallback. Tier 1 remains mandatory; pitch optional proofs only when completed.
 - Lean 4.35.0 with standard axioms only; Lean drives bot actions and street transitions. The required demo is one local active game, not a hosted multi-user service.
 
-This file defines the current product. Research notes provide background; older research recommendations do not override this spec. Findings and decisions are recorded in docs/MVP_REVIEW.md; section 15 lists the remaining open decisions.
+This file defines the current product. Research notes provide background; older research recommendations do not override this spec. Findings and decisions are recorded in docs/MVP_REVIEW.md; section 15 lists the release checks and the settled integration details.
 
 ONE LINE
 Build your opponent. Play it. Get a game review where every verdict is proven.
 
 WHY THIS WINS (the two judging axes)
 - Coolness: a poker table in the browser, a bot you design with two sliders, and a chess.com-style review of your play. Anyone gets it.
-- Verification: the theorems are about the actual Lean code that runs the game, not a model of it.
+- Verification: the theorems are about the actual Lean code that runs the game (the betting steps, shuffle, bot and review), not a model of it. The session loop (engine/Engine/Session.lean) and the JSON layer (engine/Engine/Protocol.lean) are not yet covered by any theorem.
 - NON-GOAL: a strong bot. The bot does not need to play well. It needs to do exactly what its sliders say, provably.
 
 
@@ -109,13 +109,13 @@ All math is in whole numbers. Equities are counts (wins, ties, total), and every
 - Lean libraries: core Lean plus Batteries. No Mathlib in the MVP, so builds stay fast. JSON through Lean's built-in Lean.Json.
 - Pin leanprover/lean4:v4.35.0 and matching dependency revisions; commit lake-manifest.json. Only propext, Classical.choice and Quot.sound are permitted proof axioms. No native_decide in shipped proofs.
 - The Lean program is a command-line binary: one JSON request per line on stdin, one JSON response per line on stdout.
-- Web (final folder layout to be agreed; the local prototype is under src/): a small Node server that starts the Lean binary and relays messages, plus the browser UI. NO GAME LOGIC IN JAVASCRIPT.
+- Web (layout settled in section 15: the Next.js app is under src/, and the TypeScript prototype stays under src/ as a test reference): a small Node server that starts the Lean binary and relays messages, plus the browser UI. NO GAME LOGIC IN JAVASCRIPT.
 - Required deployment: one local active game in one browser, started with make install && make run. Public hosting and concurrent games are outside the MVP.
 - After new_game, a valid act, or next_hand, Lean runs the bot and automatic street transitions until the next human decision or hand end, then returns one state response. JavaScript does not decide bot actions. Read-only review and rejected commands do not advance play or consume shuffle randomness.
 - Tests (tests/): differential tests against our npm library poker-calculations, PINNED TO EXACTLY 4.0.3.
   - Do not use versions below 4.0.0: versions 2.2.0 through 3.2.0 were reported to have an evaluator bug that can skew equity results.
-  - A previous local check reported 48 of 48 checks passing for 4.0.3 on Oct 31, matching an independent full enumeration. The replayable harness, cases and results still need to be included in the handoff before teammates rely on this as reproduced evidence.
-  - Compare hand ranks on 100,000 random deals, exact equity on flop, turn and river spots, a few dozen preflop matchups, and Monte Carlo results within 4 standard errors.
+  - The harness, cases and results are in tests/diff/ (run.ts, cases.json, results.json). Its recorded run (Oct 31, Windows, Node 22, seed 20261031) passed 11 of 11 checks against 4.0.3, including hand ranks on 100,000 random deals.
+  - Compare hand ranks on 100,000 random deals, exact equity on flop, turn and river spots, 36 preflop starting hands each against a random hand (not hand against hand), and Monte Carlo results within 4 standard errors.
   - Library gotchas: it silently accepts duplicate cards, so the harness deals distinct cards itself; cards go in as "Ah" (capital rank; lowercase "ah" throws); rank hands with evaluateHandStrength; never ask it for exact preflop equity (minutes per call).
 - Makefile: "make install" builds the Lean engine and installs the web dependencies; "make run" starts the server and opens the browser. Must work on a fresh clone.
 
@@ -168,15 +168,15 @@ DONE / PRESENT:
 - Heads-up 500-chip games, fixed 5/10 blinds, Risk/Bluff sliders, explicit Next Hand, game-over handling and replays. Random-game seeds are generated on the server and hidden until game over; entered seeds are intentional replays.
 - The Lean slider bot, preflop count data, sampled flop counts, exact turn/river counts, river betting sets and opening-river-bet call/fold review are implemented.
 - Lean project under engine/, pinned to 4.35.0. Poker/Spec/ contains card/deck, legality and hand-ranking definitions; Engine/ contains seeded shuffling, hand/game transitions and payouts.
-- Tier 1 T1-T5 and Tier 2 T6-T8 proofs are present, with standard-axiom audits, Comparator and kernel re-checks in Linux CI. These prove their stated Lean properties; they do not prove the browser or Node transport correct.
+- Tier 1 T1-T5 and Tier 2 T6-T8 proofs are present, with standard-axiom audits, Comparator and kernel re-checks in Linux CI (green on main at df6904a: https://github.com/DevomB/vibe-check-2026-project/actions/runs/41281639578). These prove their stated Lean properties; they do not prove the browser or Node transport correct.
 - Lean examples, known-showdown checks, 300 simulated random games, JavaScript unit/integration tests against the compiled Lean program, and a differential harness with recorded results under tests/diff/ are present. TypeScript game code remains a test reference.
 - Makefile builds Lean before integration tests. Source, build, proof checks and a final GUI launch rehearsal are separate checks.
 - Product decisions confirmed above: Lean 4.35.0 shipping engine and standard axioms; actual-outcome Risk utility; hand-set Bluff target; deterministic ranking/rounding; opening-bet call/fold review only; detailed reasons after the hand; street-total amounts and legal pot sizing/fallback; explicit Next Hand and separate statuses; Lean-driven bot scheduling; fixed benchmark-selected turn mode; one local game; Tier 1 mandatory, optional proof claims only once completed.
 
 STILL NEEDED:
 - Fresh-clone "make install && make run" rehearsal on the intended demo setup.
-- Final UI playthroughs: fold, showdown, short stack, graded and ungraded reviews, replay, rejected input and engine restart errors.
-- Record demo seed, Risk/Bluff, human moves, fixed turn mode and commit; rehearse the five-minute pitch and review every claim.
+- Final UI playthroughs: fold, showdown, short stack, graded and ungraded reviews, replay, rejected input and engine restart errors. The checklist, with seeds and moves, is in docs/DEMO.md.
+- Record demo seed, Risk/Bluff, human moves, fixed turn mode and commit; rehearse the five-minute pitch and review every claim. The record is in docs/DEMO.md, checked on the engine built from df6904a; recheck it on the final build. The pitch script and claim review are in docs/PITCH.md; it is not rehearsed yet.
 - T9 hand termination and T10 fast-evaluator equivalence are optional stretch work.
 
 Working together: use separate clones and coordinate before editing the same files. Commit small, "git pull --rebase" before every push, never force-push. Never commit the API key. Use this status list to avoid duplicating completed work.
@@ -248,9 +248,9 @@ Only present a claim below as proven once its actual Lean theorem and final chec
 
 
 15. RELEASE CHECKS AND SETTLED INTEGRATION DETAILS
-- Lean 4.35.0 is pinned. Standard-axiom audits, Comparator and kernel re-checks for T1-T8 pass in Linux CI; require a passing run for the final submitted commit too.
-- Next.js lives under src/; the shipping Lean engine lives under engine/. The browser uses src/lean/protocol.ts and the Node bridge, not the TypeScript game implementation.
+- Lean 4.35.0 is pinned. Standard-axiom audits, Comparator and kernel re-checks for T1-T8 pass in Linux CI (run 41281639578 on main at df6904a: https://github.com/DevomB/vibe-check-2026-project/actions/runs/41281639578); require a passing run for the final submitted commit too.
+- Next.js lives under src/; the shipping Lean engine lives under engine/. The browser gets every game state from Lean, through src/lean/protocol.ts and the Node bridge. It still imports a few display helpers (potTotal, rankOf, suitOf) and types from the TypeScript prototype in src/engine, and its Fold button is off when there is nothing to call, although Lean allows that fold.
 - Turn mode is fixed exact, with the compiled benchmark recorded in engine/Engine/Equity.lean. Recheck response times on the demo hardware; do not switch modes silently during play.
-- Preflop counts, review history, post-hand reasons, explicit next_hand, rejected-input replies and engine-loss errors are implemented. One local active game is supported. A lost engine requires a new game; browser refresh does not resume the UI's previous game.
+- Preflop counts, review history, post-hand reasons, explicit next_hand and rejected-input replies are implemented. Engine loss is only partly handled: the request in flight gets a raw error, the next one says the game was lost, and the old table keeps live buttons until the player starts a new game. One local active game is supported. A lost engine requires a new game; browser refresh does not resume the UI's previous game.
 - Random seeds remain private until gameOver. Replays use an entered seed, the same sliders, human actions and engine version; record all of these for the demo.
 - Fresh-clone launch, final UI rehearsal, reproducible demo hands and accurate pitch claims remain the release checks. Tier 1 is mandatory; advertise optional properties only after their own checks pass.

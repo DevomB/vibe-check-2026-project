@@ -1,5 +1,7 @@
 # MVP review and decision log
 
+Historical log. MVP.txt §11 is the current status.
+
 Reviewed October 31, 2026, starting at 1:57 PM Pacific, against MVP v2
 (`5f6c16beffc4f3bff6dfbd0efb32c92df5a8cc2c`). Confirmed decisions have been
 folded into MVP v3 and the README. Application source was left untouched.
