@@ -1,5 +1,7 @@
 # Demo record
 
+For the short live walkthrough, start with [DEMO_QUICKSTART.md](DEMO_QUICKSTART.md).
+
 This file records the demo hands, the practice-challenge spots and the morning checks.
 Every hand here was played on the compiled Lean engine, with scripted human moves. Nothing
 in this file was played in a browser yet: the UI checks below are still to do.
@@ -85,7 +87,7 @@ Ivy and Vex are named opponents on the setup screen. Picking one sets both slide
 - **Two ways to show the bluff.** Devom picks one in the morning.
   - **Peek off (works on `main` now).** The audience sees the bet. The bot's cards appear
     only at the showdown, and the reasons after the hand say "a bluff, picked at Bluff 60%".
-  - **Peek on (after job 1 merges).** Turn on "Peek at bot's cards" before the river. The
+  - **Peek on (integrated).** Turn on "Peek at bot's cards" before the river. The
     audience sees Ks 9d while the bot bets 20: king-high, betting as a bluff. The moves, the
     showdown and the review are the same as with peek off.
 - This spot is also the `catch-bluff` practice spot.
@@ -125,7 +127,8 @@ Send these bodies in order, each as a `POST` to `/api/game`. Every reply must ha
 | 5 | `{"cmd":"act","action":"call"}` | `status` `handOver`; `result.outcome` `player1`; bot cards `["6s","4c"]` |
 | 6 | `{"cmd":"review","hand":1}` | the last decision is the graded river call (below) |
 
-The last entry of `review.decisions` must be exactly:
+The last entry of `review.decisions` must contain these fields. It also includes the
+integrated `range` data:
 
 ```json
 {"equity_had":0.185,"equity_needed":0.333,"label":"Mistake","street":"river","worth_bb":{"call":-2.67,"fold":0},"your_action":"call"}
@@ -145,7 +148,17 @@ for body in \
   '{"cmd":"review","hand":1}'; do
   reply=$(curl -s -X POST "$URL" -H 'content-type: application/json' -d "$body")
 done
-echo "$reply" | grep -q '"label":"Mistake","street":"river","worth_bb":{"call":-2.67,"fold":0}' && echo PASS || echo FAIL
+echo "$reply" | node -e '
+let input = "";
+process.stdin.on("data", chunk => input += chunk);
+process.stdin.on("end", () => {
+  const reply = JSON.parse(input);
+  const decision = reply.review?.decisions.at(-1);
+  if (!reply.ok || decision?.label !== "Mistake" || decision.worth_bb.call !== -2.67) {
+    throw new Error("Demo verdict did not match");
+  }
+  console.log("PASS");
+});'
 ```
 
 ## Practice spots for job 5 (`docs/demo/challenges.json`)
@@ -182,13 +195,13 @@ expected results come from the engine replays above, and from reading the code w
 | 6 | Ungraded review | Ivy (100, 0%), seed 1 | Scene (b) | "No river call or fold to grade in this hand." The raise shows "not graded yet". | [ ] | [ ] |
 | 7 | Replay by seed | Rook (0, 0%), seed 1 | After check 3, click "Replay these cards", then All-in 500 again | The same cards (3c 8c) and the same result. Starting seed 1 by hand gives the same cards too. | [ ] | [ ] |
 | 8 | Rejected input | any, seed 1 | Type `15` in the raise box | The UI keeps raises inside Lean's bounds: the box goes back to 20 when it loses focus, so the UI cannot send 15. To see Lean reject it, send `{"cmd":"act","action":"raise","amount":15}` after `new_game` (seed 1): the reply is `{"error":"illegal move",...}` with the state unchanged (checked on the engine). | [ ] | [ ] |
-| 9 | Engine restart error | any | Start a game. Stop the `poker.exe` that this server started. Click any action. | From the code on `main`: a banner says "The game engine stopped and this game was lost. Please start a new game." The old table and its buttons stay live, and the next click says "no game yet: send new_game first". After job 1 merges: the banner has a New game button, and no action buttons stay live. | [ ] | [ ] |
+| 9 | Engine restart error | any | Start a game. Stop the `poker.exe` that this server started. Click any action. | A Game lost dialog offers New game. No live action buttons remain available; subsequent requests continue to report the lost game until a new one starts. | [ ] | [ ] |
 | 10 | Peek toggle (job 1) | Vex (0, 60%), seed 1 | Scene (c), Peek on from the start | Off by default. When on, Ks 9d show, marked as peeked. Nothing else changes: the same bot moves, the same showdown and the same review (+1.6 BB, 60% vs 33%). | [ ] | [ ] |
 
 Stop only the `poker.exe` of your own server (Task Manager shows it under Node). Other jobs
 may run their own copies.
 
-After jobs 4 and 5 merge, also check:
+Also check the integrated features:
 
 | # | Feature | Opponent, seed | Moves | Expected | Pass | Fail |
 | --- | --- | --- | --- | --- | --- | --- |
