@@ -6,13 +6,17 @@ import type { Card } from "@/lib/cards";
  * bot's moves itself: every reply is a state where the human is to act or the hand is over.
  */
 
-/** The bot's two settings. Risk is 0-100, Bluff is a whole percentage, 0-60. */
+/**
+ * The bot's one setting, Risk: its appetite for risk, a whole number 0-100. 0 is a "Rock",
+ * 50 is the ideal, 100 is a "Maniac". Lean derives everything else from it (see `sliders`).
+ */
 export const RISK_MAX = 100;
-export const BLUFF_PCT_MAX = 60;
+/** The Risk of the ideal bot, and the setup screen's starting value. */
+export const RISK_IDEAL = 50;
 
 export type LeanCommand = (
   /** At the HTTP boundary, an empty seed requests a private server-generated game. */
-  | { cmd: "new_game"; seed: string; risk: number; bluff_pct: number }
+  | { cmd: "new_game"; seed: string; risk: number }
   | { cmd: "act"; action: "fold" | "check" | "call" }
   /** A bet or raise to `amount` chips this round. Lean treats "bet" and "raise" the same. */
   | { cmd: "act"; action: "bet" | "raise"; amount: number }
@@ -81,8 +85,12 @@ export interface LeanState {
   result: { showdown: boolean; outcome: "player0" | "player1" | "tie" | "fold"; winnings: [number, number] } | null;
   /** What happened since the previous reply, in order, including each bot move. */
   events: LeanEvent[];
-  /** The bot's settings for this game. */
-  sliders: { risk: number; bluffPct: number };
+  /**
+   * The bot's settings for this game: the Risk it was started with, and the two values Lean
+   * derives from it. `caution` (0-100) is how heavily the bot weighs a lost chip when it
+   * decides to call. `bluffPct` is the share of bluffs in its river betting set, in percent.
+   */
+  sliders: { risk: number; caution: number; bluffPct: number };
   /** The bot's reason for each of its moves this hand. Null until the hand is over. */
   botReasons: string[] | null;
   /**
@@ -214,8 +222,8 @@ export interface LeanReview {
  */
 
 /**
- * Start a Mystery game. The route picks Risk (0-100), Bluff (0-60) and a private seed at
- * random, and keeps them secret until the reveal. It must not carry a seed or sliders.
+ * Start a Mystery game. The route picks Risk (0-100) and a private seed at random, and keeps
+ * them secret until the reveal. It must not carry a seed or a Risk.
  */
 export interface MysteryNewGame {
   cmd: "new_game";
@@ -223,24 +231,22 @@ export interface MysteryNewGame {
   peek?: boolean;
 }
 
-/** The player's one guess at the Mystery bot's settings. Allowed after 3 finished hands, or at game over. */
+/** The player's one guess at the Mystery bot's Risk. Allowed after 3 finished hands, or at game over. */
 export interface RevealCommand {
   cmd: "reveal";
   risk: number;
-  bluff_pct: number;
   peek?: boolean;
 }
 
 /** Everything the browser may send to `/api/game`. */
 export type ApiCommand = LeanCommand | MysteryNewGame | RevealCommand;
 
-/** The reveal: the real settings, the guess, and how far off each guess was. */
+/** The reveal: the real Risk, the guess, and how far off the guess was. */
 export interface MysteryReveal {
   risk: number;
-  bluff_pct: number;
-  guess: { risk: number; bluff_pct: number };
-  /** How far each guess was from the real setting (never negative). */
-  off: { risk: number; bluff_pct: number };
+  guess: number;
+  /** How far the guess was from the real Risk (never negative). */
+  off: number;
 }
 
 /**

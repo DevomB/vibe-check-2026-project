@@ -107,13 +107,13 @@ const LINES = {
       : LINES.passive(s),
 };
 
-function newGame(seed, risk, bluff_pct) {
-  return { cmd: "new_game", seed: String(seed), risk, bluff_pct };
+function newGame(seed, risk) {
+  return { cmd: "new_game", seed: String(seed), risk };
 }
 
 /** Play hand 1 by `line` until the human faces the bot's opening river bet or the hand ends. */
-async function playToRiver(engine, seed, risk, bluff_pct, line) {
-  let reply = await engine.ok(newGame(seed, risk, bluff_pct));
+async function playToRiver(engine, seed, risk, line) {
+  let reply = await engine.ok(newGame(seed, risk));
   const moves = [];
   for (let i = 0; i < 20; i++) {
     const s = reply.state;
@@ -138,7 +138,7 @@ function roleOf(reason) {
  * answer with `final`, and read the review of hand 1.
  */
 async function replay(engine, spot, final) {
-  let reply = await engine.ok(newGame(spot.seed, spot.risk, spot.bluff_pct));
+  let reply = await engine.ok(newGame(spot.seed, spot.risk));
   for (const move of spot.moves) reply = await engine.ok({ cmd: "act", ...move });
   const before = reply.state;
   if (!facingRiverBet(before)) throw new Error(`seed ${spot.seed}: the moves do not reach the bot's opening river bet`);
@@ -180,7 +180,6 @@ async function gradeBoth(engine, spot) {
   return {
     seed: String(spot.seed),
     risk: spot.risk,
-    bluff_pct: spot.bluff_pct,
     moves: spot.moves,
     labels: { call: call.decision.label, fold: fold.decision.label },
     worth_bb: call.decision.worth_bb,
@@ -250,12 +249,8 @@ const CHALLENGE_KINDS = [
   },
 ];
 
-/** Slider settings tried for the river spots, in order. Risk 0 / Bluff 60 is scene (c). */
-const RIVER_SLIDERS = [
-  { risk: 0, bluff_pct: 60 },
-  { risk: 50, bluff_pct: 33 },
-  { risk: 100, bluff_pct: 0 },
-];
+/** Risk values tried for the river spots, in order. Risk 100 (Vex, the most bluffs) is scene (c). */
+const RIVER_RISKS = [100, 50, 0];
 
 function asChallenge(kind, g, identity) {
   return {
@@ -263,7 +258,6 @@ function asChallenge(kind, g, identity) {
     title: kind.title,
     seed: g.seed,
     risk: g.risk,
-    bluff_pct: g.bluff_pct,
     moves: g.moves,
     best: kind.best,
     labels: g.labels,
@@ -278,30 +272,29 @@ function asChallenge(kind, g, identity) {
   };
 }
 
-/** Scene (b): with Risk 100, the bot folds to a raise to `amount` preflop; with Risk 0 it calls. */
+/** Scene (b): at Risk 0 (Ivy), the bot folds to a raise to `amount` preflop; at Risk 100 (Vex) it calls. */
 async function sceneB(engine, seed, amount) {
   const move = { action: "raise", amount };
-  await engine.ok(newGame(seed, 100, 0));
-  const high = (await engine.ok({ cmd: "act", ...move })).state;
-  const folded = high.status === "handOver" && high.result.outcome === "fold" && high.players[1].folded;
-  if (!folded) return null;
-  await engine.ok(newGame(seed, 0, 0));
+  await engine.ok(newGame(seed, 0));
   const low = (await engine.ok({ cmd: "act", ...move })).state;
-  const botCalled = low.events.some((e) => e.type === "action" && e.player === 1 && e.action === "call");
-  const reason = high.botReasons[0];
+  const folded = low.status === "handOver" && low.result.outcome === "fold" && low.players[1].folded;
+  if (!folded) return null;
+  await engine.ok(newGame(seed, 100));
+  const high = (await engine.ok({ cmd: "act", ...move })).state;
+  const botCalled = high.events.some((e) => e.type === "action" && e.player === 1 && e.action === "call");
+  const reason = low.botReasons[0];
   const chance = Number(/win chance (\d+)%/.exec(reason)?.[1] ?? 0);
   return {
     id: "b",
-    title: "Risk 100, Bluff 0: the bot folds to a big bet",
+    title: "Risk 0: the bot folds to a big bet",
     seed: String(seed),
-    risk: 100,
-    bluff_pct: 0,
+    risk: 0,
     moves: [move],
-    human_cards: high.players[0].cards,
+    human_cards: low.players[0].cards,
     bot_reason: reason,
     bot_win_chance_percent: chance,
-    human_net_chips: high.players[0].stack - START_STACK,
-    same_seed_at_risk_0: { bot_called: botCalled, events: low.events.filter((e) => e.type === "action") },
+    human_net_chips: low.players[0].stack - START_STACK,
+    same_seed_at_risk_100: { bot_called: botCalled, events: high.events.filter((e) => e.type === "action") },
   };
 }
 
@@ -312,18 +305,18 @@ async function search(engine, maxSeeds, identity) {
   for (let seed = 1; seed <= maxSeeds; seed++) {
     const missing = CHALLENGE_KINDS.filter((k) => !found.has(k.id));
     if (missing.length === 0 && sceneC) break;
-    for (const sliders of RIVER_SLIDERS) {
+    for (const risk of RIVER_RISKS) {
       for (const [lineName, line] of Object.entries(LINES)) {
         attempts++;
-        const reached = await playToRiver(engine, seed, sliders.risk, sliders.bluff_pct, line);
+        const reached = await playToRiver(engine, seed, risk, line);
         if (!reached) continue;
-        const tag = `seed ${seed} ${lineName} risk ${sliders.risk} bluff ${sliders.bluff_pct}`;
+        const tag = `seed ${seed} ${lineName} risk ${risk}`;
         // First a cheap look: call in this game. Only a likely fit gets the full call and fold replays.
         const look = await quickLook(engine);
         console.error(`${tag}: call ${look.labels.call}, worth ${look.worth_bb.call} bb, bot ${look.bot_role}, call ends ${look.results.call.outcome}`);
-        const wantC = !sceneC && sliders.risk === 0 && sliders.bluff_pct === 60 && look.bot_role === "bluff";
+        const wantC = !sceneC && risk === 100 && look.bot_role === "bluff";
         if (!wantC && !CHALLENGE_KINDS.some((k) => !found.has(k.id) && k.fits(look))) continue;
-        const g = await gradeBoth(engine, { seed, ...sliders, moves: reached.moves });
+        const g = await gradeBoth(engine, { seed, risk, moves: reached.moves });
         console.error(`  replayed: call ${g.labels.call}, fold ${g.labels.fold}`);
         for (const kind of CHALLENGE_KINDS) {
           if (!found.has(kind.id) && kind.fits(g)) {
@@ -331,7 +324,7 @@ async function search(engine, maxSeeds, identity) {
             console.error(`  -> ${kind.id}`);
           }
         }
-        if (!sceneC && sliders.risk === 0 && sliders.bluff_pct === 60 && g.bot_role === "bluff") sceneC = g;
+        if (!sceneC && risk === 100 && g.bot_role === "bluff") sceneC = g;
       }
     }
   }
@@ -339,7 +332,7 @@ async function search(engine, maxSeeds, identity) {
   let sceneBFound = null;
   for (let seed = 1; seed <= maxSeeds && !sceneBFound; seed++) {
     const b = await sceneB(engine, seed, 150);
-    if (b && b.same_seed_at_risk_0.bot_called && b.bot_win_chance_percent >= 50) sceneBFound = b;
+    if (b && b.same_seed_at_risk_100.bot_called && b.bot_win_chance_percent >= 50) sceneBFound = b;
   }
   console.error(`${attempts} river attempts over seeds 1..${maxSeeds}`);
   return { challenges: CHALLENGE_KINDS.map((k) => found.get(k.id)).filter(Boolean), sceneB: sceneBFound, sceneC };
@@ -370,7 +363,7 @@ async function check(engine) {
     for (const sc of scenes) {
       if (sc.id === "b") {
         const b = await sceneB(engine, sc.seed, sc.moves[0].amount);
-        report("scene b", b ? differences(sc, b, ["bot_reason", "human_net_chips", "same_seed_at_risk_0"]) : ["the bot no longer folds"]);
+        report("scene b", b ? differences(sc, b, ["bot_reason", "human_net_chips", "same_seed_at_risk_100"]) : ["the bot no longer folds"]);
       } else {
         const g = await gradeBoth(engine, sc);
         report(`scene ${sc.id}`, differences(sc, g, ["labels", "worth_bb", "equity_had", "equity_needed", "river", "bot_river_reason", "results"]));
@@ -400,7 +393,7 @@ async function main() {
     const scenes = [
       avoid && { id: "a", title: "Review scene: a bad river call", ...pick(avoid) },
       b,
-      c && { id: "c", title: "Risk 0, Bluff 60: the bot bets a designated bluff on the river", ...c },
+      c && { id: "c", title: "Risk 100: the bot bets a designated bluff on the river", ...c },
     ].filter(Boolean);
     console.log(JSON.stringify({ engine: identity, challenges, scenes }, null, 2));
     if (args.includes("--write")) {
@@ -419,9 +412,9 @@ async function main() {
 
 /** The fields of a challenge that a river scene shares. */
 function pick(c) {
-  const { seed, risk, bluff_pct, moves, labels, worth_bb, equity_had, equity_needed, river, bot_river_reason } = c;
+  const { seed, risk, moves, labels, worth_bb, equity_had, equity_needed, river, bot_river_reason } = c;
   const byChoice = (choice) => (choice === c.best ? c.result_if_best : c.result_if_other);
-  return { seed, risk, bluff_pct, moves, labels, worth_bb, equity_had, equity_needed, river, bot_river_reason, results: { call: byChoice("call"), fold: byChoice("fold") } };
+  return { seed, risk, moves, labels, worth_bb, equity_had, equity_needed, river, bot_river_reason, results: { call: byChoice("call"), fold: byChoice("fold") } };
 }
 
 main().catch((e) => {

@@ -3,7 +3,6 @@ import { randomBytes, randomInt } from "node:crypto";
 import { EngineStoppedError, LeanProcess } from "@/lean/process";
 import {
   type ApiReply,
-  BLUFF_PCT_MAX,
   type LeanCommand,
   type LeanReply,
   type LeanState,
@@ -18,8 +17,9 @@ import {
  * this endpoint supplies private random seeds and reveals them only after game over.
  * One game program runs per server: a local, single-player app.
  *
- * Mystery games (MVP §10, S9): the route also picks the bot's Risk and Bluff at random, the way
- * it picks a private seed, and hides them from every reply until the player has guessed.
+ * Mystery games (MVP §10, S9): the route also picks the bot's Risk at random, the way it picks
+ * a private seed, and hides it (and what Lean derives from it) from every reply until the
+ * player has guessed.
  */
 
 export const runtime = "nodejs";
@@ -46,7 +46,6 @@ const SERVER_COMMIT = (() => {
 interface MysterySecret {
   engine: LeanProcess;
   risk: number;
-  bluffPct: number;
   /** Set by the reveal. After it, nothing is hidden. */
   reveal: MysteryReveal | null;
 }
@@ -102,10 +101,12 @@ function parseCommand(body: unknown): LeanCommand | null {
 function parseGameCommand(b: Record<string, unknown>): LeanCommand | null {
   switch (b.cmd) {
     case "new_game":
-      if (!isCount(b.risk) || !isCount(b.bluff_pct)) return null;
+      // The bot has one setting, Risk. A Bluff value is from the old two-slider protocol:
+      // turning it away is better than silently playing a different bot.
+      if (!isCount(b.risk) || b.bluff_pct !== undefined) return null;
       const seed = b.seed === undefined || b.seed === "" ? privateSeed() : b.seed;
       if (typeof seed !== "string" || !/^\d{1,20}$/.test(seed)) return null;
-      return { cmd: "new_game", seed, risk: b.risk, bluff_pct: b.bluff_pct };
+      return { cmd: "new_game", seed, risk: b.risk };
     case "act":
       if (b.action === "fold" || b.action === "check" || b.action === "call") return { cmd: "act", action: b.action };
       if ((b.action === "bet" || b.action === "raise") && isCount(b.amount)) return { cmd: "act", action: b.action, amount: b.amount };
@@ -124,11 +125,11 @@ function parseGameCommand(b: Record<string, unknown>): LeanCommand | null {
 type RouteRequest =
   | { kind: "lean"; command: LeanCommand }
   | { kind: "mystery"; peek: boolean }
-  | { kind: "reveal"; risk: number; bluffPct: number; peek: boolean };
+  | { kind: "reveal"; risk: number; peek: boolean };
 
 /**
  * Lean's commands as `parseCommand` reads them, plus the two Mystery requests the route
- * answers itself. A guess must be whole numbers in the sliders' ranges; the route checks that,
+ * answers itself. A guess must be a whole number in Risk's range; the route checks that,
  * because Lean never sees it.
  */
 function parseRequest(body: unknown): RouteRequest | null {
@@ -137,15 +138,15 @@ function parseRequest(body: unknown): RouteRequest | null {
   if (b.peek !== undefined && typeof b.peek !== "boolean") return null;
   const peek = b.peek === true;
   if (b.cmd === "new_game" && b.mystery !== undefined) {
-    // A Mystery game picks its own seed and sliders. Sending any of them is a mistake, and an
-    // entered seed would let the player replay the game to find the hidden settings.
+    // A Mystery game picks its own seed and Risk. Sending either is a mistake, and an entered
+    // seed would let the player replay the game to find the hidden Risk.
     const seedSent = b.seed !== undefined && b.seed !== "";
     if (b.mystery !== true || seedSent || b.risk !== undefined || b.bluff_pct !== undefined) return null;
     return { kind: "mystery", peek };
   }
   if (b.cmd === "reveal") {
-    if (!isCount(b.risk) || !isCount(b.bluff_pct) || b.risk > RISK_MAX || b.bluff_pct > BLUFF_PCT_MAX) return null;
-    return { kind: "reveal", risk: b.risk, bluffPct: b.bluff_pct, peek };
+    if (!isCount(b.risk) || b.risk > RISK_MAX || b.bluff_pct !== undefined) return null;
+    return { kind: "reveal", risk: b.risk, peek };
   }
   const command = parseCommand(body);
   return command && { kind: "lean", command };
@@ -181,8 +182,9 @@ function publicReply(reply: LeanReply): RouteReply {
   if ("error" in reply) return { error: reply.error, state: reply.state && publicState(reply.state) };
   const state = publicState(reply.state);
   if (!reply.review) return { ok: true, state };
-  // Every number in a review (labels, worths, equities) comes from the bot's river betting set
-  // at its Bluff setting, and its reasons quote the sliders. So the whole review waits for the reveal.
+  // Every number in a review (labels, worths, equities) comes from the bot's river betting set,
+  // whose bluff share Lean derives from Risk, and its reasons quote the settings. So the whole
+  // review waits for the reveal.
   return settingsHidden() ? { ok: true, state, reviewDeferred: true } : { ok: true, state, review: reply.review };
 }
 
@@ -192,10 +194,11 @@ function finishedHands(s: LeanState): number {
 }
 
 /**
- * The player's guess at a Mystery bot. It is accepted once per game, after 3 finished hands or
- * at game over. The reply has the real settings, how far off the guess was, and the full state.
+ * The player's guess at a Mystery bot's Risk. It is accepted once per game, after 3 finished
+ * hands or at game over. The reply has the real Risk, how far off the guess was, and the full
+ * state, whose `sliders` now show what Lean derived from that Risk.
  */
-async function reveal(lean: LeanProcess, guess: { risk: number; bluffPct: number; peek: boolean }): Promise<Response> {
+async function reveal(lean: LeanProcess, guess: { risk: number; peek: boolean }): Promise<Response> {
   const turnedAway = (error: string, state: RouteState | null = null) => Response.json({ error, state } satisfies RouteReply, { status: 400 });
   const m = currentMystery();
   if (!m) return turnedAway("There is no Mystery game to reveal.");
@@ -216,12 +219,7 @@ async function reveal(lean: LeanProcess, guess: { risk: number; bluffPct: number
   if (reply.state.status !== "gameOver" && done < REVEAL_AFTER_HANDS) {
     return turnedAway(`Play ${REVEAL_AFTER_HANDS} hands before you guess (${done} finished so far).`, publicState(reply.state));
   }
-  m.reveal = {
-    risk: m.risk,
-    bluff_pct: m.bluffPct,
-    guess: { risk: guess.risk, bluff_pct: guess.bluffPct },
-    off: { risk: Math.abs(guess.risk - m.risk), bluff_pct: Math.abs(guess.bluffPct - m.bluffPct) },
-  };
+  m.reveal = { risk: m.risk, guess: guess.risk, off: Math.abs(guess.risk - m.risk) };
   return Response.json({ ok: true, state: publicState(reply.state), reveal: m.reveal } satisfies RouteReply);
 }
 
@@ -245,13 +243,13 @@ export async function POST(request: Request): Promise<Response> {
   }
   if (parsed.kind === "reveal") return reveal(lean, parsed);
   let command: LeanCommand;
-  let picked: { risk: number; bluffPct: number } | null = null;
+  let picked: { risk: number } | null = null;
   if (parsed.kind === "lean") {
     command = parsed.command;
   } else {
-    // A Mystery game: the route picks the sliders at random, like the private seed.
-    picked = { risk: randomInt(RISK_MAX + 1), bluffPct: randomInt(BLUFF_PCT_MAX + 1) };
-    command = { cmd: "new_game", seed: privateSeed(), risk: picked.risk, bluff_pct: picked.bluffPct, ...(parsed.peek ? { peek: true } : {}) };
+    // A Mystery game: the route picks Risk at random, like the private seed.
+    picked = { risk: randomInt(RISK_MAX + 1) };
+    command = { cmd: "new_game", seed: privateSeed(), risk: picked.risk, ...(parsed.peek ? { peek: true } : {}) };
   }
   let reply: LeanReply;
   try {

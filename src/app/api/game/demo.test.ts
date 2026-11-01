@@ -15,7 +15,7 @@ import { POST } from "./route";
 
 /** Hand 1 of a new game, up to the bot's opening river bet. */
 const SCENE_A_MOVES = [
-  { cmd: "new_game", seed: "6", risk: 0, bluff_pct: 60 },
+  { cmd: "new_game", seed: "6", risk: 100 },
   { cmd: "act", action: "raise", amount: 30 },
   { cmd: "act", action: "check" },
   { cmd: "act", action: "check" },

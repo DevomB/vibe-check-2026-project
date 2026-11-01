@@ -19,7 +19,7 @@ async function send(body: LeanCommand): Promise<{ state: LeanState; review?: Lea
 
 /** The spot's game, up to its river decision. */
 async function load(c: Challenge): Promise<LeanState> {
-  let { state } = await send({ cmd: "new_game", seed: c.seed, risk: c.risk, bluff_pct: c.bluff_pct });
+  let { state } = await send({ cmd: "new_game", seed: c.seed, risk: c.risk });
   for (const m of c.moves) ({ state } = await send({ cmd: "act", ...m }));
   return state;
 }

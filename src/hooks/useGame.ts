@@ -17,24 +17,22 @@ import { CUSTOM_BOT, HUMAN_COLOR, botFor } from "@/lib/roster";
 export const TABLE = { startingStack: 500, smallBlind: 5, bigBlind: 10 } as const;
 
 export interface GameSettings {
-  /** How heavily the bot weighs a lost chip when deciding to call, 0 to 100. */
+  /** The bot's one setting: its appetite for risk, 0 to 100 (50 is the ideal). Lean derives the rest. */
   risk: number;
-  /** Target bluff share in the bot's defined river betting range, 0 to 60 (percent). */
-  bluffPct: number;
   /** Game seed to replay; null deals a new random game. */
   seed: bigint | null;
   fast: boolean;
   /**
-   * A Mystery opponent: the server picks Risk, Bluff and the seed, and hides them until the
-   * player guesses. `risk`, `bluffPct` and `seed` above are then not sent; they only keep the
-   * setup screen's sliders for next time.
+   * A Mystery opponent: the server picks Risk and the seed, and hides them until the player
+   * guesses. `risk` and `seed` above are then not sent; they only keep the setup screen's
+   * slider for next time.
    */
   mystery: boolean;
 }
 
 /**
  * What kind of game this is. The kinds never mix: starting any game sets exactly one.
- * - normal: the player set the sliders (or picked a named opponent).
+ * - normal: the player set Risk (or picked a named opponent).
  * - practice: a rehearsed hand from `@/lib/challenges`, loaded up to its river decision.
  * - mystery: the server picked the bot's settings and hides them; `reveal` is null until the
  *   player's guess is in.
@@ -406,8 +404,8 @@ export function useGame() {
       resetPeek();
       const players: Player[] = [
         { name: "You", color: HUMAN_COLOR },
-        // A preset's name would tell the hidden sliders, so a Mystery bot gets a plain one.
-        settings.mystery ? MYSTERY_BOT : botFor(settings.risk, settings.bluffPct),
+        // A preset's name would tell the hidden Risk, so a Mystery bot gets a plain one.
+        settings.mystery ? MYSTERY_BOT : botFor(settings.risk),
       ];
       // A Mystery game's seed is private (the server picks it), so none is kept here.
       const seed = settings.mystery ? null : settings.seed;
@@ -415,14 +413,14 @@ export function useGame() {
       const base = { settings, mode, seed, players, log: [], stats: { handsPlayed: 0, handsWon: 0, biggestPot: 0 } };
       const command: ApiCommand = settings.mystery
         ? { cmd: "new_game", mystery: true }
-        : { cmd: "new_game", seed: seed?.toString() ?? "", risk: settings.risk, bluff_pct: settings.bluffPct };
+        : { cmd: "new_game", seed: seed?.toString() ?? "", risk: settings.risk };
       void request(command, (s) => withReply(base, null, s));
     },
     [request, resetPeek],
   );
 
   /**
-   * Start a practice challenge: a new game with the spot's seed and sliders, then its moves
+   * Start a practice challenge: a new game with the spot's seed and Risk, then its moves
    * through the normal `act` command, without the bot's "thinking" pauses. The table appears
    * only once Lean's reply is the spot's river decision; if it is not, the challenge stops
    * with an error instead of going on from a different spot.
@@ -438,14 +436,14 @@ export function useGame() {
       resetPeek();
       setGame(null);
       setLoading(challenge);
-      const settings: GameSettings = { risk: challenge.risk, bluffPct: challenge.bluff_pct, seed: BigInt(challenge.seed), fast, mystery: false };
+      const settings: GameSettings = { risk: challenge.risk, seed: BigInt(challenge.seed), fast, mystery: false };
       const mode: GameMode = { kind: "practice", challenge };
-      const players: Player[] = [{ name: "You", color: HUMAN_COLOR }, botFor(challenge.risk, challenge.bluff_pct)];
+      const players: Player[] = [{ name: "You", color: HUMAN_COLOR }, botFor(challenge.risk)];
       const base = { settings, mode, seed: settings.seed, players, log: [], stats: { handsPlayed: 0, handsWon: 0, biggestPot: 0 } };
       let g: Game | null = null;
       try {
         const commands: LeanCommand[] = [
-          { cmd: "new_game", seed: challenge.seed, risk: challenge.risk, bluff_pct: challenge.bluff_pct },
+          { cmd: "new_game", seed: challenge.seed, risk: challenge.risk },
           ...challenge.moves.map((m): LeanCommand => ({ cmd: "act", ...m })),
         ];
         for (const command of commands) {
@@ -531,11 +529,11 @@ export function useGame() {
   const closeReview = useCallback(() => setReview(null), []);
 
   /**
-   * Send the player's guess at the Mystery bot. On success the game shows everything again:
-   * the reply has the real settings and the full state. Returns the server's refusal, or null.
+   * Send the player's guess at the Mystery bot's Risk. On success the game shows everything
+   * again: the reply has the real Risk and the full state. Returns the server's refusal, or null.
    */
   const reveal = useCallback(
-    async (risk: number, bluffPct: number): Promise<string | null> => {
+    async (risk: number): Promise<string | null> => {
       const g = gameRef.current;
       if (!g || g.lost !== null || g.mode.kind !== "mystery" || g.mode.reveal !== null) return "There is no Mystery bot to reveal.";
       if (busy.current) return "Wait for the table to finish, then try again.";
@@ -543,7 +541,7 @@ export function useGame() {
       const gen = generation.current;
       const asked = peekRef.current;
       try {
-        const command: ApiCommand = { cmd: "reveal", risk, bluff_pct: bluffPct };
+        const command: ApiCommand = { cmd: "reveal", risk };
         const reply = await sendToLean(asked ? { ...command, peek: true } : command);
         if (gen !== generation.current) return null;
         if (!("ok" in reply)) {

@@ -25,7 +25,7 @@ function hidden(reply) {
 
 assert.equal((await fetch(base)).status, 200);
 const [scene] = JSON.parse(readFileSync(new URL("../docs/demo/scenes.json", import.meta.url), "utf8"));
-let state = accepted(await post({ cmd: "new_game", seed: scene.seed, risk: scene.risk, bluff_pct: scene.bluff_pct }));
+let state = accepted(await post({ cmd: "new_game", seed: scene.seed, risk: scene.risk }));
 assert.equal(state.seed, null);
 assert.equal(state.players[1].cards, null);
 assert.equal(state.turnMode, "exact");
@@ -53,7 +53,8 @@ for (const entry of reviewed.review.risk_explorer) {
   assert.equal(entry.actions[entry.risk], entry.action);
 }
 
-accepted(await post({ cmd: "new_game", seed: "1", risk: 0, bluff_pct: 0 }));
+// At Risk 100 the bot calls the all-in with seed 1's cards, and loses: game over at once.
+accepted(await post({ cmd: "new_game", seed: "1", risk: 100 }));
 const finished = accepted(await post({ cmd: "act", action: "raise", amount: 500 }));
 assert.equal(finished.status, "gameOver");
 assert.equal(finished.seed, "1");
@@ -61,7 +62,7 @@ assert.equal(finished.seed, "1");
 let mystery = await post({ cmd: "new_game", mystery: true });
 accepted(mystery);
 hidden(mystery);
-await post({ cmd: "reveal", risk: 50, bluff_pct: 33 }, 400);
+await post({ cmd: "reveal", risk: 50 }, 400);
 for (let hand = 0; hand < 3; hand++) {
   if (mystery.state.status === "playing") mystery = await post({ cmd: "act", action: "fold" });
   accepted(mystery);
@@ -74,9 +75,9 @@ for (let hand = 0; hand < 3; hand++) {
   accepted(mystery);
   hidden(mystery);
 }
-const revealed = await post({ cmd: "reveal", risk: 50, bluff_pct: 33 });
+const revealed = await post({ cmd: "reveal", risk: 50 });
 accepted(revealed);
 assert.equal(revealed.state.sliders.risk, revealed.reveal.risk);
-assert.equal(revealed.state.sliders.bluffPct, revealed.reveal.bluff_pct);
-await post({ cmd: "reveal", risk: 50, bluff_pct: 33 }, 400);
+assert.equal(revealed.reveal.off, Math.abs(50 - revealed.reveal.risk));
+await post({ cmd: "reveal", risk: 50 }, 400);
 console.log("PASS: production HTTP game, Peek, rejected move, graded review, range, Risk explorer, replay seed and Mystery reveal");

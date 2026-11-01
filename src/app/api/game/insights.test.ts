@@ -29,7 +29,7 @@ function botMoves(state: LeanState): number {
  * is graded. Returns the finished state, the bot's move count and the review.
  */
 async function playSeed7(): Promise<{ state: LeanState; moves: number; review: LeanReview }> {
-  let state = okState(await post({ cmd: "new_game", seed: "7", risk: 50, bluff_pct: 33 }));
+  let state = okState(await post({ cmd: "new_game", seed: "7", risk: 50 }));
   let moves = botMoves(state);
   state = okState(await post({ cmd: "act", action: "raise", amount: 30 }));
   moves += botMoves(state);
@@ -101,7 +101,7 @@ describe.skipIf(skipLean)("the review's range viewer and Risk explorer", () => {
   });
 
   it("keeps the explorer back while the hand is played", async () => {
-    okState(await post({ cmd: "new_game", seed: "7", risk: 50, bluff_pct: 33 }));
+    okState(await post({ cmd: "new_game", seed: "7", risk: 50 }));
     const mid = okState(await post({ cmd: "act", action: "raise", amount: 30 }));
     expect(mid.status).toBe("playing");
     const reply = await post({ cmd: "review", hand: mid.hand });
