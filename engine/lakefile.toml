@@ -23,6 +23,11 @@ root = "EquityBench"
 name = "Checks"
 roots = ["Checks.Challenge", "Checks.Solution"]
 
+# Times the river betting set and the river review on the compiled engine.
+[[lean_exe]]
+name = "river-bench"
+root = "RiverBench"
+
 # Differential test driver for tests/diff/run.ts (MVP section 7). Not part of the game.
 [[lean_exe]]
 name = "difftest"
