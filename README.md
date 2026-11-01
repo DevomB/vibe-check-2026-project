@@ -48,7 +48,7 @@ docs, so the final commit gets a run started by hand, and this line moves to it.
 The theorems name the engine's own functions (`step`, `shuffle`, `botDecide`,
 `reviewRiver`), not copies of them. Each statement is in
 [`engine/Checks/Challenge.lean`](engine/Checks/Challenge.lean), the file the team agreed
-on, and [`engine/comparator.json`](engine/comparator.json) lists all 46. CI checks that each
+on, and [`engine/comparator.json`](engine/comparator.json) lists them all. CI checks that each
 proof proves exactly that statement, with only the three standard axioms.
 
 | # | In plain words | Lean theorems |
