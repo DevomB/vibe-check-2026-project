@@ -26,14 +26,19 @@ open Lean
 
 /-! ## Game values as JSON -/
 
+/-- Cards as a list of strings such as `"Ah"`. -/
 def cardsJson (cs : List Card) : Json := toJson (cs.map Card.toString)
 
+/-- A street's name: `"preflop"`, `"flop"`, `"turn"` or `"river"`. -/
 def streetName : Street → String
   | .preflop => "preflop" | .flop => "flop" | .turn => "turn" | .river => "river"
 
+/-- A move's name in events: `"fold"`, `"check"`, `"call"` or `"raise"` (a bet is a raise
+in the engine; the `to` field gives the street total). -/
 def actionName : Action → String
   | .fold => "fold" | .check => "check" | .call => "call" | .raiseTo _ => "raise"
 
+/-- One event as JSON, with a `type` of `blind`, `action`, `street` or `win`. -/
 def Event.json : Event → Json
   | .blind p amount small => Json.mkObj
     [("type", toJson "blind"), ("player", toJson p.val), ("amount", toJson amount),
@@ -141,12 +146,13 @@ inductive Request where
   | game (c : _root_.Command)
   | review (hand : Nat)
 
+/-- The move in an `act` request. `bet` and `raise` both need `amount`, the street total. -/
 def parseAction (j : Json) : Except String Action := do
   match ← j.getObjValAs? String "action" with
   | "fold" => pure .fold
   | "check" => pure .check
   | "call" => pure .call
-  | "raise" => return .raiseTo (← j.getObjValAs? Nat "amount")
+  | "bet" | "raise" => return .raiseTo (← j.getObjValAs? Nat "amount")
   | other => throw s!"unknown action '{other}'"
 
 /-- A seed given as a number or as a string of digits. -/
@@ -165,6 +171,7 @@ def parseUpTo (j : Json) (key : String) (hi : Nat) (msg : String) : Except Strin
   | .ok n => if n ≤ hi then pure n else throw msg
   | .error _ => throw msg
 
+/-- Read one request. Unknown commands, such as the old `bot`, are rejected. -/
 def parseRequest (j : Json) : Except String Request := do
   match ← j.getObjValAs? String "cmd" with
   | "new_game" =>

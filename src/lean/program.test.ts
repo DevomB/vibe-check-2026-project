@@ -42,7 +42,7 @@ function humanMove(s: LeanState, pick: (n: number) => number): LeanCommand {
 /** The same move, for the TypeScript engine. */
 function toTsAction(c: LeanCommand): Action {
   if (c.cmd !== "act") throw new Error("not a move");
-  return c.action === "raise" ? { type: "raise", to: c.amount } : { type: c.action };
+  return c.action === "bet" || c.action === "raise" ? { type: "raise", to: c.amount } : { type: c.action };
 }
 
 /** Apply the moves Lean reports (the human's and the bot's) to the TypeScript engine. */

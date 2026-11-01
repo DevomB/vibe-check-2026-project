@@ -144,21 +144,31 @@ function streetName(street: string) {
   return street[0]!.toUpperCase() + street.slice(1);
 }
 
-/** Turns Lean's events into readable log lines. */
-function describeEvents(events: readonly LeanEvent[], names: string[]): string[] {
+/**
+ * Turns Lean's events into readable log lines. `startBet` is the round's highest bet before
+ * these events, so the first chips of a round read as a bet ("Bot bets 40"), not a raise.
+ */
+function describeEvents(events: readonly LeanEvent[], names: string[], startBet: number): string[] {
+  let roundBet = startBet;
   return events.map((e): string => {
     const name = "player" in e ? names[e.player]! : "";
     const verb = (base: string) => (name === "You" ? base : `${base}s`);
     switch (e.type) {
       case "blind":
+        roundBet = Math.max(roundBet, e.amount);
         return `${name} ${verb("post")} the ${e.kind} blind (${chips(e.amount)})`;
       case "street":
+        roundBet = 0;
         return `${streetName(e.street)}  ${e.cards.map(cardText).join(" ")}`;
       case "win":
         return `${name} ${verb("win")} ${chips(e.amount)}`;
       case "action": {
         const allIn = e.allIn ? " (all-in)" : "";
-        if (e.action === "raise") return `${name} ${verb("raise")} to ${chips(e.to ?? 0)}${allIn}`;
+        if (e.action === "raise") {
+          const opening = roundBet === 0;
+          roundBet = e.to ?? roundBet;
+          return opening ? `${name} ${verb("bet")} ${chips(e.to ?? 0)}${allIn}` : `${name} ${verb("raise")} to ${chips(e.to ?? 0)}${allIn}`;
+        }
         if (e.action === "call") return `${name} ${verb("call")} ${chips(e.amount)}${allIn}`;
         return `${name} ${verb(e.action)}`;
       }
@@ -185,7 +195,7 @@ function withReply(base: Omit<Game, "lean" | "session" | "dealt" | "legal" | "bo
   const names = base.players.map((p) => p.name);
   const newHand = !previous || previous.lean.hand !== s.hand;
   const header = newHand ? [`Hand #${s.hand}`] : [];
-  const lines = describeEvents(s.events, names);
+  const lines = describeEvents(s.events, names, newHand ? 0 : previous.lean.currentBet);
   // Count the hand once, when its result first arrives.
   const justEnded = s.result !== null && (newHand || previous.lean.result === null);
   const won = s.result?.winnings[HUMAN_SEAT] ?? 0;
@@ -312,6 +322,8 @@ export function useGame() {
     if (!g || g.lean.status === "playing" || busy.current) return;
     const hand = g.lean.hand;
     const gen = generation.current;
+    // Hold other commands (like Next Hand) until the review is back, so it cannot open over a new hand.
+    busy.current = true;
     try {
       const response = await fetch("/api/game", {
         method: "POST",
@@ -330,6 +342,8 @@ export function useGame() {
       }
     } catch (e) {
       if (gen === generation.current) setError(`Could not reach the game engine: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      if (gen === generation.current) busy.current = false;
     }
   }, []);
 

@@ -36,7 +36,7 @@ function parseCommand(body: unknown): LeanCommand | null {
       return { cmd: "new_game", seed: b.seed, risk: b.risk, bluff_pct: b.bluff_pct };
     case "act":
       if (b.action === "fold" || b.action === "check" || b.action === "call") return { cmd: "act", action: b.action };
-      if (b.action === "raise" && isCount(b.amount)) return { cmd: "act", action: "raise", amount: b.amount };
+      if ((b.action === "bet" || b.action === "raise") && isCount(b.amount)) return { cmd: "act", action: b.action, amount: b.amount };
       return null;
     case "review":
       return isCount(b.hand) ? { cmd: "review", hand: b.hand } : null;
@@ -58,7 +58,13 @@ export async function POST(request: Request): Promise<Response> {
   const command = parseCommand(body);
   if (!command) return Response.json({ error: "unknown or malformed command", state: null }, { status: 400 });
   try {
-    return Response.json(await engine().send(command));
+    // A program that stopped took its game with it; a new program has no game until new_game.
+    const lost = holder.__leanProcess !== undefined && !holder.__leanProcess.alive;
+    const reply = await engine().send(command);
+    if (lost && command.cmd !== "new_game" && "error" in reply) {
+      return Response.json({ error: "The game engine stopped and this game was lost. Please start a new game.", state: null });
+    }
+    return Response.json(reply);
   } catch (e) {
     return Response.json({ error: e instanceof Error ? e.message : String(e), state: null }, { status: 500 });
   }
