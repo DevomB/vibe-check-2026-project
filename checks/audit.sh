@@ -4,7 +4,10 @@
 #   - any main theorem in engine/comparator.json uses an axiom other than
 #     propext, Classical.choice, Quot.sound (an unfinished proof shows up as sorryAx),
 #   - `sorry`, `admit`, `native_decide`, `maxHeartbeats 0` or a new `axiom` appears in the
-#     engine's Lean code (Checks/Challenge.lean is skipped: it is all `sorry` on purpose).
+#     engine's Lean code (Checks/Challenge.lean is skipped: it is all `sorry` on purpose),
+#   - `implemented_by`, `unsafe`, `@[extern ...]` or `debug.skipKernelTC` appears there (each
+#     lets running code, or the kernel, differ from what the proofs see),
+#   - a `maxHeartbeats` line has no comment saying why (on the line, or on the line above).
 # Usage: checks/audit.sh   (from anywhere in the repo)
 set -euo pipefail
 export PATH="$HOME/.elan/bin:$PATH"
@@ -23,6 +26,31 @@ banned=$(grep -rnE '(^|[^A-Za-z_.])(sorry|admit|native_decide)([^A-Za-z_]|$)|max
 if [ -n "$banned" ]; then
   echo "$banned"
   echo "FAIL: banned words found (lines above). Doc comments that mention them must be reworded."
+  fail=1
+else
+  echo "ok"
+fi
+
+echo "== Ways to make running code differ from the proofs"
+hatches=$(grep -rnE '(^|[^A-Za-z_.])(implemented_by|unsafe)([^A-Za-z_]|$)|@\[[[:space:]]*extern|debug\.skipKernelTC' \
+  --include='*.lean' Engine Poker Checks Engine.lean Poker.lean Main.lean \
+  | grep -vE '^[^:]+:[0-9]+:[[:space:]]*--' || true)
+if [ -n "$hatches" ]; then
+  echo "$hatches"
+  echo "FAIL: implemented_by, unsafe, @[extern] or debug.skipKernelTC found (lines above)."
+  fail=1
+else
+  echo "ok"
+fi
+
+echo "== Every maxHeartbeats line has a comment"
+heartbeats=$(find Engine Poker Checks Engine.lean Poker.lean Main.lean -name '*.lean' -print0 \
+  | xargs -0 awk 'FNR == 1 { prev = "" }
+      /maxHeartbeats/ && !/--/ && prev !~ /^[[:space:]]*--/ { print FILENAME ":" FNR ": " $0 }
+      { prev = $0 }')
+if [ -n "$heartbeats" ]; then
+  echo "$heartbeats"
+  echo "FAIL: maxHeartbeats without a comment saying why (lines above)."
   fail=1
 else
   echo "ok"
