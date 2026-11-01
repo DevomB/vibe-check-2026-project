@@ -11,13 +11,16 @@ export function leanBinaryPath(): string {
 }
 
 /**
- * How long one command may wait for its reply. The bot takes up to a few seconds a reply;
- * a program that is silent this long is stuck, so it is stopped and the next command starts a new one.
- * POKER_REPLY_TIMEOUT_MS sets another limit in milliseconds (the tests use a short one).
+ * How long one command may wait for its reply. Replies take under a second (the slowest in the
+ * 300-game fuzz run, docs/validation/integration-fuzz.json, was a review at 0.8 s), so a program
+ * that is silent for 10 s is stuck: it is stopped, and the next command starts a new one. The
+ * first reply may take 30 s, because Windows scans a newly built program before its first run.
+ * POKER_REPLY_TIMEOUT_MS sets one limit for every reply, in milliseconds (the tests use a short one).
  */
-function replyTimeoutMs(): number {
+function replyTimeoutMs(firstReply: boolean): number {
   const ms = Number(process.env.POKER_REPLY_TIMEOUT_MS);
-  return Number.isSafeInteger(ms) && ms > 0 ? ms : 30_000;
+  if (Number.isSafeInteger(ms) && ms > 0) return ms;
+  return firstReply ? 30_000 : 10_000;
 }
 
 /** The program stopped, could not start, or did not answer in time. Its game is gone. */
@@ -38,6 +41,8 @@ export class LeanProcess {
   private readonly child: ChildProcessWithoutNullStreams;
   private readonly waiting: Waiting[] = [];
   private exited = false;
+  /** True once the program has sent its first reply. */
+  private answered = false;
 
   constructor(binary = leanBinaryPath()) {
     // Local app: Makefile builds the binary separately. A standalone package must include it explicitly.
@@ -48,14 +53,21 @@ export class LeanProcess {
       : spawn(/* turbopackIgnore: true */ binary, [], { stdio: ["pipe", "pipe", "pipe"] });
     const lines = createInterface({ input: this.child.stdout });
     lines.on("line", (line) => {
+      let reply: LeanReply;
+      try {
+        reply = JSON.parse(line) as LeanReply;
+      } catch {
+        // A line that is not a reply would make every later reply go to the wrong command.
+        // So the game is lost: stop the program, and the next command starts a new one.
+        this.fail(`Unreadable reply from the Lean program: ${line.slice(0, 200)}`);
+        this.child.kill();
+        return;
+      }
+      this.answered = true;
       const next = this.waiting.shift();
       if (!next) return;
       clearTimeout(next.timer);
-      try {
-        next.resolve(JSON.parse(line) as LeanReply);
-      } catch {
-        next.reject(new Error(`Unreadable reply from the Lean program: ${line.slice(0, 200)}`));
-      }
+      next.resolve(reply);
     });
     // Output ends after the last reply line has been read, so no reply already written is lost.
     lines.on("close", () => this.fail(`The Lean program stopped (exit code ${this.child.exitCode})`));
@@ -74,7 +86,7 @@ export class LeanProcess {
 
   send(command: LeanCommand): Promise<LeanReply> {
     if (this.exited) return Promise.reject(new EngineStoppedError("The Lean program has stopped"));
-    const timeout = replyTimeoutMs();
+    const timeout = replyTimeoutMs(!this.answered);
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
         this.fail(`The Lean program did not answer within ${timeout / 1000} s, so it was stopped`);

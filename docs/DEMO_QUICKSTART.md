@@ -70,9 +70,10 @@ Record visual results here; leave unchecked until actually seen:
 | Retry/fold: Best | [ ] | |
 | Right-and-lose: Best despite losing | [x] | User confirmed the bot wins but the review says Best, +10.3 BB. |
 | Catch a bluff: win and Best | [x] | User confirmed a win and Best, about +1.6 BB, with Peek off. |
-| Peek reveals and re-hides cards | [ ] | |
-| Range and Risk panels work | [ ] | |
-| Proof links open and close cleanly | [ ] | |
+| Peek reveals and re-hides cards | [x] | User confirmed Ks 9d reveal, re-hide, and the review retains the Peek warning. |
+| Range panel shows expected counts | [ ] | |
+| Risk explorer works | [ ] | |
+| Proof links open and close cleanly | [ ] | User supplied the rendered T1–T8 drawer text; T7 focus and closing remain unconfirmed. |
 | Normal Next Hand, all-in and replay | [ ] | |
 | Mystery hides settings, then reveals once | [ ] | |
 | Engine loss offers recovery without live actions | [ ] | |

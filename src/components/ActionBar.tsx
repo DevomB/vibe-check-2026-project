@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { type Action, type HandState, type LegalActions, potTotal } from "@/lib/table";
 import { chips } from "@/lib/format";
+import { isTableShortcut } from "@/lib/keys";
 
 interface Props {
   hand: HandState;
@@ -43,8 +44,7 @@ export function ActionBar({ hand, legal, waiting, botMessage = null, handStrengt
   useEffect(() => {
     if (!legal) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.repeat) return;
-      if (e.target instanceof HTMLInputElement && e.target.type === "number") return;
+      if (!isTableShortcut(e)) return;
       const key = e.key.toLowerCase();
       if (key === "f" && legal.fold) onAct({ type: "fold" });
       else if (key === "c" || key === "k") onAct(legal.check ? { type: "check" } : { type: "call" });

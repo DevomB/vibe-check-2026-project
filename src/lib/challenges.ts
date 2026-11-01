@@ -85,7 +85,7 @@ export const CHALLENGES: readonly Challenge[] = [
 ];
 
 /** The line the practice bar shows after a Best choice that lost chips at showdown (T8, `no_hindsight`). */
-export const RIGHT_BUT_UNLUCKY = "Right decision, unlucky result. The grade looks at the decision, not the cards that came.";
+export const RIGHT_BUT_UNLUCKY = "Right decision, unlucky result. The grade looks at the decision, not the hand the bot turned out to hold.";
 
 /**
  * True when Lean's state is the challenge's decision point: hand 1 is on the river, it is the

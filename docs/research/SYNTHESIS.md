@@ -1,5 +1,11 @@
 # Synthesis
 
+> **Historical.** Written on Oct 31, before the build. The shipped product differs: other
+> slider rules (no aggression slider, no quadratic Risk formula), no Kuhn or Leduc mode, a
+> Node bridge instead of Python, and sampled (Monte Carlo) preflop and flop counts. A
+> `KuhnPoker/` folder was never in the repo. What was built and proved is in
+> [SPEC.md](../../SPEC.md) and the [README](../../README.md).
+
 Written by the research lead after reading all 40 summaries, and the notes where needed.
 Source ids (A01, E09, ...) point to [INDEX.md](INDEX.md). Hour estimates assume the
 teammate who is strong in Lean. They are rough, and most come from the source agents.

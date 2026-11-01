@@ -1,5 +1,11 @@
 # Open questions
 
+> **Historical.** Written on Oct 31, before the build. The shipped product differs: other
+> slider rules (no aggression slider, no quadratic Risk formula), no Kuhn or Leduc mode, a
+> Node bridge instead of Python, and sampled (Monte Carlo) preflop and flop counts. A
+> `KuhnPoker/` folder was never in the repo. What was built and proved is in
+> [SPEC.md](../../SPEC.md) and the [README](../../README.md).
+
 Decisions that only the team or the organizers can make. Each item gives the
 options and what the research suggests. Source ids point to [INDEX.md](INDEX.md).
 
