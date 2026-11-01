@@ -176,16 +176,30 @@ export interface ReviewDecision {
 }
 
 /**
- * How Risk affects one bot move. `noBet`: no bet to face, so the bot does not look at Risk.
- * `raises`: facing a bet with a win chance of 75% or more, it raises at every Risk.
- * `callsAlways` / `foldsAlways`: facing a bet, the same at every Risk. `callsUpTo`: calls up
- * to `continuesUpTo`, folds above it.
+ * How Risk affects one bot move, over the player's Risk 0-100.
+ * - `noBet`: no bet to face before the river, so the bot does not look at Risk.
+ * - `raises`: facing a bet with a win chance of 75% or more, it raises at every Risk.
+ * - `callsAlways` / `foldsAlways`: facing a bet, the same at every Risk.
+ * - `callsFrom`: facing a bet, folds below `continuesFrom` and calls from it up.
+ * - `betsAlways` / `checksAlways`: the river with no bet to face, the same at every Risk.
+ * - `bluffsFrom`: the river with no bet to face, checks below `continuesFrom` and bets a bluff
+ *   from it up (more Risk, more bluffs).
+ * - `varies`: any other pattern.
  */
-export type LeanRiskEffect = "noBet" | "raises" | "callsAlways" | "foldsAlways" | "callsUpTo";
+export type LeanRiskEffect =
+  | "noBet"
+  | "raises"
+  | "callsAlways"
+  | "foldsAlways"
+  | "callsFrom"
+  | "betsAlways"
+  | "checksAlways"
+  | "bluffsFrom"
+  | "varies";
 
 /**
- * One bot move in the Risk explorer (`exploreHand` in `engine/Engine/Explain.lean`): the move
- * at every Risk from 0 to 100, with everything else about the decision kept the same.
+ * One bot move in the Risk explorer (`exploreHandAt` in `engine/Engine/Explain.lean`): the
+ * move at every Risk from 0 to 100, with everything else about the decision kept the same.
  */
 export interface LeanRiskExplorerEntry {
   street: "preflop" | "flop" | "turn" | "river";
@@ -195,18 +209,18 @@ export interface LeanRiskExplorerEntry {
   toCall: number;
   /** The bot's win, tie and loss counts for this move. */
   counts: { win: number; tie: number; loss: number };
-  /** The bot's Risk in this game. */
+  /** The Risk set in this game. */
   risk: number;
   /** The move the bot made, as the table names it ("Call", "Bet 60", "Raise to 120"). */
   action: string;
   /** The move at each Risk: 101 entries, entry r for Risk r. */
   actions: string[];
-  /** The highest Risk at which the bot calls or raises; null if it does neither. */
-  continuesUpTo: number | null;
+  /** The lowest Risk at which the bot calls, raises or bets; null if it does none of them. */
+  continuesFrom: number | null;
   /** Whether Risk changes this move at all. */
   riskMatters: boolean;
   effect: LeanRiskEffect;
-  /** One sentence, such as "Calls at Risk 0-37, folds at 38-100." */
+  /** One sentence, such as "Folds at Risk 0-35, calls at 36-100." */
   summary: string;
 }
 
