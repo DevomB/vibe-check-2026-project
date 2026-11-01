@@ -1,4 +1,4 @@
-import Engine.Equity
+import Engine.Proofs.EquitySpec
 
 /-!
 # T6 `enumeration_exact`: the exact counts look at every outcome exactly once
@@ -13,39 +13,9 @@ On the river the bot counts every hand the opponent could hold. On the turn it c
 - so there are 990 entries on the river and 45,540 on the turn;
 - and the counts are just "how many of those outcomes the bot wins, ties and loses", using
   the spec's `showdown`.
+
+The definitions these theorems use are in `Engine/Proofs/EquitySpec.lean`.
 -/
-
-/-! ## What counts as a possible outcome -/
-
-/-- The opponent can hold the cards `a` and `b`: they are two different cards, and neither is
-in the bot's hand or on the board. -/
-def OpponentCanHold (hole board : List Card) (a b : Card) : Prop :=
-  a ≠ b ∧ a ∉ hole ++ board ∧ b ∉ hole ++ board
-
-/-- On the turn, the river can be `r` while the opponent holds `a` and `b`: three different
-cards, none of them in the bot's hand or on the board. -/
-def TurnOutcomePossible (hole board : List Card) (r a b : Card) : Prop :=
-  OpponentCanHold hole board a b ∧ r ≠ a ∧ r ≠ b ∧ r ∉ hole ++ board
-
-instance (hole board : List Card) (a b : Card) : Decidable (OpponentCanHold hole board a b) := by
-  unfold OpponentCanHold; infer_instance
-
-instance (hole board : List Card) (r a b : Card) :
-    Decidable (TurnOutcomePossible hole board r a b) := by
-  unfold TurnOutcomePossible; infer_instance
-
-/-- How many times the two-card hand `a`, `b` is in a list of hands, in either order. -/
-def timesListed (hands : List (List Card)) (a b : Card) : Nat :=
-  hands.count [a, b] + hands.count [b, a]
-
-/-- How many times the turn outcome "river `r`, opponent holds `a` and `b`" is in a list,
-with the opponent's cards in either order. -/
-def timesListedTurn (outcomes : List (Card × List Card)) (r a b : Card) : Nat :=
-  outcomes.count (r, [a, b]) + outcomes.count (r, [b, a])
-
-/-- Count how many results are a win for the bot (player 0), a tie, and a loss. -/
-def countResults (results : List Outcome) : Counts :=
-  ⟨results.count .player0, results.count .tie, results.count .player1⟩
 
 /-! ## Helper lemmas -/
 

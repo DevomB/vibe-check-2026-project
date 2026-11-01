@@ -1,5 +1,7 @@
 import Engine.Proofs.Reachable
 import Engine.Proofs.RiskSpec
+import Engine.Proofs.BotSpec
+import Engine.Proofs.EquitySpec
 
 /-!
 # The main theorems, as agreed by the team (the Comparator "challenge")
@@ -81,3 +83,55 @@ theorem more_risk_takes_fewer_gambles (g : Gamble) {r₁ r₂ : Nat} (hr : r₁ 
 /-- A gamble that can never lose is taken at every Risk. -/
 theorem no_loss_always_taken (g : Gamble) (risk : Nat) (h : ∀ o ∈ g, 0 ≤ o.2) :
     g.Takes risk := sorry
+
+/-! ## T3 (bot half) and T4: the slider bot (see `Engine/Proofs/BotSpec.lean`) -/
+
+/-- Whenever the player to act may act at all, the slider bot's move is legal, for every
+slider setting, seed, hole cards and board. -/
+theorem botDecide_legal (sl : Sliders) (seed : Nat) (hole board : List Card) :
+    AlwaysLegal fun s => (botDecide sl seed hole board s).action := sorry
+
+/-- For one spot (same state, counts, cards and Bluff): if the bot calls or raises at some
+Risk, it also calls or raises at every lower Risk. -/
+theorem risk_monotone (bluff : Nat) (c : Counts) (hole board : List Card) (s : State) :
+    RiskMonotone fun r => (decideWithCounts ⟨r, bluff⟩ c hole board s).action := sorry
+
+/-- The same for the whole bot, counts included: the counts have no Risk input. -/
+theorem botDecide_risk_monotone (bluff seed : Nat) (hole board : List Card) (s : State) :
+    RiskMonotone fun r => (botDecide ⟨r, bluff⟩ seed hole board s).action := sorry
+
+/-! ## T6: the exact counts look at every outcome once (see `Engine/Proofs/EquitySpec.lean`) -/
+
+/-- On the river and the turn, every entry of the list the bot counts over is an outcome that
+can happen, every outcome that can happen is listed exactly once, and the counts are the
+spec's `showdown` results over that list. -/
+theorem enumeration_exact (hole board : List Card) :
+    ((∀ h ∈ riverOpponentHands hole board, ∃ a b, h = [a, b] ∧ OpponentCanHold hole board a b) ∧
+     (∀ a b, OpponentCanHold hole board a b → timesListed (riverOpponentHands hole board) a b = 1) ∧
+     riverCounts hole board =
+      countResults ((riverOpponentHands hole board).map fun opp => showdown hole opp board)) ∧
+    ((∀ o ∈ turnOutcomes hole board,
+       ∃ r a b, o = (r, [a, b]) ∧ TurnOutcomePossible hole board r a b) ∧
+     (∀ r a b, TurnOutcomePossible hole board r a b →
+       timesListedTurn (turnOutcomes hole board) r a b = 1) ∧
+     turnCounts hole board =
+      countResults ((turnOutcomes hole board).map fun (r, opp) => showdown hole opp (board ++ [r]))) :=
+  sorry
+
+/-- With two hole cards and five board cards, all different, the opponent can hold 990 hands. -/
+theorem riverOpponentHands_length {hole board : List Card} (h2 : hole.length = 2)
+    (h5 : board.length = 5) (hd : (hole ++ board).Nodup) :
+    (riverOpponentHands hole board).length = 990 := sorry
+
+/-- With two hole cards and four board cards, all different, there are 45,540 turn outcomes. -/
+theorem turnOutcomes_length {hole board : List Card} (h2 : hole.length = 2)
+    (h4 : board.length = 4) (hd : (hole ++ board).Nodup) :
+    (turnOutcomes hole board).length = 45540 := sorry
+
+/-- On the river, the counts the bot uses are the river counts above. -/
+theorem countsFor_river {seed : Nat} {hole board : List Card} (h : board.length = 5) :
+    countsFor seed hole board = riverCounts hole board := sorry
+
+/-- On the turn, the counts the bot uses are the turn counts above. -/
+theorem countsFor_turn {seed : Nat} {hole board : List Card} (h : board.length = 4) :
+    countsFor seed hole board = turnCounts hole board := sorry

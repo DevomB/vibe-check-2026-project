@@ -9,7 +9,15 @@
     "bot_calls_only_when_worth_it",
     "bot_folds_only_when_not_worth_it",
     "more_risk_takes_fewer_gambles",
-    "no_loss_always_taken"
+    "no_loss_always_taken",
+    "botDecide_legal",
+    "risk_monotone",
+    "botDecide_risk_monotone",
+    "enumeration_exact",
+    "riverOpponentHands_length",
+    "turnOutcomes_length",
+    "countsFor_river",
+    "countsFor_turn"
   ],
   "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"]
 }
