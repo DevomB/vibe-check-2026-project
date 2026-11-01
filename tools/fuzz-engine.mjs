@@ -233,7 +233,8 @@ function checkReview(rv, hand, expectedGraded) {
     const want = labelFromLost(lost);
     // The worths are rounded to 0.01, so `lost` may be off by up to 0.005; allow 0.01.
     const nearEdge = EDGES.some((e) => Math.abs(lost - e) <= 0.01);
-    if (nearEdge) notes.push({ hand, action: d.your_action, worth_bb: d.worth_bb, lost: +lost.toFixed(3), label: d.label, expected: want });
+    // Note real borderline cases only: a Best with nothing lost is not one.
+    if (nearEdge && (lost !== 0 || want !== d.label)) notes.push({ hand, action: d.your_action, worth_bb: d.worth_bb, lost: +lost.toFixed(3), label: d.label, expected: want });
     if (want !== d.label && !nearEdge) bad.push(["review-label", `${d.your_action} lost ${lost.toFixed(2)} BB (call ${call}, fold ${fold}) but is labelled ${d.label}, not ${want}`]);
     // Calling breaks even exactly when equity had = equity needed.
     const eh = d.equity_had, en = d.equity_needed;
