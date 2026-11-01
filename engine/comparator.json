@@ -28,6 +28,7 @@
     "shuffle_fair",
     "no_card_dealt_twice",
     "review_worth",
+    "review_lost",
     "review_best_iff",
     "review_label_monotone",
     "review_call_best_iff_equity",

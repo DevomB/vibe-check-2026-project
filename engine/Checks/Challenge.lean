@@ -174,6 +174,14 @@ theorem review_worth (spot : RiverSpot) (choice : RiverChoice) (hn : spot.botHan
       ⟨spot.total .call, 2 * spot.botHands.length * bigBlind⟩ ∧
     (reviewRiver spot choice).worthFold.num = spot.total .fold := sorry
 
+/-- T5: what a choice lost is the better choice's total minus its own, and its denominator is
+the same as the worths' (`review_worth`), so it is in big blinds too. With `review_worth`,
+this ties the `.lost` field that `review_label_monotone` reads to the chips really lost. -/
+theorem review_lost (spot : RiverSpot) (choice : RiverChoice) :
+    (reviewRiver spot choice).lost.num =
+      max (spot.total .call) (spot.total .fold) - spot.total choice ∧
+    (reviewRiver spot choice).lost.den = (reviewRiver spot choice).worthCall.den := sorry
+
 /-- T5: the review labels a call or fold Best exactly when it was worth at least as much as
 the other choice. -/
 theorem review_best_iff (spot : RiverSpot) (choice : RiverChoice) :
