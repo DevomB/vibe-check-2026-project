@@ -1,0 +1,101 @@
+{
+ "games": 17,
+ "hands": 548,
+ "requests": 2243,
+ "badRequestsSent": 189,
+ "wallSeconds": 127,
+ "workers": 1,
+ "fuzzSeed": 2026,
+ "replaysMatched": 3,
+ "programRestarts": 0,
+ "gamesStoppedAtHandCap": 0,
+ "gradedDecisions": 11,
+ "labelCounts": {
+  "Blunder": 2,
+  "Mistake": 2,
+  "Best": 4,
+  "Inaccuracy": 2,
+  "Good": 1
+ },
+ "failureCounts": {},
+ "failures": [],
+ "speedMs": {
+  "new_game": {
+   "n": 17,
+   "median": 0.9,
+   "p95": 408.5,
+   "max": 408.5
+  },
+  "preflop": {
+   "n": 272,
+   "median": 0.2,
+   "p95": 0.3,
+   "max": 2.2
+  },
+  "review": {
+   "n": 595,
+   "median": 0.4,
+   "p95": 581.3,
+   "max": 817.9
+  },
+  "next_hand": {
+   "n": 531,
+   "median": 0.6,
+   "p95": 1.1,
+   "max": 2.2
+  },
+  "flop": {
+   "n": 321,
+   "median": 58.2,
+   "p95": 92.5,
+   "max": 159.3
+  },
+  "showdown": {
+   "n": 41,
+   "median": 0.5,
+   "p95": 100.6,
+   "max": 511.7
+  },
+  "rejected": {
+   "n": 257,
+   "median": 0.2,
+   "p95": 0.5,
+   "max": 0.8
+  },
+  "turn": {
+   "n": 128,
+   "median": 395.3,
+   "p95": 548.9,
+   "max": 605.6
+  },
+  "state": {
+   "n": 38,
+   "median": 0.2,
+   "p95": 0.4,
+   "max": 0.4
+  },
+  "river": {
+   "n": 43,
+   "median": 75,
+   "p95": 574.3,
+   "max": 644.9
+  }
+ },
+ "slowReplies": [],
+ "nearBandEdge": [
+  {
+   "hand": 33,
+   "action": "call",
+   "worth_bb": {
+    "call": -2,
+    "fold": 0
+   },
+   "lost": 2,
+   "label": "Mistake",
+   "expected": "Mistake",
+   "seed": "6163025236636917295",
+   "risk": 100,
+   "bluff_pct": 0
+  }
+ ]
+}

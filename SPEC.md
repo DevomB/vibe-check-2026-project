@@ -59,8 +59,8 @@ T1 to T8 are proved on `main`. Each is listed with its Lean theorems. The statem
 - **T8 no hindsight** (MVP `no_hindsight`; Lean `no_hindsight`, `bot_hand_in_review`). Two
   hands that look the same to the human get the same review, whatever cards the bot really
   holds. The bot's real hand is always one of the hands the review counts.
-- **T9 `every_hand_ends`** (stretch). Every hand finishes in a bounded number of moves. Not
-  proved yet.
+- **T9 `every_hand_ends`** (completed stretch). Every run of accepted moves in one reachable
+  hand has at most 200 moves. This does not bound the length of an entire match.
 - **T10 `evaluator_equals_spec`** (stretch, Tier 3). At showdown, the winner is the player with the better
   five-card hand. "Better" is defined by a short, obviously correct reference ranking (best
   of the 21 five-card hands). The fast evaluator used in the game must agree with it on
@@ -111,6 +111,11 @@ These follow `MVP.txt`, which is the team's agreed rule set.
 
 ## What is proven so far
 
+- The integrated 46-target registry includes T9, session/protocol invariants and the
+  explanation-panel statements. It passed audit, Comparator and kernel re-check in
+  [integration run 41336322319](https://github.com/DevomB/vibe-check-2026-project/actions/runs/41336322319).
+  This is newer than the historical T1–T8 baseline below.
+
 - **T1 to T8**, with the Lean names above. The Lean proofs CI on `main` at `df6904a`
   passed the axiom audit, Comparator and `lake check`
   ([run 41281639578](https://github.com/DevomB/vibe-check-2026-project/actions/runs/41281639578)).
@@ -121,15 +126,13 @@ These follow `MVP.txt`, which is the team's agreed rule set.
   or an accepted move, either the hand is over or the player to act has chips and is not
   ahead in street contributions.
 
-## Still to write
+## Integration coverage and remaining proof work
 
-- Theorems about the session loop (`Engine/Session.lean`), which no theorem covers yet:
-  - a rejected command leaves the session unchanged;
-  - every game a session plays is `Game.Reachable`, so T1 and T2 cover the app's games;
-  - the engine always accepts the bot's planned move, so the check-or-call fallback in
-    `runBot` is never used;
-  - when the bot acts, the amount to call is at most the pot. `bot_calls_only_when_worth_it`
-    and `bot_folds_only_when_not_worth_it` assume this. No theorem proves it yet.
+- The session now has `bot_move_accepted`, `handle_keeps_reachable`, `handle_error_unchanged`,
+  `viewOf_toCall_le_pot`, `app_game_reachable` and `respond_keeps_session_unless_accepted`.
+  Rejection covers valid Peek flags and build identities. The unused fallback is removed.
+- `exploreHand_moves`, `exploreHand_risk_monotone`, `rangeOf_adds_up` and `rangeOf_counts`
+  are registered. Faithful recording of the bot's original inputs remains tested, not proved.
 - That `legalOptions` (the moves and raise bounds the human is offered) matches `Legal`.
-- T9. T10, if the team keeps it (see above).
+- T9 is proved and registered. T10 remains optional if a separate fast evaluator is added.
 - The JSON layer (`Engine/Protocol.lean`) is tested, not proved.

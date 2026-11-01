@@ -97,8 +97,8 @@ is a simple model of what the bot holds, and we say so."
 >   against the better choice. A worse label always means more chips lost. And the grade
 >   never depends on the bot's real cards."
 >
-> "What we do not prove: the web page, and the JSON between the page and Lean. The loop that
-> runs a session is tested, not proved yet."
+> "The session preserves reachable games and rejected commands change nothing. The web
+> page, Node transport and full JSON conversion remain tested rather than proved."
 
 ## 4:30 The close (30 seconds)
 
@@ -114,7 +114,7 @@ The final commit needs its own green run.
 
 | Spoken claim | Lean theorems | What they say, in one sentence | Limit |
 | --- | --- | --- | --- |
-| "The theorems are about the Lean code the game runs." | All below | The statements name the engine's own functions (`step`, `shuffle`, `botDecide`, `reviewRiver`), not copies. | The session loop (`Engine/Session.lean`) and the JSON layer (`Engine/Protocol.lean`) are covered by no theorem. They are tested. |
+| "The theorems are about the Lean code the game runs." | All below | The statements name the engine's own functions (`step`, `shuffle`, `botDecide`, `reviewRiver`), not copies. | Session reachability and rejection are proved. Full JSON conversion and Node/browser transport remain tested. |
 | "Lean's kernel checks every proof. Comparator checks each statement." | (CI) | The audit allows only `propext`, `Classical.choice` and `Quot.sound`; Comparator matches each proof to `Checks/Challenge.lean`. | Seen green on `df6904a`. Rerun for the final commit. |
 | "In every game the engine can reach, there are always exactly 1,000 chips." (T1) | `step_keeps_chips`, `startHand_keeps_chips`, `chips_always_1000` | An accepted move and a new deal keep the chip total, so every reachable game has exactly 1,000 chips. | "Reachable" means a new game, then accepted moves and next hands (`Game.Reachable`). No theorem yet says the app's session only builds such games. |
 | "No card is ever dealt twice." (T2) | `shuffle_same_cards`, `shuffle_fair`, `no_card_dealt_twice` | The shuffle keeps exactly the 52 cards, and in every reachable game the dealt cards are all different. | The same "reachable" limit. It does not say the shuffle is random. |
@@ -125,7 +125,7 @@ The final commit needs its own green run.
 | "At 60%, it adds 486 bluffs, picked from its weakest hands, and this is one of them." (scene c, peek on) | `bluff_frequency` | 324 × 60 / 40 = 486 exactly, so the set has 486 bluffs. | "Picked from its weakest hands" is the code's rule (MVP §5), not a theorem on `main`. That Ks 9d is a bluff comes from the bot's own reason. |
 | "The review compares call and fold under its stated model. Best means you lost nothing against the better choice. A worse label always means more chips lost." (T5) | `review_worth`, `review_lost`, `review_best_iff`, `review_label_monotone`, `review_call_best_iff_equity` | The worth of calling is the exact average over the bot's possible hands, in big blinds; Best means the choice was worth at least the other; fewer big blinds lost never gets a worse label; calling is Best exactly when your equity is at least the equity needed. | The model is every hand the bot's river rule bets on that board, minus your cards. It ignores the earlier betting. Only river calls and folds against the bot's opening bet are graded. The label bands (0.5, 2, 5 BB) are in `labelFor`, which a reader must check. |
 | "18.5% against 33% needed: a Mistake." (scene a) | `review_call_best_iff_equity`, `review_lost` | 0.185 < 0.333, so the call is not Best; it lost 2.67 BB, which is in the Mistake band (2 to 5). | The decimals are rounded for display. The engine compares exact fractions. |
-| "The grade never depends on the bot's real cards." (T8) | `no_hindsight`, `bot_hand_in_review` | Two hands that look the same to you get the same review, whatever the bot holds; the bot's real hand is always one of the hands the review counts. | "Look the same" means the same chips, board and your cards (`SameForHuman`). That the session records the right spot is in `Session.lean`, which no theorem covers. |
+| "The grade never depends on the bot's real cards." (T8) | `no_hindsight`, `bot_hand_in_review` | Two hands that look the same to you get the same review, whatever the bot holds; the bot's real hand is always one of the hands the review counts. | "Look the same" means the same chips, board and your cards (`SameForHuman`). Faithful recording of the decision snapshot remains checked by tests rather than proved. |
 | Not spoken; say it if asked: "On the turn and river, the win chance counts every outcome exactly once." (T6) | `enumeration_exact`, `riverOpponentHands_length`, `turnOutcomes_length`, `countsFor_river`, `countsFor_turn` | The river counts each of the 990 opponent hands once; the turn counts each of the 45,540 (river card, opponent hand) pairs once. | The flop is an estimate from 1,000 deals; preflop uses a table of estimates (`data/preflop.json`). The compiler is trusted to run the turn's 46 parallel tasks. |
 
 Claims cut or softened from MVP §14:

@@ -4,6 +4,12 @@ This file records the demo hands, the practice-challenge spots and the morning c
 Every hand here was played on the compiled Lean engine, with scripted human moves. Nothing
 in this file was played in a browser yet: the UI checks below are still to do.
 
+Integration recheck, November 1: all six scenes/challenges passed again on the integrated
+program, and fresh Linux Makefile launch plus production HTTP checks passed in
+[run 41336322319](https://github.com/DevomB/vibe-check-2026-project/actions/runs/41336322319).
+See `INTEGRATION_REVIEW.md` for the binary hash and validation limits. The original
+discovery identity below is historical; the visual checklist remains unverified.
+
 ## What the hands were checked on
 
 - **Engine.** `poker.exe` with SHA-256

@@ -18,7 +18,7 @@ Build your opponent. Play it. Get a game review where every verdict is proven.
 
 WHY THIS WINS (the two judging axes)
 - Coolness: a poker table in the browser, a bot you design with two sliders, and a chess.com-style review of your play. Anyone gets it.
-- Verification: the theorems are about the actual Lean code that runs the game (the betting steps, shuffle, bot and review), not a model of it. The session loop (engine/Engine/Session.lean) and the JSON layer (engine/Engine/Protocol.lean) are not yet covered by any theorem.
+- Verification: the theorems cover the actual Lean betting steps, shuffle, bot, review and session reachability/rejection. JSON parser/serializer accuracy and browser/Node transport correctness remain tested rather than proved.
 - NON-GOAL: a strong bot. The bot does not need to play well. It needs to do exactly what its sliders say, provably.
 
 
@@ -33,6 +33,7 @@ WHY THIS WINS (the two judging axes)
 2. WHAT THE USER SEES
 - Setup screen: two sliders, Risk (0 to 100) and Bluff (0% to 60%), and a Start button.
 - Table screen: your two cards, the board, the pot, both stacks, and your legal actions (fold, check, call, bet or raise with an amount). Live bot messages stay generic; show detailed reasons only after the hand.
+- Optional Peek toggle (off by default) reveals the bot's cards from Lean without changing play. Mark peeked hands in the review: grades still assume the bot's cards were unknown.
 - Review screen: each graded decision with its label (Best, Good, Inaccuracy, Mistake, Blunder), what each option was worth, and the equity you had vs the equity you needed.
 
 
@@ -177,7 +178,7 @@ STILL NEEDED:
 - Fresh-clone "make install && make run" rehearsal on the intended demo setup.
 - Final UI playthroughs: fold, showdown, short stack, graded and ungraded reviews, replay, rejected input and engine restart errors. The checklist, with seeds and moves, is in docs/DEMO.md.
 - Record demo seed, Risk/Bluff, human moves, fixed turn mode and commit; rehearse the five-minute pitch and review every claim. The record is in docs/DEMO.md, checked on the engine built from df6904a; recheck it on the final build. The pitch script and claim review are in docs/PITCH.md; it is not rehearsed yet.
-- T9 hand termination and T10 fast-evaluator equivalence are optional stretch work.
+- T9's 200-move hand bound is proved and registered. T10 remains optional: no separate fast evaluator exists, because the engine uses the spec's bestScore directly.
 
 Working together: use separate clones and coordinate before editing the same files. Commit small, "git pull --rebase" before every push, never force-push. Never commit the API key. Use this status list to avoid duplicating completed work.
 
@@ -249,8 +250,10 @@ Only present a claim below as proven once its actual Lean theorem and final chec
 
 15. RELEASE CHECKS AND SETTLED INTEGRATION DETAILS
 - Lean 4.35.0 is pinned. Standard-axiom audits, Comparator and kernel re-checks for T1-T8 pass in Linux CI (run 41281639578 on main at df6904a: https://github.com/DevomB/vibe-check-2026-project/actions/runs/41281639578); require a passing run for the final submitted commit too.
-- Next.js lives under src/; the shipping Lean engine lives under engine/. The browser gets every game state from Lean, through src/lean/protocol.ts and the Node bridge. It still imports a few display helpers (potTotal, rankOf, suitOf) and types from the TypeScript prototype in src/engine, and its Fold button is off when there is nothing to call, although Lean allows that fold.
+- Next.js lives under src/; the shipping Lean engine lives under engine/. Display helpers/types live under src/lib; the production UI has no value imports from the TypeScript engine. Fold availability comes from Lean.
 - Turn mode is fixed exact, with the compiled benchmark recorded in engine/Engine/Equity.lean. Recheck response times on the demo hardware; do not switch modes silently during play.
-- Preflop counts, review history, post-hand reasons, explicit next_hand and rejected-input replies are implemented. Engine loss is only partly handled: the request in flight gets a raw error, the next one says the game was lost, and the old table keeps live buttons until the player starts a new game. One local active game is supported. A lost engine requires a new game; browser refresh does not resume the UI's previous game.
+- Preflop counts, review history, post-hand reasons, explicit next_hand and rejected-input replies are implemented. Engine loss disables actions and offers a new game; malformed requests preserve the existing game. One local active game is supported. Refresh does not resume the previous UI; stale tabs are not isolated by game IDs.
 - Random seeds remain private until gameOver. Replays use an entered seed, the same sliders, human actions and engine version; record all of these for the demo.
+- Peek is off by default and changes only the card view; peeked hands carry a review warning because grades assume the bot's cards were unknown. Mystery games hide settings, reasons, detailed reviews and the seed until reveal, including at game over. Peek remains an optional aid in Mystery mode.
+- The integrated Proofs drawer, practice challenges, range viewer and Risk explorer go beyond the required MVP. Session invariants and explanation calculations have registered integration theorems. See docs/INTEGRATION_REVIEW.md for current checks and remaining refinements.
 - Fresh-clone launch, final UI rehearsal, reproducible demo hands and accurate pitch claims remain the release checks. Tier 1 is mandatory; advertise optional properties only after their own checks pass.

@@ -43,17 +43,22 @@ Done or present:
   unit tests and tests against the compiled Lean program. TypeScript game code remains
   a test reference. Differential-test cases and recorded results are under `tests/diff/`.
 - Makefile targets build Lean before running the integration tests.
+- Integrated session proofs, T9's 200-move hand bound, and checked range/Risk panels.
+  See [the merge review](docs/INTEGRATION_REVIEW.md) for current evidence and remaining work.
+- Peek (off by default), the Proofs drawer, practice challenges and Mystery opponents.
+  Mystery reviews remain hidden until the guess/reveal.
 
 ## Still needed
 
-- A complete fresh-clone `make install && make run` rehearsal for the demo setup.
+- A final rehearsal on the demo machine; the integrated fresh-Linux-checkout Makefile
+  launch and production HTTP checks passed (see the merge review).
 - Final UI playthroughs covering folds, showdowns, short stacks, reviews, replay and
   engine restart errors. The checklist, with seeds and moves, is in
   [docs/DEMO.md](docs/DEMO.md), with the demo seeds, sliders, moves, turn mode and
   engine commit. Recheck them on the final build.
 - Rehearse the five-minute pitch in [docs/PITCH.md](docs/PITCH.md). Its claim table
-  ties each spoken claim to its theorems. T9 termination and T10 fast-evaluator
-  equivalence remain optional stretch work.
+  ties each spoken claim to its theorems. T9 is proved; T10 remains optional if a separate
+  fast evaluator is introduced.
 
 MVP section 11 records completed and remaining work without assigning people.
 The shipping game engine is Lean; browser rendering and transport are tested separately.
@@ -178,11 +183,9 @@ otherwise try to run the 52-card shuffle on an unknown seed inside a proof.
   theorem would catch it. The engine still rejects any illegal move it receives (T3).
 - **Turning the engine's state into JSON** (`engine/Engine/Protocol.lean`) and back.
   `engine/Main.lean` only reads and writes the lines.
-- **The session loop** (`engine/Engine/Session.lean`): the code the app runs between
-  commands. It plays the bot's moves (with a check-or-call fallback if a planned move were
-  ever rejected), records the river spot the review grades, and starts the next hand. It
-  is tested (`SessionTests.lean`, `npm test`), not proved. No theorem yet says its games
-  are `Game.Reachable`, so T1-T3 reach the app's games only through that gap.
+- **Recorded review inputs**: the explorer is proved equal to the bot on its recorded inputs.
+  Faithful recording of the original inputs is checked by guards and route tests rather
+  than a recording-correctness theorem. Session reachability and rejection are now proved.
 - **The human's buttons**: `legalOptions` (which moves to offer, and the raise bounds)
   is never proved equal to `Legal`. The engine still rejects any illegal move (T3).
 - **`Task.spawn` in `turnCounts`**: the turn counts run 46 tasks in parallel. The proofs
