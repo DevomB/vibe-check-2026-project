@@ -13,6 +13,7 @@ import { NextHandBar } from "./ResultBanner";
 import { Table, resultDelay } from "./Table";
 import { type PracticeVerdict, practiceVerdict } from "@/lib/challenges";
 import { chips, describeStartingHand } from "@/lib/format";
+import { dropControlFocus, isTableShortcut } from "@/lib/keys";
 import { type Game, type GameMode, type GameSettings, HUMAN_SEAT, TABLE, gameStatus, useGame } from "@/hooks/useGame";
 import styles from "./modes.module.css";
 
@@ -119,21 +120,47 @@ export function PokerApp() {
     setPractice({ mode: game.mode, verdict: practiceVerdict(review, game.lean.result) });
   }, [game, review]);
 
+  // The result, with its Next hand and Review buttons, shows only once an all-in run-out has been
+  // dealt (`resultDelay`); CSS keeps the buttons hidden until then. The keys wait just as long,
+  // so Space cannot skip the run-out.
+  const result = game?.dealt.hand.result ?? null;
+  const resultWaitMs = game && result ? resultDelay(game) * 1000 : 0;
+  const [shownResult, setShownResult] = useState<typeof result>(null);
   useEffect(() => {
-    if (status !== "handOver" || showRules || proofs || guessOpen || review || lost !== null) return;
+    if (!result) return;
+    const timer = window.setTimeout(() => setShownResult(result), resultWaitMs);
+    return () => window.clearTimeout(timer);
+  }, [result, resultWaitMs]);
+  const resultShown = result !== null && shownResult === result;
+
+  useEffect(() => {
+    if (status !== "handOver" || !resultShown || showRules || proofs || guessOpen || review || lost !== null) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.repeat || (e.target instanceof HTMLElement && e.target.closest("button, input, textarea, select, [contenteditable]"))) return;
-      if (e.key === " " || e.key === "Enter") {
+      if (!isTableShortcut(e)) return;
+      // Enter on a focused button presses that button, as usual. Space and R are always the table's keys.
+      const enterOnButton = e.key === "Enter" && e.target instanceof HTMLElement && e.target.closest("button, a[href]") !== null;
+      if (e.key === " " || (e.key === "Enter" && !enterOnButton)) {
         e.preventDefault();
+        dropControlFocus();
         nextHand();
       } else if (e.key === "r" || e.key === "R") {
         e.preventDefault();
+        dropControlFocus();
         askReview();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [status, showRules, proofs, guessOpen, review, lost, nextHand, askReview]);
+  }, [status, resultShown, showRules, proofs, guessOpen, review, lost, nextHand, askReview]);
+
+  // A closed dialog leaves focus on the button that opened it (Review, for example). Drop it, so
+  // the next Space or Enter goes to the table instead of opening the dialog again.
+  const dialogOpen = review !== null || showRules || proofs !== null || guessOpen;
+  const dialogWasOpen = useRef(false);
+  useEffect(() => {
+    if (dialogWasOpen.current && !dialogOpen) dropControlFocus();
+    dialogWasOpen.current = dialogOpen;
+  }, [dialogOpen]);
 
   const begin = (settings: GameSettings) => {
     setLastSettings(settings);
@@ -272,7 +299,7 @@ export function PokerApp() {
             <ActionBar
               hand={hand}
               legal={yourTurn && !showRules && !proofs && !guessOpen ? game.legal : null}
-              waiting={you?.folded ? "You folded — watching the rest" : actor ? `${actor.name} is thinking…` : ""}
+              waiting={you?.folded ? "You folded — watching the rest" : yourTurn ? "Your turn" : actor ? `${actor.name} is thinking…` : ""}
               botMessage={thinking ? null : game.botLine}
               handStrength={strength}
               onAct={humanAct}

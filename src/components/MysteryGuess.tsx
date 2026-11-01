@@ -112,6 +112,9 @@ export function MysteryGuess({ reveal, sending, error, onGuess, onClose, onRevie
               </tbody>
             </table>
             <p className="muted">Nothing is hidden now: the review and the bot's reasons show the real settings.</p>
+            <p className="muted">
+              Graded with the bot's real settings, which you did not know when you decided.
+            </p>
             <div className="modal-actions">
               {onReview && (
                 <button className="btn btn-ghost" onClick={onReview}>

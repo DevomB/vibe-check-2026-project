@@ -9,8 +9,9 @@ names are the ones in `engine/Checks/Challenge.lean`, the statements the team ag
 
 ## Proof targets
 
-T1 to T8 are proved on `main`. Each is listed with its Lean theorems. The statements are in
-`engine/Checks/Challenge.lean`; the proofs are in `engine/Engine/Proofs/`.
+T1 to T9 are proved on `main`. Each is listed with its Lean theorems. The statements are in
+`engine/Checks/Challenge.lean`; the proofs are in `engine/Engine/Proofs/`. The README's
+"What is proved" table also lists the app and panel theorems.
 
 - **T1 chips are never created or destroyed** (MVP name `chips_conserved`; Lean
   `step_keeps_chips`, `startHand_keeps_chips`, `chips_always_1000`). Every move, and every payout, keeps the total chips on the
@@ -103,23 +104,20 @@ These follow `MVP.txt`, which is the team's agreed rule set.
   counts, the slider bot, the river betting set and the river review.
 - `engine/Engine/Session.lean`: the game loop the app runs. `engine/Engine/Protocol.lean`:
   the JSON messages. `engine/Main.lean` only reads and writes lines.
-- `engine/Engine/Proofs/`: the proofs of T1 to T8, and the definitions they rely on
+- `engine/Engine/Explain.lean`: the Risk explorer (`exploreHand`) and the range viewer
+  (`rangeOf`) shown in the review.
+- `engine/Engine/Proofs/`: the proofs of T1 to T9, and the definitions they rely on
   (`Reachable.lean`, `RiskSpec.lean`, `BotSpec.lean`, `EquitySpec.lean`, `BluffSpec.lean`,
-  `ReviewSpec.lean`).
+  `ReviewSpec.lean`, `EndsSpec.lean`).
 - `engine/Checks/Challenge.lean` and `engine/comparator.json`: the agreed statements, which
   Comparator checks against the proofs.
 
 ## What is proven so far
 
-- The integrated 46-target registry includes T9, session/protocol invariants and the
-  explanation-panel statements. It passed audit, Comparator and kernel re-check in
-  [integration run 41336322319](https://github.com/DevomB/vibe-check-2026-project/actions/runs/41336322319).
-  This is newer than the historical T1–T8 baseline below.
-
-- **T1 to T8**, with the Lean names above. The Lean proofs CI on `main` at `df6904a`
-  passed the axiom audit, Comparator and `lake check`
-  ([run 41281639578](https://github.com/DevomB/vibe-check-2026-project/actions/runs/41281639578)).
-  Only `propext`, `Classical.choice` and `Quot.sound` are used.
+- **Every theorem in `engine/comparator.json`**: T1 to T9 with the Lean names above, plus
+  the app (session) and review-panel theorems. CI checks them with the axiom audit,
+  Comparator and `lake check`; the README's evidence line names the green run. Only
+  `propext`, `Classical.choice` and `Quot.sound` are used.
 - `no_raise_against_all_in`, `all_in_player_cannot_act`, `player_ahead_cannot_act`,
   `raise_at_least_big_blind` (`engine/Poker/Spec/Basics.lean`): facts about the rules themselves.
 - `step_turn_ok` and `startHand_turn_ok` (`engine/Engine/Proofs.lean`): after a new hand

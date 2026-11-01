@@ -719,8 +719,12 @@ kbd {
   border-color: rgba(233, 196, 106, 0.45);
 }
 
+/* Its inline animation-delay waits for an all-in run-out; `hidden-until-shown` keeps the
+   invisible buttons from being clicked during the wait. */
 .next-bar {
-  animation: banner-in 0.35s ease-out both;
+  animation:
+    banner-in 0.35s ease-out both,
+    hidden-until-shown 0.35s both;
 }
 
 .next-btn {
@@ -1033,7 +1037,11 @@ kbd {
   background: rgba(3, 6, 9, 0.7);
   backdrop-filter: blur(4px);
   z-index: 50;
-  animation: fade-in 0.2s ease-out both;
+  /* Game over waits (an inline animation-delay) for the last hand's result; until then the
+     dialog is hidden, so it cannot catch clicks meant for the table. */
+  animation:
+    fade-in 0.2s ease-out both,
+    hidden-until-shown 0.2s both;
 }
 
 .modal {
@@ -1176,8 +1184,10 @@ kbd {
   color: var(--muted);
 }
 
+/* Wraps, so Game Over's four buttons stay inside its 440 px dialog. */
 .modal-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   justify-content: center;
 }
@@ -1304,6 +1314,14 @@ kbd {
   from {
     opacity: 0;
     translate: 0 12px;
+  }
+}
+
+/* Hidden (so not clickable or focusable) during an animation delay, visible from the first frame
+   of the animation on. Pair it with a fade that has the same delay. */
+@keyframes hidden-until-shown {
+  from {
+    visibility: hidden;
   }
 }
 
@@ -1513,6 +1531,99 @@ kbd {
     width: 22px;
     height: 22px;
     font-size: 11px;
+  }
+}
+
+/* ---------- Fit the table to a laptop screen ----------
+   A 1080p screen at 125% shows about 1536 x 730 CSS pixels in a browser. The table, both seats
+   and the action bar must all fit without scrolling. Above the phone layout, the table gets the
+   height that the top bar, the action bar and any notes leave over: `.table-area` is a size
+   container, and the table is no wider than 2.05 times its height. */
+@media (min-width: 821px) {
+  .app:not(.app-lobby) {
+    height: 100dvh;
+  }
+
+  .app:not(.app-lobby) .layout {
+    min-height: 0;
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  .play-column {
+    min-height: 0;
+  }
+
+  .table-area {
+    flex: 1 1 0;
+    min-height: 300px;
+    container-type: size;
+    display: grid;
+    place-items: center;
+  }
+
+  .table {
+    width: min(100cqw, 980px, 205cqh);
+    max-width: none;
+  }
+
+  /* A long top bar (Practice, Mystery) wraps whole items onto a second row, not mid-label. */
+  .topbar-info {
+    flex-wrap: wrap;
+    row-gap: 2px;
+  }
+
+  .topbar-info > span,
+  .peek-toggle {
+    white-space: nowrap;
+  }
+}
+
+/* Wide screens: the raise controls sit beside the buttons, so the action bar is one row. */
+@media (min-width: 1100px) {
+  .action-bar {
+    grid-template-columns: minmax(160px, 1fr) auto auto;
+    grid-template-areas: "info buttons raise";
+  }
+
+  .raise-controls {
+    width: 280px;
+  }
+}
+
+/* Short screens: less empty space around the table. */
+@media (min-width: 821px) and (max-height: 860px) {
+  .layout {
+    padding-top: 10px;
+    padding-bottom: 12px;
+  }
+
+  .play-column {
+    gap: 12px;
+  }
+
+  .table-area {
+    padding-top: 64px;
+    padding-bottom: 100px;
+  }
+
+  .action-bar {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+}
+
+/* A small table: smaller cards for you, set a little lower, so they don't cover your bet. */
+@container (max-height: 460px) {
+  .card-lg {
+    --w: 62px;
+  }
+
+  .seat-human .seat-cards {
+    min-height: 87px;
+  }
+
+  .seat-human {
+    translate: 0 14px;
   }
 }
 

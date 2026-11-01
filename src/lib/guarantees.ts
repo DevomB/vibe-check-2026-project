@@ -7,8 +7,8 @@
  * fails the tests.
  */
 
-/** The ids the drawer can be opened at. The review uses "review", "bluff" and "risk". */
-export type GuaranteeId = "chips" | "cards" | "legal" | "risk" | "review" | "equity" | "bluff" | "hindsight";
+/** The ids the drawer can be opened at. The review uses "review", "risk" and "hindsight". */
+export type GuaranteeId = "chips" | "cards" | "legal" | "risk" | "review" | "equity" | "bluff" | "hindsight" | "ends";
 
 export interface Guarantee {
   id: GuaranteeId;
@@ -34,9 +34,10 @@ export const GUARANTEES: readonly Guarantee[] = [
       "After every move the engine accepts, the stacks, the pot and the bets add up to the same number of chips as before.",
       "A new hand holds exactly the chips the two players brought to it.",
       "So every game always has exactly 1,000 chips.",
+      "The game the app plays is always such a game: answering the page's requests in order only builds games the engine can reach.",
     ],
     theorems: ["step_keeps_chips", "startHand_keeps_chips", "chips_always_1000", "app_game_reachable"],
-    assumes: ["The game started as a new game and then changed only by moves and new hands that the engine accepted."],
+    assumes: ["The game started as a new game and then changed only by moves and new hands that the engine accepted. For the app's game this is proved."],
     limits: ["It is about the engine's own game state. It does not check the numbers the web page shows."],
   },
   {
@@ -64,15 +65,25 @@ export const GUARANTEES: readonly Guarantee[] = [
       'If a move breaks the rules while the hand is still going, the engine rejects it with "illegal move" and makes no new hand.',
       "In every game, the player whose turn it is has chips and has not bet more than the other player.",
       "Whenever the player to act may act, the bot's move is legal, at every slider setting.",
+      "Only a game command the engine accepts changes the game. Bad JSON, an unknown command, a review request or a rejected move leaves it exactly as it was.",
     ],
-    theorems: ["accepted_move_is_legal", "illegal_move_rejected", "player_to_act_may_act", "botDecide_legal", "handle_error_unchanged", "bot_move_accepted", "handle_keeps_reachable"],
+    theorems: [
+      "accepted_move_is_legal",
+      "illegal_move_rejected",
+      "player_to_act_may_act",
+      "botDecide_legal",
+      "handle_error_unchanged",
+      "bot_move_accepted",
+      "handle_keeps_reachable",
+      "respond_keeps_session_unless_accepted",
+    ],
     assumes: [
       "The rules are the ones written in Legal, in engine/Poker/Spec/Basics.lean.",
       "For a rejection: the hand is not over yet.",
     ],
     limits: [
       "The buttons and raise limits on the page come from code that is not proved to match the rules. The engine still rejects any illegal move it gets.",
-      "Session reachability and rejected commands are covered; browser behavior and the Node bridge are tested separately.",
+      "The browser and the Node bridge between the page and the engine are tested, not proved.",
     ],
   },
   {
@@ -84,6 +95,9 @@ export const GUARANTEES: readonly Guarantee[] = [
       "When it reaches the call/fold rule, it calls exactly when the Risk-weighted call is worth at least as much as folding. A strong hand can raise instead.",
       "A lost chip counts 1 + Risk/50 times: once at Risk 0, twice at Risk 50, three times at Risk 100.",
       "The call/fold rule accepts a call that can never lose chips at every Risk.",
+      "In every spot the bot really sees, the chips it must add to call are at most the pot, so the call/fold rule above always applies.",
+      "The Risk explorer in the review shows the real bot: its move at each Risk from 0 to 100 is the move the bot's own code makes at that Risk, in the same spot.",
+      "So the explorer never shows a call or raise at some Risk and a fold at a lower Risk.",
     ],
     theorems: [
       "risk_monotone",
@@ -93,11 +107,11 @@ export const GUARANTEES: readonly Guarantee[] = [
       "bot_folds_only_when_not_worth_it",
       "more_risk_takes_fewer_gambles",
       "no_loss_always_taken",
+      "viewOf_toCall_le_pot",
+      "exploreHand_moves",
+      "exploreHand_risk_monotone",
     ],
-    assumes: [
-      "The same spot: the same game state, cards, Bluff setting and win, tie and loss counts.",
-      "For the call rule: the amount to call is not more than the pot.",
-    ],
+    assumes: ["The same spot: the same game state, cards, Bluff setting and win, tie and loss counts."],
     limits: [
       "It compares one decision at a time. It says nothing about whole games, or how often a bot wins.",
       "It holds for any win, tie and loss counts. It does not say the counts are exact on the flop or preflop.",
@@ -110,13 +124,26 @@ export const GUARANTEES: readonly Guarantee[] = [
     says: [
       "A graded call or fold is Best exactly when it was worth at least as much as the other choice.",
       "A decision that lost fewer big blinds never gets a worse label.",
-      "Worths are computed as exact averages over the bot's possible hands, in big blinds. Displayed values are rounded. Folding is worth 0.",
-      "Calling is Best exactly when the equity you had is at least the equity you needed.",
+      "Lean computes each worth as an exact average over the bot's possible hands, in big blinds. Folding is worth 0. The screen shows the worths rounded.",
+      "Calling is Best exactly when your share of the pot against those hands (a tie counts half) is at least the share calling needed to break even.",
+      "When the bot really bet the river, the list of hands it can hold is never empty: its real hand is in it.",
+      "The range viewer's beat, tie and lose numbers are the same win, tie and loss counts the grade uses.",
+      "The range viewer's numbers add up: value hands plus bluffs equal the hands your cards block plus the hands you beat, tie with and lose to.",
     ],
-    theorems: ["review_worth", "review_lost", "review_best_iff", "review_label_monotone", "review_call_best_iff_equity"],
+    theorems: [
+      "review_worth",
+      "review_lost",
+      "review_best_iff",
+      "review_label_monotone",
+      "review_call_best_iff_equity",
+      "review_hands_ne_nil",
+      "rangeOf_counts",
+      "rangeOf_adds_up",
+    ],
     assumes: [
       "The bot's possible hands are every hand its river rule bets with on that board, minus the hands that use your cards. Each one counts the same.",
-      "For the worths and equities: the bot can hold at least one hand, and calling costs chips.",
+      "For the worths and shares: calling costs chips.",
+      "For the list of hands: no card was dealt twice, which T2 proves for every game.",
     ],
     limits: [
       "Only your call or fold after the bot's first river bet is graded. Raises and other streets are not.",
@@ -170,7 +197,22 @@ export const GUARANTEES: readonly Guarantee[] = [
       "Look the same: the same Bluff setting, chips, board and your two cards.",
       "For the second theorem: the bot's cards are ones it bets with on that board, and they are not your cards.",
     ],
-    limits: ["A right decision can still lose chips. The grade looks at the decision, not the cards that came."],
+    limits: ["A right decision can still lose chips. The grade looks at the decision, not the hand the bot turned out to hold."],
+  },
+  {
+    id: "ends",
+    code: "T9",
+    title: "Every hand ends",
+    says: [
+      "From any game the engine can reach, every run of accepted moves in one hand has at most 200 moves.",
+      "So no hand goes on forever.",
+    ],
+    theorems: ["every_hand_ends"],
+    assumes: ["The game started as a new game and then changed only by moves and new hands that the engine accepted."],
+    limits: [
+      "It counts moves in one hand. It does not bound how many hands a game has.",
+      "It says nothing about how long each move takes to compute.",
+    ],
   },
 ];
 
@@ -180,7 +222,7 @@ export const TRUSTED: readonly string[] = [
   "Three standard axioms: propext, Quot.sound and Classical.choice.",
   "The rule definitions the theorems use, such as Legal. A person must read them to check they say the right thing.",
   "The preflop table: win, tie and loss counts estimated from random deals. It is data, not a proof.",
-  "The browser, Node transport and full JSON conversion remain tested rather than proved. Session reachability and rejected-command behavior do have proofs.",
+  "The browser, the Node bridge, the buttons and raise limits the page offers, and the JSON the engine writes for the page. These are tested, not proved. Which requests change the game, and what a rejected move replies, are proved.",
 ];
 
 /** The guarantee with this id, if there is one. */

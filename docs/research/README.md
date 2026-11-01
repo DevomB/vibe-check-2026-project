@@ -1,5 +1,11 @@
 # Research phase: verified poker app (Vibecheck 2026)
 
+> **Historical.** Written on Oct 31, before the build. The shipped product differs: other
+> slider rules (no aggression slider, no quadratic Risk formula), no Kuhn or Leduc mode, a
+> Node bridge instead of Python, and sampled (Monte Carlo) preflop and flop counts. A
+> `KuhnPoker/` folder was never in the repo. What was built and proved is in
+> [SPEC.md](../../SPEC.md) and the [README](../../README.md).
+
 This folder holds the literature and tools research done before the build phase.
 It is notes and links only: no PDFs, no project code.
 

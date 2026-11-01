@@ -8,7 +8,7 @@
 *.trace
 *.hash
 
-# Python (helper scripts, differential-testing harnesses)
+# Python caches (the project's own scripts and test harnesses are TypeScript and Node)
 __pycache__/
 *.py[cod]
 .venv/
@@ -39,3 +39,6 @@ next-env.d.ts
 
 # tectonix
 .tectonix/
+
+# Output of the engine fuzzer (tools/fuzz-engine.mjs)
+fuzz-out/

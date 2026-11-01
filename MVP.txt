@@ -11,10 +11,10 @@ CHANGED FROM v2 (decisions confirmed during the MVP review)
 - Value hands use floor(30%); bluff hands round their target count half upward. Pot sizing has explicit legal bounds and fallback. Tier 1 remains mandatory; pitch optional proofs only when completed.
 - Lean 4.35.0 with standard axioms only; Lean drives bot actions and street transitions. The required demo is one local active game, not a hosted multi-user service.
 
-This file defines the current product. Research notes provide background; older research recommendations do not override this spec. Findings and decisions are recorded in docs/MVP_REVIEW.md; section 15 lists the release checks and the settled integration details.
+READ THIS FIRST: this is the original plan and its rule decisions, written Saturday Oct 31. Sections 3 to 6 still define how the game, the sliders, the bot and the review behave. Current status and the CI evidence are in README.md. The proved theorems, with their Lean names, are in SPEC.md and README.md. Plans, timelines and checklists below are kept as they were written. Research notes provide background; older research recommendations do not override this file. Findings and decisions are recorded in docs/MVP_REVIEW.md.
 
 ONE LINE
-Build your opponent. Play it. Get a game review where every verdict is proven.
+Build your opponent. Play it. Get a game review whose grades are proved to follow its stated rules, and never peek at the bot's cards.
 
 WHY THIS WINS (the two judging axes)
 - Coolness: a poker table in the browser, a bot you design with two sliders, and a chess.com-style review of your play. Anyone gets it.
@@ -23,7 +23,7 @@ WHY THIS WINS (the two judging axes)
 
 
 1. SETUP CHECKLIST (everyone, before 2:30 PM)
-- Node 22 or newer, and npm. Check with "node -v" and "npm -v".
+- Node 22.12 or newer, and npm. Check with "node -v" and "npm -v".
 - Lean 4.35.0 through elan, plus the Lean 4 extension in VS Code. The project must pin leanprover/lean4:v4.35.0 and matching dependencies.
 - git, and your own clone of github.com/DevomB/vibe-check-2026-project.
 - make. On Windows: "winget install ezwinports.make".
@@ -122,12 +122,13 @@ All math is in whole numbers. Equities are counts (wins, ties, total), and every
 
 
 8. THE THEOREMS
+The names below are the planned names. Where the Lean names differ, they are given in brackets; engine/comparator.json lists every registered theorem.
 Tier 1 (must ship):
-- T1 chips_conserved: after every action, your stack + the bot's stack + the pot = 1,000. Chips are never created or destroyed.
-- T2 no_duplicate_cards: the shuffled deck is a rearrangement of the 52 cards, so no card is ever dealt twice.
-- T3 legal_only: the engine rejects any illegal action and leaves the game unchanged, and the bot only ever picks a legal action.
+- T1 chips_conserved [Lean: step_keeps_chips, startHand_keeps_chips, chips_always_1000]: after every action, your stack + the bot's stack + the pot = 1,000. Chips are never created or destroyed.
+- T2 no_duplicate_cards [Lean: shuffle_same_cards, shuffle_fair, no_card_dealt_twice]: the shuffled deck is a rearrangement of the 52 cards, so no card is ever dealt twice.
+- T3 legal_only [Lean: accepted_move_is_legal, illegal_move_rejected, player_to_act_may_act, botDecide_legal]: the engine rejects any illegal action and leaves the game unchanged, and the bot only ever picks a legal action.
 - T4 risk_monotone: for the same valid decision state, outcome counts and other settings, if the bot continues (calls or raises) at some Risk, it also continues at every lower Risk. This covers our exact loss-weight utility; it is not a statement about how many hands different full-game trajectories play.
-- T5 review_sound: for a graded call/fold decision, Best means zero chip EV lost against the better of those two actions under the declared range model, and labels only get worse as the cost grows. It makes no claim about raising.
+- T5 review_sound [Lean: review_worth, review_lost, review_best_iff, review_label_monotone, review_call_best_iff_equity]: for a graded call/fold decision, Best means zero chip EV lost against the better of those two actions under the declared range model, and labels only get worse as the cost grows. It makes no claim about raising.
 
 Tier 2 (should ship):
 - T6 enumeration_exact: the exact equity count visits every valid outcome exactly once: opponent hands on the river; opponent-hand/river-card pairs on the turn.
@@ -136,7 +137,7 @@ Tier 2 (should ship):
 
 Tier 3 (stretch):
 - T9 every_hand_ends: every hand finishes in a bounded number of actions.
-- T10 evaluator_equals_spec: the fast evaluator gives the same answer as the slow, obviously correct one (best of the 21 five-card hands).
+- T10 evaluator_equals_spec [not built: there is no separate fast evaluator; see SPEC.md]: the fast evaluator gives the same answer as the slow, obviously correct one (best of the 21 five-card hands).
 
 Proof rules (from the organizers' CLAUDE.md):
 - Spec files (engine/Poker/Spec/) are written and owned by humans. Claude may write proofs; it never changes a spec or a definition to make a proof easier.
@@ -147,10 +148,11 @@ Proof rules (from the organizers' CLAUDE.md):
 
 9. NOT IN THE MVP (do not start these until Checkpoint B works and Tier 1 proofs/checks pass)
 A Proofs screen. Blind increases. 3+ players and side pots. Kuhn/Leduc mode. Reading the other player, either direction. Grading preflop, flop, or turn decisions. Accuracy % and the luck graph. The general Pratt theorem. Any LLM. Proving the shuffle is uniform. Mobile layout.
+(Update, Sunday Nov 1: the Proofs screen (S1) and the Mystery bot, where you read the bot (S9), were built after the gate passed.)
 
 
 10. STRETCH LADDER (in this order, after the section 9 gate)
-- S1 Proofs screen: every theorem in plain English, with its Lean name.
+- S1 Proofs screen: every theorem in plain English, with its Lean name. (Done: the Proofs drawer.)
 - S2 The bot's one-line reason is proven to be exactly the condition that produced its action.
 - S3 Aggression slider (bet sizes), with a theorem that raising it never makes the bot bet smaller.
 - S4 Accuracy % and a luck-vs-skill graph, with a proof that skill + luck = the actual result.
@@ -158,7 +160,7 @@ A Proofs screen. Blind increases. 3+ players and side pots. Kuhn/Leduc mode. Rea
 - S6 Kuhn poker mode with a proven unexploitable strategy.
 - S7 3-player table with side pots, and T1 extended to side pots.
 - S8 T10, the evaluator equivalence proof.
-- S9 Mystery bot (you read the bot): the sliders are hidden, you play, then you guess its Risk and Bluff, and the review tells you how close you were. Cheap on top of the MVP.
+- S9 Mystery bot (you read the bot): the sliders are hidden, you play, then you guess its Risk and Bluff, and the review tells you how close you were. Cheap on top of the MVP. (Done: Mystery mode.)
 - S10 The bot reads you: it tracks how often you fold and bluffs more only when its own numbers say it pays. Provable: it never bluffs unless its estimate says the bluff is profitable. Not provable: that its read on you is accurate.
 
 
@@ -169,7 +171,7 @@ DONE / PRESENT:
 - Heads-up 500-chip games, fixed 5/10 blinds, Risk/Bluff sliders, explicit Next Hand, game-over handling and replays. Random-game seeds are generated on the server and hidden until game over; entered seeds are intentional replays.
 - The Lean slider bot, preflop count data, sampled flop counts, exact turn/river counts, river betting sets and opening-river-bet call/fold review are implemented.
 - Lean project under engine/, pinned to 4.35.0. Poker/Spec/ contains card/deck, legality and hand-ranking definitions; Engine/ contains seeded shuffling, hand/game transitions and payouts.
-- Tier 1 T1-T5 and Tier 2 T6-T8 proofs are present, with standard-axiom audits, Comparator and kernel re-checks in Linux CI (green on main at df6904a: https://github.com/DevomB/vibe-check-2026-project/actions/runs/41281639578). These prove their stated Lean properties; they do not prove the browser or Node transport correct.
+- Tier 1 T1-T5 and Tier 2 T6-T8 proofs are present, with standard-axiom audits, Comparator and kernel re-checks in Linux CI (the green run is the evidence line in README.md). These prove their stated Lean properties; they do not prove the browser or Node transport correct.
 - Lean examples, known-showdown checks, 300 simulated random games, JavaScript unit/integration tests against the compiled Lean program, and a differential harness with recorded results under tests/diff/ are present. TypeScript game code remains a test reference.
 - Makefile builds Lean before integration tests. Source, build, proof checks and a final GUI launch rehearsal are separate checks.
 - Product decisions confirmed above: Lean 4.35.0 shipping engine and standard axioms; actual-outcome Risk utility; hand-set Bluff target; deterministic ranking/rounding; opening-bet call/fold review only; detailed reasons after the hand; street-total amounts and legal pot sizing/fallback; explicit Next Hand and separate statuses; Lean-driven bot scheduling; fixed benchmark-selected turn mode; one local game; Tier 1 mandatory, optional proof claims only once completed.
@@ -177,13 +179,13 @@ DONE / PRESENT:
 STILL NEEDED:
 - Fresh-clone "make install && make run" rehearsal on the intended demo setup.
 - Final UI playthroughs: fold, showdown, short stack, graded and ungraded reviews, replay, rejected input and engine restart errors. The checklist, with seeds and moves, is in docs/DEMO.md.
-- Record demo seed, Risk/Bluff, human moves, fixed turn mode and commit; rehearse the five-minute pitch and review every claim. The record is in docs/DEMO.md, checked on the engine built from df6904a; recheck it on the final build. The pitch script and claim review are in docs/PITCH.md; it is not rehearsed yet.
+- Record demo seed, Risk/Bluff, human moves, fixed turn mode and commit; rehearse the five-minute pitch and review every claim. The record is in docs/DEMO.md; recheck it on the final build. The pitch script and claim table are in docs/PITCH.md; rehearse it with a timer.
 - T9's 200-move hand bound is proved and registered. T10 remains optional: no separate fast evaluator exists, because the engine uses the spec's bestScore directly.
 
 Working together: use separate clones and coordinate before editing the same files. Commit small, "git pull --rebase" before every push, never force-push. Never commit the API key. Use this status list to avoid duplicating completed work.
 
 
-12. TIMELINE (we leave at 10 PM tonight; it ends Sunday 4:30 PM)
+12. TIMELINE (the plan as written Saturday Oct 31; kept for the record; it ends Sunday 4:30 PM)
 - Now to 2:30 PM: finish setup, establish the Lean project skeleton and agree the shared types and JSON messages. Commit the agreed Lean 4.35.0 pin and matching dependencies. Research is available as background.
 - 2:30 to 5:30 PM: cards, deck, shuffle, T2; the state machine with T1 and T3 stated; the evaluator; the web table drawing a hand through the Node bridge.
 - CHECKPOINT A, 5:30 PM: play a full hand in the browser through the Node-to-Lean bridge against a bot that always calls. A TypeScript-only hand does not establish Lean integration.
@@ -218,7 +220,7 @@ State response (players[0] is human, players[1] is bot):
    "currentBet":60,"minRaise":60,"status":"playing","toAct":0,
    "board":["2c","7d","Js","Qh"],
    "players":[{"cards":["Ah","Kd"],"stack":470,"bet":0},
-              {"cards":null,"stack":410,"bet":60,"lastAction":"bet 60"}],
+              {"cards":null,"stack":410,"bet":60,"lastAction":"Bet 60"}],
    "legal":{"fold":true,"check":false,"call":60,"raise":{"min":120,"max":470}},
    "botReasons":null}}
 Review response (example: pot 200, call 100, equity 0.24):
@@ -227,12 +229,13 @@ Review response (example: pot 200, call 100, equity 0.24):
     "worth_bb":{"call":-2.8,"fold":0},"equity_had":0.24,"equity_needed":0.333}],
    "bot_reasons":[ ...post-hand reasons... ]}}
 Error response:
-  {"error":"illegal action","state":{ ...the unchanged state... }}
+  {"error":"illegal move","state":{ ...the unchanged state... }}
 Cards: rank (2-9, T, J, Q, K, A) + suit (c, d, h, s). Sliders travel as whole numbers (risk 0-100, bluff_pct 0-60). Decimals in responses are for display only; the engine computes exact fractions.
 Status: "playing", "handOver", or "gameOver". Only "handOver" accepts next_hand. A finished hand retains its result and review until that command; gameOver ends the match. State pot contains earlier streets only; add both players' current bet values for the displayed pot. Bet/raise amount and min/max are street totals, while call amount is additional chips to pay.
 
 
 14. THE 5-MINUTE PITCH
+The plan as written Saturday. The current script is docs/PITCH.md; its claim table ties each spoken claim to its theorems and lists the claims below that were cut or softened.
 Only present a claim below as proven once its actual Lean theorem and final checks pass.
 0:00 The hook (30 seconds): "Build your opponent, play it, and review your river calls and folds. Our Lean proofs check properties of the game and the review's stated model."
 0:30 Build your opponent (1 minute): set Risk to 100 and Bluff to 0%. Bet big at it: it folds everything but strong hands.
@@ -249,7 +252,7 @@ Only present a claim below as proven once its actual Lean theorem and final chec
 
 
 15. RELEASE CHECKS AND SETTLED INTEGRATION DETAILS
-- Lean 4.35.0 is pinned. Standard-axiom audits, Comparator and kernel re-checks for T1-T8 pass in Linux CI (run 41281639578 on main at df6904a: https://github.com/DevomB/vibe-check-2026-project/actions/runs/41281639578); require a passing run for the final submitted commit too.
+- Lean 4.35.0 is pinned. Standard-axiom audits, Comparator and kernel re-checks pass in Linux CI (the evidence line in README.md names the run); require a passing run for the final submitted commit too.
 - Next.js lives under src/; the shipping Lean engine lives under engine/. Display helpers/types live under src/lib; the production UI has no value imports from the TypeScript engine. Fold availability comes from Lean.
 - Turn mode is fixed exact, with the compiled benchmark recorded in engine/Engine/Equity.lean. Recheck response times on the demo hardware; do not switch modes silently during play.
 - Preflop counts, review history, post-hand reasons, explicit next_hand and rejected-input replies are implemented. Engine loss disables actions and offers a new game; malformed requests preserve the existing game. One local active game is supported. Refresh does not resume the previous UI; stale tabs are not isolated by game IDs.
