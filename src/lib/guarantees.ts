@@ -81,9 +81,9 @@ export const GUARANTEES: readonly Guarantee[] = [
     title: "More Risk never turns a fold into a call",
     says: [
       "In one spot, if the bot calls or raises at some Risk, it also calls or raises at every lower Risk.",
-      "The bot calls exactly when the call, weighted by Risk, is worth at least as much as folding.",
+      "When it reaches the call/fold rule, it calls exactly when the Risk-weighted call is worth at least as much as folding. A strong hand can raise instead.",
       "A lost chip counts 1 + Risk/50 times: once at Risk 0, twice at Risk 50, three times at Risk 100.",
-      "A call that can never lose chips is taken at every Risk.",
+      "The call/fold rule accepts a call that can never lose chips at every Risk.",
     ],
     theorems: [
       "risk_monotone",
@@ -110,7 +110,7 @@ export const GUARANTEES: readonly Guarantee[] = [
     says: [
       "A graded call or fold is Best exactly when it was worth at least as much as the other choice.",
       "A decision that lost fewer big blinds never gets a worse label.",
-      "The worths shown are the exact averages over the bot's possible hands, in big blinds. Folding is worth 0.",
+      "Worths are computed as exact averages over the bot's possible hands, in big blinds. Displayed values are rounded. Folding is worth 0.",
       "Calling is Best exactly when the equity you had is at least the equity you needed.",
     ],
     theorems: ["review_worth", "review_lost", "review_best_iff", "review_label_monotone", "review_call_best_iff_equity"],
@@ -148,7 +148,7 @@ export const GUARANTEES: readonly Guarantee[] = [
       "On a river board, the bot's river betting set has 324 value hands.",
       "Its number of bluffs is the whole number nearest to the one that makes bluffs b% of the set, with halves rounded up.",
       "No hand is both a value hand and a bluff.",
-      "With no bet to face on the river, the bot bets exactly the hands in this set.",
+      "With no bet to face on the river and a legal bet available, the bot bets exactly the hands in this set.",
     ],
     theorems: ["bluff_frequency", "value_and_bluffs_apart", "bot_bets_its_set", "botDecide_river_follows_set", "rankRiverHands_sorted"],
     assumes: ["The board has five different cards, and Bluff is 0 to 60."],
@@ -167,7 +167,7 @@ export const GUARANTEES: readonly Guarantee[] = [
     ],
     theorems: ["no_hindsight", "bot_hand_in_review"],
     assumes: [
-      "Look the same: the same chips, the same board and your same two cards.",
+      "Look the same: the same Bluff setting, chips, board and your two cards.",
       "For the second theorem: the bot's cards are ones it bets with on that board, and they are not your cards.",
     ],
     limits: ["A right decision can still lose chips. The grade looks at the decision, not the cards that came."],
@@ -180,7 +180,7 @@ export const TRUSTED: readonly string[] = [
   "Three standard axioms: propext, Quot.sound and Classical.choice.",
   "The rule definitions the theorems use, such as Legal. A person must read them to check they say the right thing.",
   "The preflop table: win, tie and loss counts estimated from random deals. It is data, not a proof.",
-  "The web app and the JSON layer: the page, the server route and the code that turns the game into JSON. No proof covers them.",
+  "The browser, Node transport and full JSON conversion remain tested rather than proved. Session reachability and rejected-command behavior do have proofs.",
 ];
 
 /** The guarantee with this id, if there is one. */
