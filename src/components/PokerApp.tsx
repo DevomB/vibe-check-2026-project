@@ -50,6 +50,24 @@ export function PokerApp() {
   const lost = game?.lost ?? null;
   const mode = game?.mode;
 
+  // Lean takes about half a second to grade a hand. Meanwhile the Review button says "Opening…".
+  const [reviewOpening, setReviewOpening] = useState(false);
+  const openReviewNow = useCallback(async () => {
+    setReviewOpening(true);
+    try {
+      await openReview();
+    } finally {
+      setReviewOpening(false);
+    }
+  }, [openReview]);
+
+  // From Start until Lean's first reply, the setup screen gives way to "Dealing…". The first start
+  // on a laptop can take seconds, while Windows scans the newly built engine.
+  const [starting, setStarting] = useState(false);
+  useEffect(() => {
+    if (game) setStarting(false);
+  }, [game]);
+
   // Practice: once the rehearsed hand is over, open Lean's review on its own, after the result
   // has had time to show. Only once per loaded challenge.
   const practiceOver = mode?.kind === "practice" && game?.lean.hand === 1 && game.lean.result !== null && lost === null;
@@ -59,10 +77,10 @@ export function PokerApp() {
     if (!practiceOver || !mode || autoReviewed.current === mode) return;
     const timer = window.setTimeout(() => {
       autoReviewed.current = mode;
-      void openReview();
+      void openReviewNow();
     }, practiceDelayMs);
     return () => window.clearTimeout(timer);
-  }, [practiceOver, mode, practiceDelayMs, openReview]);
+  }, [practiceOver, mode, practiceDelayMs, openReviewNow]);
 
   // Mystery: the guess panel, and a note when a review must wait for the guess.
   const mysteryHidden = mode?.kind === "mystery" && mode.reveal === null;
@@ -89,13 +107,13 @@ export function PokerApp() {
   };
   /** Review, unless the review must wait for the Mystery guess: then guess, or say when you may. */
   const askReview = useCallback(() => {
-    if (!mysteryHidden) return void openReview();
+    if (!mysteryHidden) return void openReviewNow();
     if (mayGuess) return openGuess();
     setNotice({
       hand: game?.lean.hand ?? 0,
       text: `Reviews open after you guess the bot. You can guess after ${REVEAL_AFTER_HANDS} finished hands (${finished} so far).`,
     });
-  }, [mysteryHidden, mayGuess, finished, game?.lean.hand, openReview, openGuess]);
+  }, [mysteryHidden, mayGuess, finished, game?.lean.hand, openReviewNow, openGuess]);
 
   // Mystery: open the guess panel on its own once, when the third hand is over, and again at
   // game over, if the bot is still hidden.
@@ -164,6 +182,7 @@ export function PokerApp() {
 
   const begin = (settings: GameSettings) => {
     setLastSettings(settings);
+    setStarting(true);
     start(settings);
   };
 
@@ -178,14 +197,24 @@ export function PokerApp() {
   );
 
   if (!game) {
+    // A practice hand is replayed up to its river decision (several Lean commands), and a new game
+    // waits for Lean's first reply. Meanwhile "Dealing…" replaces the setup screen, so "Try again"
+    // does not flash the setup screen and Start cannot be clicked twice. An error shows the setup
+    // screen again, with the error.
+    const dealing = loading ? `Dealing "${loading.title}"…` : starting && !error ? "Dealing…" : null;
+    if (dealing) {
+      return (
+        <div className="app app-lobby">
+          <p className="dealing" role="status">
+            {dealing}
+          </p>
+          {rulesModal}
+        </div>
+      );
+    }
     return (
       <div className="app app-lobby">
         <Lobby initial={lastSettings} onStart={begin} onPractice={(c, fast) => void startChallenge(c, fast)} onRules={() => setShowRules(true)} />
-        {loading && (
-          <p className={styles.loading} role="status">
-            Loading "{loading.title}"…
-          </p>
-        )}
         {errorBanner}
         {rulesModal}
       </div>
@@ -292,6 +321,7 @@ export function PokerApp() {
               game={game}
               delay={resultDelay(game)}
               gameOver={status === "gameOver"}
+              reviewOpening={reviewOpening}
               onNextHand={nextHand}
               onReview={askReview}
             />
@@ -369,7 +399,7 @@ export function PokerApp() {
             status !== "playing"
               ? () => {
                   setGuessOpen(false);
-                  void openReview();
+                  void openReviewNow();
                 }
               : undefined
           }
