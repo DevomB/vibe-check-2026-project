@@ -17,7 +17,10 @@
     "riverOpponentHands_length",
     "turnOutcomes_length",
     "countsFor_river",
-    "countsFor_turn"
+    "countsFor_turn",
+    "bluff_frequency",
+    "value_and_bluffs_apart",
+    "bot_bets_its_set"
   ],
   "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"]
 }
