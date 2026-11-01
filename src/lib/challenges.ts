@@ -8,8 +8,10 @@ import type { LeanReview, LeanState, ReviewLabel } from "@/lean/protocol";
  * `best`, `labels`, `worth_bb` and `result_if_best` are what Lean answered when the spots were
  * found, kept so `challenges.test.ts` can check that Lean still answers the same.
  *
- * The spot data is copied from `docs/demo/challenges.json` on branch `release-docs` (commit
- * f55a3ee). Job 3 found and replayed the spots there with `docs/demo/find-demo-hands.mjs`.
+ * The spot data is copied from `docs/demo/challenges.json`. Job 3 found the spots with
+ * `docs/demo/find-demo-hands.mjs` (branch `release-docs`, commit f55a3ee) when the bot had two
+ * sliders. They used Risk 0 and Bluff 60 there; that bot is Risk 100 now, and the spots replay
+ * the same on the one-slider engine (`find-demo-hands.mjs --check`).
  */
 
 export type ChallengeId = "catch-bluff" | "avoid-bad-call" | "right-and-lose";
