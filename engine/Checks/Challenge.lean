@@ -740,3 +740,35 @@ theorem shuffle_uses_64_bits {α : Type} (seed : Nat) (l : List α) :
 `shuffle_uses_64_bits`, at most 2^64 of the 52! orders of a deck can ever come out of the
 shuffle, so most orders never do. -/
 theorem fewer_seeds_than_orders : 2 ^ 64 < factorial 52 := sorry
+
+/-! ## The game never freezes, and the bot cannot see your cards
+(see `Engine/Proofs/Liveness.lean` and `Engine/Proofs/NoPeek.lean`) -/
+
+/-- The game can never freeze: in every game the engine can reach, while the hand is not
+over, there is a legal move for the player to act (folding is always one), and the engine
+accepts it. -/
+theorem game_never_freezes (g : Game) (hg : g.Reachable) (hnot : g.hand.ended = none) :
+    ∃ a, Legal g.hand.chips a ∧ ∃ h', step g.hand a = .ok h' := sorry
+
+/-- The bot never sees your cards: two sessions that give the bot the same settings and Risk,
+the same game seed and hand number, the same cards for the bot, the same board and the same
+chips get exactly the same bot choice, whatever your cards and the undealt deck are. -/
+theorem bot_never_sees_your_cards (s s' : Session)
+    (hsl : s'.sliders = s.sliders) (hrisk : s'.risk = s.risk)
+    (hseed : s'.game.seed = s.game.seed) (hno : s'.game.handNo = s.game.handNo)
+    (hhole : s'.game.hand.hole bot = s.game.hand.hole bot)
+    (hboard : s'.game.hand.board = s.game.hand.board)
+    (hchips : s'.game.hand.chips = s.game.hand.chips) :
+    s'.botChoice = s.botChoice := sorry
+
+/-- Off the flop the bot's move does not depend on the shuffle at all: before the flop, on the
+turn and on the river, two sessions that give the bot the same settings, Risk, cards, board
+and chips get the same bot choice, even with a different game seed or hand number. (On the
+flop the bot's random samples start from the hand's seed; see `NoPeek.lean`.) -/
+theorem bot_ignores_seed_off_flop (s s' : Session)
+    (hsl : s'.sliders = s.sliders) (hrisk : s'.risk = s.risk)
+    (hhole : s'.game.hand.hole bot = s.game.hand.hole bot)
+    (hboard : s'.game.hand.board = s.game.hand.board)
+    (hchips : s'.game.hand.chips = s.game.hand.chips)
+    (hflop : s.game.hand.board.length ≠ 3) :
+    s'.botChoice = s.botChoice := sorry
