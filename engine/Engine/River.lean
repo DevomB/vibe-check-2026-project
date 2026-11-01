@@ -13,14 +13,13 @@ Ported from the TypeScript reference `src/review/riverStrategy.ts`. `Engine/Rive
 checks that the two choose the same hands.
 
 Every function here expects a river board (five different cards) and a Bluff setting from
-0 to 60. The callers check this first, as the TypeScript does.
+0 to 60, and does not check them. A new game refuses a Bluff above 60 (`Session.start` in
+`Engine/Session.lean`), and the board is always dealt from one deck. The TypeScript checks
+inside each function instead.
 -/
 
 /-- Share of the candidate hands the bot bets for value, in percent. -/
 def valuePct : Nat := 30
-
-/-- Highest Bluff slider setting, in percent. -/
-def maxBluffPct : Nat := 60
 
 /-- What the bot does with its hand on the river when it faces no bet. -/
 inductive RiverRole where
@@ -31,12 +30,6 @@ inductive RiverRole where
   /-- Check: the hand is not in the betting set. -/
   | check
   deriving DecidableEq, Repr
-
-/-- The role as one word, as in the TypeScript: `"value"`, `"bluff"` or `"check"`. -/
-def RiverRole.name : RiverRole → String
-  | .value => "value" | .bluff => "bluff" | .check => "check"
-
-instance : ToString RiverRole := ⟨RiverRole.name⟩
 
 /-- A hand the bot could hold, with its showdown score on this board. -/
 structure RankedHand where
@@ -99,8 +92,8 @@ def riverRole (bluffPct : Nat) (board hole : List Card) : RiverRole :=
   else if set.bluffs.any (·.isHole hole) then .bluff
   else .check
 
-/-- Is `hole` in the river betting set at this Bluff setting? The slider bot bets the river
-with no bet to face exactly when this is true. -/
+/-- Is `hole` in the river betting set at this Bluff setting? True exactly when `riverRole` is
+value or bluff. The slider bot uses `riverRole` itself; this yes/no form is for the review. -/
 def riverBets (bluffPct : Nat) (board hole : List Card) : Bool :=
   riverRole bluffPct board hole != .check
 

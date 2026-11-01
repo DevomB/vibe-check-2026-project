@@ -35,8 +35,8 @@ function randomBoard(): Card[] {
 
 const cards = (s: string) => s.split(" ") as Card[];
 
-/** Hand-picked boards: no pair or flush possible, a royal flush on the board (every hand ties),
- * four of a kind on the board, and a paired board with a flush draw. Each at the edges of Bluff. */
+/** Hand-picked boards: no flush possible, a royal flush on the board (every hand ties), four
+ * of a kind on the board, and a paired board with three hearts. Each at the edges of Bluff. */
 const edgeCases: { board: Card[]; bluffPct: number }[] = [
   ...[0, 1, 33, 50, 60].map((bluffPct) => ({ board: cards("2c 7d Js Qh 9s"), bluffPct })),
   ...[0, 33, 60].map((bluffPct) => ({ board: cards("As Ks Qs Js Ts"), bluffPct })),

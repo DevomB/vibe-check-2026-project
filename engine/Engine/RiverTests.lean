@@ -49,7 +49,8 @@ def riverMismatches (cases : List RiverGoldenCase) : List (Nat × String) :=
 
 /-! ## Unit tests, as in `src/review/riverStrategy.test.ts` -/
 
-/-- No pair and no flush is possible. King-Ten makes the best hand, a king-high straight. -/
+/-- No flush is possible (at most two cards of a suit). King-Ten makes the best hand, a
+king-high straight. -/
 def straightBoard : List Card := cards "2c 7d Js Qh 9s"
 
 -- 47 cards left, 47 × 46 / 2 pairs.

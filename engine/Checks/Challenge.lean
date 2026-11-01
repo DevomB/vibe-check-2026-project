@@ -157,10 +157,11 @@ theorem value_and_bluffs_apart (bluffPct : Nat) (board : List Card) (h5 : board.
     ∀ h ∈ (riverBettingSet bluffPct board).value, h ∉ (riverBettingSet bluffPct board).bluffs :=
   sorry
 
-/-- The bot's river bet (`riverBets`) is true for the hole cards `a`, `b` exactly when they are
+/-- The bot's river role (`riverRole`: with no bet to face, the slider bot bets on value or
+bluff and checks on check) is value or bluff for the hole cards `a`, `b` exactly when they are
 one of the value hands or one of the bluffs in the river betting set, in either order. -/
 theorem bot_bets_its_set (bluffPct : Nat) (board : List Card) (a b : Card) :
-    riverBets bluffPct board [a, b] = true ↔
+    riverRole bluffPct board [a, b] ≠ RiverRole.check ↔
       ∃ h ∈ (riverBettingSet bluffPct board).value ++ (riverBettingSet bluffPct board).bluffs,
         h.cards = (a, b) ∨ h.cards = (b, a) := sorry
 

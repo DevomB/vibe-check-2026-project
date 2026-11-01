@@ -11,7 +11,8 @@ some bluffs. These theorems say:
 - on every river board, the set has 324 value hands, and its number of bluffs is the whole
   number nearest to the number that makes bluffs exactly Bluff% of the set (halves up);
 - a hand is never both a value hand and a bluff;
-- the bot's river bet (`riverBets`) is true for exactly the hands in this set.
+- the bot's river role (`riverRole`, which the slider bot uses to bet or check) is value or
+  bluff for exactly the hands in this set.
 
 They say nothing about how often the bot is seen to bluff over many games: that depends on
 which cards it is dealt.
@@ -147,11 +148,12 @@ theorem isHole_pair {h : RankedHand} {a b : Card} (hne : h.cards.1 ≠ h.cards.2
   · rintro ⟨hx | hx, hy | hy⟩ <;> subst hx hy <;> simp_all
   · rintro (⟨rfl, rfl⟩ | ⟨rfl, rfl⟩) <;> simp
 
-/-- The bot bets on the river (when it faces no bet) with exactly the hands in its river betting
-set: `riverBets` is true for the hole cards `a`, `b` exactly when they are one of the value
+/-- With no bet to face on the river, the slider bot bets (if a bet is allowed) when
+`riverRole` is value or bluff, and checks otherwise (`riverOpening` in `Engine/Slider.lean`).
+The role is value or bluff for the hole cards `a`, `b` exactly when they are one of the value
 hands or one of the bluffs, in either order. -/
 theorem bot_bets_its_set (bluffPct : Nat) (board : List Card) (a b : Card) :
-    riverBets bluffPct board [a, b] = true ↔
+    riverRole bluffPct board [a, b] ≠ RiverRole.check ↔
       ∃ h ∈ (riverBettingSet bluffPct board).value ++ (riverBettingSet bluffPct board).bluffs,
         h.cards = (a, b) ∨ h.cards = (b, a) := by
   have hall : ∀ h ∈ (riverBettingSet bluffPct board).value ++
@@ -169,7 +171,7 @@ theorem bot_bets_its_set (bluffPct : Nat) (board : List Card) (a b : Card) :
     exact ⟨fun ⟨h, hm, hh⟩ => ⟨h, hm, (isHole_pair (hall h hm)).mp hh⟩,
       fun ⟨h, hm, hh⟩ => ⟨h, hm, (isHole_pair (hall h hm)).mpr hh⟩⟩
   rw [← key, List.any_append]
-  simp only [riverBets, riverRole]
+  simp only [riverRole]
   cases (riverBettingSet bluffPct board).value.any (·.isHole [a, b]) <;>
     cases (riverBettingSet bluffPct board).bluffs.any (·.isHole [a, b]) <;> decide
 
