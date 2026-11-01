@@ -113,6 +113,12 @@ the range viewer and Risk explorer. No additional features are required for acce
 
 ### Product choices / small refinements — do not block the core MVP
 
+- **Structural debt:** Tectonix quality_signal rose from 6,930 to 6,944 and cycles stayed
+  at zero, but its coupling measure rose from 0.09 to 0.32 and complex-function count
+  from 18 to 23. Its session gate therefore failed those structural thresholds. These
+  are triage signals, not correctness failures. The larger mode/review flows in the hook
+  and route deserve later simplification; this integration intentionally avoids a refactor.
+
 - **Stale tabs:** no game/session ID protects one browser tab from replacing or acting on
   another tab's game. Use one active tab in the demo. Add IDs before multi-session use.
 - **Refresh/resume:** refresh returns the UI to setup; it does not reconstruct the prior UI
