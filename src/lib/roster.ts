@@ -13,11 +13,11 @@ export interface Opponent {
 
 /** The named opponents, from most careful to wildest. */
 export const OPPONENTS: Opponent[] = [
-  { name: "Ivy", color: "#f0a23a", style: "Careful, never bluffs", tier: "Rock", risk: 0 },
-  { name: "Rook", color: "#3fb68b", style: "Careful, bluffs a little", tier: "Tight", risk: 25 },
-  { name: "Dex", color: "#e0624f", style: "Close to ideal, a little careful", tier: "Solid", risk: 40 },
-  { name: "Mia", color: "#5b8def", style: "Plays the ideal balance", tier: "Ideal", risk: 50 },
-  { name: "Vex", color: "#b06ce8", style: "Wild: calls a lot, bluffs the most", tier: "Maniac", risk: 100 },
+  { name: "Ivy", color: "#f0a23a", style: "Folds unless a call clearly pays, never bluffs", tier: "Rock", risk: 0 },
+  { name: "Rook", color: "#3fb68b", style: "Folds more than the odds say, bluffs a little", tier: "Tight", risk: 25 },
+  { name: "Dex", color: "#e0624f", style: "A little careful", tier: "Solid", risk: 40 },
+  { name: "Mia", color: "#5b8def", style: "The textbook setting", tier: "Ideal", risk: 50 },
+  { name: "Vex", color: "#b06ce8", style: "Calls like Mia, bluffs the most", tier: "Maniac", risk: 100 },
 ];
 
 /** The bot when its Risk matches no named opponent. */

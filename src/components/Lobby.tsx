@@ -27,9 +27,9 @@ export const RISK_MARKS = [
   { at: RISK_MAX, label: "Maniac" },
 ] as const;
 
-/** What Risk does, in one plain sentence; shared by the setup screen and the Mystery guess. */
+/** What Risk does, in plain words; shared by the setup screen and the Mystery guess. */
 export const RISK_HELP =
-  "The bot's appetite for risk. At 0 (Rock) it calls only with strong hands and never bluffs. At 50 it plays the ideal balance. At 100 (Maniac) it calls the most and bluffs the most.";
+  "The bot's appetite for risk. At 0 (Rock) it folds unless a call clearly pays, and never bluffs. At 50 it plays the textbook way: it calls when the pot odds say so, and a third of the hands it bets on the river are bluffs. Above 50 it calls the same way but bluffs more, the most at 100 (Maniac).";
 
 export function BotSlider({ label, value, max, shown, help, marks, onChange }: SliderProps) {
   return (

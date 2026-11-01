@@ -5,7 +5,7 @@ import "./globals.css";
 // Fonts come from the system (see globals.css), so building the app needs no network.
 export const metadata: Metadata = {
   title: "Hold'em",
-  description: "Heads-up no-limit Texas Hold'em against one bot you build with two sliders, Risk and Bluff.",
+  description: "Heads-up no-limit Texas Hold'em against one bot you build with one slider, Risk.",
 };
 
 export const viewport: Viewport = {
