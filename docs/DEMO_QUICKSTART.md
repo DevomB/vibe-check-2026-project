@@ -65,8 +65,10 @@ Record visual results here; leave unchecked until actually seen:
 
 Browser tester follow-up: all 13 functional checks below passed on the previous demo
 (engine `507b21c`), including the operator-assisted engine-loss test. The report also found
-clipped Game Over buttons and a missing losing-hand label. Those presentation fixes need a
-fresh visual recheck after deployment; these passes do not validate later UI revisions.
+clipped Game Over buttons and a missing losing-hand label. Both fixes were visually
+confirmed on UI build `0b62296`: all four Game Over buttons are fully visible without
+horizontal scrolling, New game works, and the showdown says "Pair beats High Card".
+These results do not validate the subsequent one-slider engine/UI changes.
 
 | Browser check | Pass | Fail / observation |
 | --- | --- | --- |
@@ -80,7 +82,7 @@ fresh visual recheck after deployment; these passes do not validate later UI rev
 | Risk explorer works | [x] | Tester moved the slider: 0/29 Call, 30/100 Fold (the old two-slider engine; the one-slider engine gives Fold at 0-35, Call at 36-100). |
 | Range proof link opens at T7 | [x] | User confirmed T7/Bluff is in view and highlighted. |
 | Proof drawer closes back to the review | [x] | T4/T5/T7 links open correctly and close to the intact review. |
-| Normal Next Hand, all-in and replay | [x] | Includes short-stack 20-chip return. New game button clipping remains a reported defect pending retest. |
+| Normal Next Hand, all-in and replay | [x] | Includes short-stack 20-chip return. On UI `0b62296`, user confirmed all four Game Over buttons are visible and New game works. |
 | Mystery hides settings, then reveals once | [x] | One observed guess 50/30 vs 17/39 correctly showed differences 33/9. |
 | Engine loss offers recovery without live actions | [x] | Stopped only port-3000 engine PID 15380; user confirmed Game lost, blocked actions and successful New game. |
 
