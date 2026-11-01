@@ -3,6 +3,7 @@
 This script uses the hands in [DEMO.md](DEMO.md). Say only what the claim table at the end
 backs. Each line there names its Lean theorems in `engine/comparator.json`. The script
 started from MVP §14; the end of this file lists the claims we cut or softened.
+The three proof headlines and their demo limits are in [DEMO_THEOREMS.md](DEMO_THEOREMS.md).
 
 Before you start: have the setup screen open. Check that `node docs/demo/find-demo-hands.mjs
 --check` printed six `PASS` lines on the build you will use.
@@ -50,7 +51,8 @@ Both versions work on the current build. Peek on shows the bluff before the bet;
 keeps the surprise for the showdown.
 
 - **Peek off.**
-  > "At Risk 100, 60% of the hands it bets on the river are bluffs. Is this one?"
+  > "At Risk 100, 60% of its board-only river betting set is designated bluffs, before my
+  > cards remove any hands. Is this one?"
 
   Click "Call 20". The showdown shows the bot's king-high. Your pair of eights wins. Open
   the review: "Bet 20: a bluff, picked at Bluff 60%."
@@ -105,23 +107,17 @@ decision, unlucky result."
 
 ## 3:30 What is proven (1 minute)
 
-> "The game itself is written in Lean, and the theorems are about that code, not a copy of it:
-> the betting rules, the shuffle, the bot and the review. Lean's kernel checks every proof.
-> Comparator checks that each proof states exactly the theorem we agreed on."
+> "Three promises matter here. First, the grade never depends on the bot's real cards: a
+> right decision can lose. Second, Best means the better of call and fold against the
+> stated range model, with exact expected-value arithmetic. Third, the Risk explorer
+> shows the real bot: in the same spot, more Risk never turns its call into a fold."
 >
-> - "In every game the engine can reach, there are always exactly 1,000 chips."
-> - "No card is ever dealt twice."
-> - "The engine accepts only legal moves, and the bot only picks legal moves."
-> - "Facing a bet, turning Risk up never turns a call into a fold."
-> - "Risk sets how many bluffs are in the bot's river betting set, to the nearest whole
->   hand."
-> - "The review compares call and fold under its stated model. Best means you lost nothing
->   against the better choice. A worse label always means more chips lost. And the grade
->   never depends on the bot's real cards."
+> "Underneath, the engine conserves all 1,000 chips, never deals a card twice, pays the
+> winner according to its hand-ranking rules, and accepts only legal moves."
 >
-> "The game on screen is always one the engine can reach, so all of this holds for it, and
-> a rejected command changes nothing. The web page, Node and the JSON text are tested, not
-> proved."
+> "Lean's kernel checks the proofs. Comparator matches the agreed theorem statements;
+> people must still review the definitions they use. The browser, Node bridge and JSON
+> transport are tested, not proved."
 
 ## 4:30 The close (30 seconds)
 
@@ -138,11 +134,11 @@ Comparator, `lake check`, fresh-clone launch) is the one line in the
 
 | Spoken claim | Lean theorems | What they say, in one sentence | Limit |
 | --- | --- | --- | --- |
-| "The theorems are about the Lean code the game runs." | All below | The statements name the engine's own functions (`step`, `shuffle`, `botDecide`, `reviewRiver`), not copies. | The game on screen is proved reachable (`app_game_reachable`), and a rejected command changes nothing (`handle_error_unchanged`, `respond_keeps_session_unless_accepted`). The JSON text and the browser/Node transport are tested, not proved. |
+| "The theorems are about the Lean code the game runs." | All below | The statements name the engine's own functions (`step`, `shuffle`, `botDecide`, `reviewRiver`), not copies. | The Lean app's game is proved reachable (`app_game_reachable`), and a rejected command changes nothing (`handle_error_unchanged`, `respond_keeps_session_unless_accepted`). The JSON text and the browser/Node transport are tested, not proved. |
 | "Lean's kernel checks every proof. Comparator checks each statement." | (CI) | The audit allows only `propext`, `Classical.choice` and `Quot.sound`; Comparator matches each proof to `Checks/Challenge.lean`. | The README's evidence line names the green run. Rerun for the final commit. |
 | "In every game the engine can reach, there are always exactly 1,000 chips." (T1) | `step_keeps_chips`, `startHand_keeps_chips`, `chips_always_1000` | An accepted move and a new deal keep the chip total, so every reachable game has exactly 1,000 chips. | "Reachable" means a new game, then accepted moves and next hands (`Game.Reachable`). `app_game_reachable` proves the app's game is always one of these. |
 | "No card is ever dealt twice." (T2) | `shuffle_same_cards`, `shuffle_fair`, `no_card_dealt_twice` | The shuffle keeps exactly the 52 cards, and in every reachable game the dealt cards are all different. | The same "reachable" limit. It does not say the shuffle is random. |
-| "The engine accepts only legal moves, and the bot only picks legal moves." (T3) | `accepted_move_is_legal`, `illegal_move_rejected`, `player_to_act_may_act`, `botDecide_legal` | A move the engine accepts is legal; an illegal move is rejected and changes nothing; the bot's move is legal whenever the player to act may act. | The buttons and raise bounds the browser shows (`legalOptions`) are not proved equal to the rules (`Legal`). The engine still rejects anything illegal. MVP §14's "Every move is legal" is softened to this. |
+| "The engine accepts only legal moves, and the bot only picks legal moves." (T3) | `accepted_move_is_legal`, `illegal_move_rejected`, `legal_move_accepted`, `player_to_act_may_act`, `botDecide_legal`, `legalOptions_exact` | Accepted moves are legal; legal moves are accepted; illegal moves are rejected without changing the hand; the bot's move is legal whenever the player to act may act; Lean's offered moves and raise bounds match `Legal`. | The engine's `legalOptions` is proved to match the rules; the browser rendering and Node/JSON transport are tested, not proved. |
 | "Facing a bet, turning Risk up never turns a call into a fold." (T4) | `more_risk_never_folds_a_call`, `ofRisk_caution_antitone`, `ofRisk_bluff_monotone`, `more_risk_never_checks_a_bet`, `risk_monotone`, `botDecide_risk_monotone`, `more_risk_takes_fewer_gambles` | Facing a bet in one spot (the same seed, cards, board and chips), if the bot calls or raises at some Risk, it does so at every higher Risk too. More Risk never makes the bot more cautious, never makes it bluff less, and never turns a river bet into a check. | One decision at a time. It says nothing about whole games, or how many hands a bot wins. |
 | "At this Risk the call was not worth it. The bot folds only when that is true." (scene b) | `bot_folds_only_when_not_worth_it`, `bot_calls_only_when_worth_it`, `callPays_iff_takes`, `no_loss_always_taken`, `viewOf_toCall_le_pot` | Facing a bet, if the bot does not raise, it calls exactly when the call is worth it, with a lost chip counted (1 + caution/50) times. Risk 0 sets caution 100, so a lost chip counts three times. | The theorems assume the call is at most the pot; `viewOf_toCall_le_pot` proves that for every view the bot gets. A strong hand (75% or more) with a legal raise raises without using the call rule. "Folds everything but strong hands" (MVP §14) is cut: no theorem says that. |
 | "Risk sets how many bluffs are in the bot's river betting set, to the nearest whole hand." (T7) | `ofRisk_bluff_le_60`, `ideal_river_set`, `bluff_frequency`, `value_and_bluffs_apart`, `bot_bets_its_set`, `botDecide_river_follows_set`, `rankRiverHands_sorted`, `value_strongest`, `bluffs_weakest` | Risk sets a bluff share b of at most 60%. On any river board, the set has 324 value hands and the whole number of bluffs nearest to 324 × b / (100 − b) (160 at Risk 50); no hand is both; with no bet to face and a legal bet available, the bot bets exactly the hands in the set; the value hands are the strongest and the bluffs the weakest. | A count of hands in a set, not how often the bot bluffs in play. |

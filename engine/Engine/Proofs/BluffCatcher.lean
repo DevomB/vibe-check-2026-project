@@ -23,9 +23,10 @@ The spec, in plain words, is in `Engine/Proofs/BluffCatcherSpec.lean`. These the
    setting gives exactly one third (`no_bluff_setting_is_exact`), and 33% is the closest
    (`bluff_33_is_closest`).
 
-Your own two cards change the counts. On the A♠ K♥ 2♣ 5♦ 7♣ board at Risk 50, T♣ T♦ blocks
-value hands (312 value, 152 bluffs left) and calling a pot-sized bet loses, while Q♣ T♣
-blocks bluffs (309 value, 156 bluffs left) and calling wins. See the `#guard` checks at the
+Your own two cards change the counts. On the A♠ K♥ 2♣ 5♦ 7♣ board at Risk 50, T♣ T♦ removes
+proportionally more bluffs (312 value, 152 bluffs left) and calling a pot-sized bet loses,
+while Q♣ T♣ removes proportionally more value hands (309 value, 156 bluffs left) and calling
+wins. See the `#guard` checks at the
 end of this file.
 -/
 
@@ -248,7 +249,7 @@ def bcSpot (hole : List Card) : RiverSpot :=
 #guard (riverBettingSet 33 bcBoard).value.length == 324
 #guard (riverBettingSet 33 bcBoard).bluffs.length == 160
 
--- T♣ T♦ catches bluffs here. It blocks value hands: 312 value and 152 bluffs remain, fewer
+-- T♣ T♦ catches bluffs here. It removes 12 value hands and 8 bluffs: 312 and 152 remain, fewer
 -- than one in three are bluffs, so folding is better and the review grades only fold Best.
 #guard decide (CatchesBluffs (bcSpot [card 10 .clubs, card 10 .diamonds]).myScore
   (bcSpot [card 10 .clubs, card 10 .diamonds]).valueHands
@@ -258,7 +259,7 @@ def bcSpot (hole : List Card) : RiverSpot :=
 #guard (reviewRiver (bcSpot [card 10 .clubs, card 10 .diamonds]) .fold).label == .best
 #guard (reviewRiver (bcSpot [card 10 .clubs, card 10 .diamonds]) .call).label != .best
 
--- Q♣ T♣ also catches bluffs. It blocks bluffs instead: 309 value and 156 bluffs remain, more
+-- Q♣ T♣ also catches bluffs. It removes 15 value hands and 4 bluffs: 309 and 156 remain, more
 -- than one in three, so calling is better and the review grades only call Best.
 #guard decide (CatchesBluffs (bcSpot [card 12 .clubs, card 10 .clubs]).myScore
   (bcSpot [card 12 .clubs, card 10 .clubs]).valueHands

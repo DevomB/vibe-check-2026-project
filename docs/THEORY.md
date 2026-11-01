@@ -250,9 +250,9 @@ bluffs and the set has 160 (`risk50_two_bluffs_short`), because 33% is not 1/3. 
 own cards remove any hands, calling loses 1/121 of the bet (`risk50_bluff_catcher_call_loses`).
 No whole Bluff percent is exact; 33 is the closest (`bluff_33_is_closest`).
 
-Your two cards matter more than that gap. On A♠ K♥ 2♣ 5♦ 7♣ at Risk 50, T♣ T♦ blocks value
-hands (312 value, 152 bluffs left), so folding is right; Q♣ T♣ blocks bluffs (309 value, 156
-bluffs left), so calling is right. The review counts these blockers exactly
+Your two cards matter more than that gap. On A♠ K♥ 2♣ 5♦ 7♣ at Risk 50, T♣ T♦ removes
+proportionally more bluffs (312 value, 152 bluffs left), so folding is right; Q♣ T♣ removes
+proportionally more value hands (309 value, 156 bluffs left), so calling is right. The review counts these blockers exactly
 (`review_both_best_iff_one_third`, and the `#guard` checks in the same file).
 
 **The bot's half, also proved** (`engine/Engine/Proofs/Equilibrium.lean`). The bot really bets

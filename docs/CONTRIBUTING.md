@@ -27,8 +27,21 @@ inspect its axioms, and include a concrete valid example plus a known-bad case t
 spec rejects. Use the Comparator workflow in [CLAUDE.md](../CLAUDE.md) for final
 verification.
 
+Comparator matches theorem statements against `Checks/Challenge.lean`; both sides import
+shared engine definitions. It does not independently freeze those definitions. Human spec
+review is required for `engine/Poker/Spec/`, `engine/Engine/Proofs/*Spec.lean`,
+`engine/Engine/Proofs/Reachable.lean`, and meaning-giving definitions elsewhere, such as
+`Engine/Hand.lean`'s `step`. This list is not exhaustive: review the definitions a claim uses.
+Named, registered rejection theorems can catch particular spec regressions, but do not
+replace that review. Ordinary examples can be deleted without changing Comparator's list.
+
 Before the demo, test `make install && make run` in a fresh clone. A working developer
 checkout alone does not show that the shared repo is ready.
+
+After changes to `Engine/Session.lean`, `Engine/Protocol.lean` or `Main.lean`, rerun the
+compiled-engine fuzzer (`node tools/fuzz-engine.mjs --games 300`). Record the binary's
+commit and hash, the command, completed game count and failures. A time-limited run may
+finish fewer games than requested; report its actual count. Keep earlier run artifacts.
 
 ## Other notes
 
