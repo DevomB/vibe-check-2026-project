@@ -164,16 +164,24 @@ def RiskExplorerEntry.json (e : RiskExplorerEntry) : Json :=
       ("effect", toJson e.effect.name),
       ("summary", toJson e.effect.summary) ]
 
-/-- The review of hand `n` (MVP §13). Ungraded moves have `null` grades: "not graded yet".
-A graded move also has `range`: the river range viewer's numbers. `risk_explorer` has one
-entry per bot move, or is `null` while hand `n` is played. -/
+/-- The review of hand `n` (MVP §13). Ungraded moves have `null` grades. `model` says which
+grade a move has: "river-set" (it answers the bot's opening river bet; `reviewRiver`) or
+"any-hand" (any other call or fold that answers a bet; `reviewAnyHand`). A river-set grade
+also has `range`: the river range viewer's numbers. `risk_explorer` has one entry per bot
+move, or is `null` while hand `n` is played. -/
 def reviewJson (srv : Session) (n : Nat) (lines : Array ReviewLine) : Json :=
   let ranges := srv.ranges n
   let line (i : Nat) (l : ReviewLine) : Json :=
-    let grade (f : RiverVerdict → Json) := match l.verdict with | some v => f v | none => Json.null
+    -- The river grade when there is one, else the any-hand grade.
+    let graded := match l.verdict with | some v => some v | none => l.anyHand
+    let grade (f : RiverVerdict → Json) := match graded with | some v => f v | none => Json.null
     Json.mkObj <|
       [ ("street", toJson (streetName l.street)),
         ("your_action", toJson l.action),
+        ("model", match l.verdict, l.anyHand with
+          | some _, _ => toJson "river-set"
+          | none, some _ => toJson "any-hand"
+          | none, none => Json.null),
         ("label", grade (toJson ·.label.name)),
         ("worth_bb", grade fun v =>
           Json.mkObj [("call", v.worthCall.json 2), ("fold", v.worthFold.json 2)]),

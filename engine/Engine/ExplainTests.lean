@@ -66,7 +66,8 @@ def hasKey (j : Json) (k : String) : Bool := (j.getObjVal? k).toOption.isSome
     | .error _ => false
   | none => false
 
--- An ungraded move has no `range` key at all.
+-- A move without a river-set grade has no `range` key at all (here a preflop fold, graded
+-- against any hand).
 #guard match sessionAfter (foldThenNext.take 2) with
   | some s => reviewLine s 1 0 != Json.null && !hasKey (reviewLine s 1 0) "range"
   | none => false

@@ -79,14 +79,16 @@ def foldThenNext := [start42, "{\"cmd\":\"act\",\"action\":\"fold\"}", "{\"cmd\"
       && (s.game.hand.ended.isSome || s.botReasons.isNone)
   | none => false
 
--- The review of hand 1 lists the human's one move, not graded. Reviewing changes nothing.
+-- The review of hand 1 lists the human's one move: a fold that answers a bet before the
+-- river, so it is graded against any hand. Reviewing changes nothing.
 #guard
   let r := runLines (foldThenNext ++ ["{\"cmd\":\"review\",\"hand\":1}", "{\"cmd\":\"state\"}"])
   let review := field r[3]! "review"
-  !isError r[3]! && stateOf r[3]! == stateOf r[4]!
-    && field review "decisions" == Json.arr #[Json.mkObj
-      [("street", "preflop"), ("your_action", "fold"), ("label", Json.null),
-       ("worth_bb", Json.null), ("equity_had", Json.null), ("equity_needed", Json.null)]]
+  let ds := match field review "decisions" with | .arr ds => ds | _ => #[]
+  let d := ds[0]?.getD Json.null
+  !isError r[3]! && stateOf r[3]! == stateOf r[4]! && ds.size == 1
+    && field d "street" == toJson "preflop" && field d "your_action" == toJson "fold"
+    && field d "model" == toJson "any-hand" && field d "label" != Json.null
 
 -- No review for a hand not dealt yet, or hand 0.
 #guard (runLines (foldThenNext ++ ["{\"cmd\":\"review\",\"hand\":3}"])).map isError

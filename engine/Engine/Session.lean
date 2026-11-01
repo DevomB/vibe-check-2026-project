@@ -1,6 +1,7 @@
 import Engine.Bot
 import Engine.Slider
 import Engine.Review
+import Engine.AnyHand
 
 /-!
 # Engine: one game session, as the game program runs it
@@ -37,6 +38,8 @@ structure Decision where
   action : String
   /-- Only for a call or fold that answers the bot's opening river bet: what to grade. -/
   graded : Option (RiverSpot × RiverChoice) := none
+  /-- For any other call or fold that answers a bet: what to grade against any hand. -/
+  facing : Option (FacingSpot × RiverChoice) := none
 
 /-- What is kept about one hand for its review: the human's moves and the bot's reasons. -/
 structure HandLog where
@@ -212,7 +215,8 @@ def Session.start (seed risk : Nat) : Except String Session := do
   return Session.dealt { game := g, sliders := Sliders.ofRisk risk, risk } g (fun _ => startingStack)
 
 /-- The human makes move `a`, then the bot plays. A call or fold that answers the bot's
-opening river bet is kept for grading; a raise is not graded. -/
+opening river bet is kept for the river grade. Any other call or fold that answers a bet is
+kept for the any-hand grade. Checks, bets and raises are not graded. -/
 def Session.humanAct (s : Session) (a : Action) : Except String Session := do
   let h := s.game.hand
   if h.ended.isSome then throw "the hand is over"
@@ -222,7 +226,11 @@ def Session.humanAct (s : Session) (a : Action) : Except String Session := do
     | some spot, .call => some (spot, RiverChoice.call)
     | some spot, .fold => some (spot, .fold)
     | _, _ => none
-  let d : Decision := { street := h.street, action := moveWord h.chips a, graded }
+  let facing := match s.riverSpot, a with
+    | none, .call => if h.chips.toCall > 0 then some (facingSpotOf h, RiverChoice.call) else none
+    | none, .fold => if h.chips.toCall > 0 then some (facingSpotOf h, .fold) else none
+    | _, _ => none
+  let d : Decision := { street := h.street, action := moveWord h.chips a, graded, facing }
   let next := { next with riverSpot := none }.logHand fun l => { l with decisions := l.decisions.push d }
   return Session.runBot botFuel next
 
@@ -254,6 +262,8 @@ structure ReviewLine where
   street : Street
   action : String
   verdict : Option RiverVerdict
+  /-- The any-hand grade, for any other call or fold that answers a bet. -/
+  anyHand : Option RiverVerdict := none
 
 /-- The review of hand `n`: every move the human made in it, in order, with a grade for each
 graded one. Reading a review changes nothing and uses no randomness. -/
@@ -262,4 +272,5 @@ def Session.review (s : Session) (n : Nat) : Except String (Array ReviewLine) :=
   let some log := s.logs[n - 1]? | throw "no review for that hand"
   return log.decisions.map fun d =>
     { street := d.street, action := d.action,
-      verdict := d.graded.map fun (spot, choice) => reviewRiver spot choice }
+      verdict := d.graded.map fun (spot, choice) => reviewRiver spot choice,
+      anyHand := d.facing.map fun (spot, choice) => reviewAnyHand spot choice }
