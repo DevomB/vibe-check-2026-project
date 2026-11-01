@@ -8,7 +8,7 @@
  */
 
 /** The ids the drawer can be opened at. The review uses "review", "risk" and "hindsight". */
-export type GuaranteeId = "chips" | "cards" | "legal" | "risk" | "review" | "equity" | "bluff" | "bluffcatcher" | "hindsight" | "ends";
+export type GuaranteeId = "chips" | "cards" | "legal" | "risk" | "review" | "equity" | "bluff" | "bluffcatcher" | "equilibrium" | "hindsight" | "ends";
 
 export interface Guarantee {
   id: GuaranteeId;
@@ -272,6 +272,38 @@ export const GUARANTEES: readonly Guarantee[] = [
       "Your own cards remove some of the bot's hands, so the real share at the table moves a little either way. The review counts this exactly.",
       "This is one half of an equilibrium: it is about your call or fold, not about whether the bot should bet.",
       "It ignores the earlier betting, like the rest of the river model.",
+    ],
+  },
+  {
+    id: "equilibrium",
+    code: "T7c",
+    title: "Calling half the time makes the bot's bluffs break even",
+    says: [
+      "The bot bets the pot on the river. A bluff gains nothing over checking exactly when you call with half of your hands. Call more and its bluffs lose chips; call less and they win.",
+      "For any bet size, a bluff breaks even exactly when your calls times the bet equal your folds times the pot.",
+      "Betting a value hand never gains less than checking it.",
+      "Together with T7b: if your hand beats every bluff and loses to every value hand, neither you nor the bot can gain by changing only your own play exactly when one bet in three is a bluff and you call half the time. That is the river equilibrium.",
+      "The real bot's river bet is pot-sized: when it opens the river with a bet and the pot is a legal size, it bets exactly the pot.",
+    ],
+    theorems: [
+      "bluff_total",
+      "bluff_breaks_even_iff",
+      "half_calls_bluff_breaks_even",
+      "more_calls_bluff_loses",
+      "fewer_calls_bluff_wins",
+      "value_bet_never_worse",
+      "river_equilibrium_iff",
+      "bot_river_bet_is_pot_sized",
+    ],
+    assumes: [
+      "A bluff loses every showdown and a value hand wins every one.",
+      "Your possible hands are equally likely; calling with half of them is how 'call half the time' is counted.",
+      "For the bot's bet size: the river, nothing to call, and the pot is a legal bet. If the bot has less than the pot, it bets all-in instead.",
+    ],
+    limits: [
+      "It is about one river decision, not whole hands or games. The earlier betting is ignored.",
+      "The bot's Risk 50 set is two bluffs short of one third (T7b), so the real bot is close to this equilibrium, not exactly on it.",
+      "It does not say the bot's play on earlier streets is in equilibrium.",
     ],
   },
   {

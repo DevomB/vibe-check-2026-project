@@ -2,8 +2,8 @@
 
 Sun Nov 1, 2026, main at c2f4034. Every theorem named here is stated in
 [`engine/Checks/Challenge.lean`](../engine/Checks/Challenge.lean), proved under
-`engine/Engine/Proofs/`, listed in [`engine/comparator.json`](../engine/comparator.json) (79
-names since main at 6230d04, which added the ten bluff-catcher theorems; see [GUARANTEES.md](GUARANTEES.md) for the full
+`engine/Engine/Proofs/`, listed in [`engine/comparator.json`](../engine/comparator.json) (87
+names since the bluff-catcher and equilibrium theorems were added; see [GUARANTEES.md](GUARANTEES.md) for the full
 table), and checked on every push to main by `checks/audit.sh`, `lake comparator` and
 `lake check`, using only the three standard axioms. The README's "What we trust" section lists
 the definitions a reader must still read. Most important first.
@@ -70,10 +70,21 @@ the definitions a reader must still read. Most important first.
    percent hits one third, and 33 is the closest (`no_bluff_setting_is_exact`,
    `bluff_33_is_closest`). This is half of an equilibrium: your side, not the bot's.
 
+8. **The bot's side, and the river equilibrium (game theory, part 2).** The bot's river bet is
+   pot-sized whenever the pot is a legal size (`bot_river_bet_is_pot_sized`). A pot-sized bluff
+   gains nothing over checking exactly when you call with half of your hands
+   (`half_calls_bluff_breaks_even`; any bet size: `bluff_breaks_even_iff`); call more and bluffs
+   lose, call less and they win (`more_calls_bluff_loses`, `fewer_calls_bluff_wins`). Betting
+   a value hand is never worse than checking it (`value_bet_never_worse`). Together:
+   with a bluff catcher, neither side can gain by changing only its own play exactly when one
+   bet in three is a bluff and you call half the time (`river_equilibrium_iff`). Risk 50 is
+   two bluffs short of that (item 7), so the real bot is near this equilibrium, not on it.
+
 ## Not proved, most important first
 
-1. **That the bot plays well.** No theorem about winning or exploitability, and only the
-   caller's half of the river equilibrium (item 7 above). It
+1. **That the bot plays well.** No theorem about winning or exploitability over whole
+   games. The river equilibrium is proved for one decision in a simple model (items 7 and 8):
+   bluffs always lose, value hands always win, and the earlier betting is ignored. It
    would need a best-response computation over the whole game. The bot is a fixed-rule bot;
    Risk 50 matches the textbook bluff ratio inside its own river set, which is not a claim of
    optimal play. See [THEORY.md](THEORY.md), sections 3 and 6.

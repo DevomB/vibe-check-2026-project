@@ -148,9 +148,10 @@ weakest; registered on this branch from `sunday/review-fixes`).
 **Formula.** Against a bet S into a pot P, the caller must continue with share P / (P + S) of
 its hands for a pure bluff to break even. For a pot-sized bet that is 1/2.
 
-**Where.** Nowhere. We checked `engine/` on 2026-11-01: the engine does not compute this number.
-The review grades each call by pot odds against the bot's actual set (2.1), not by how often you
-defend.
+**Where.** Proved in `engine/Engine/Proofs/Equilibrium.lean`: a pot-sized bluff breaks even
+exactly when you call with half of your hands (`half_calls_bluff_breaks_even`; any bet size:
+`bluff_breaks_even_iff`). The engine still does not compute this number during play; the review
+grades each call by pot odds against the bot's actual set (2.1), not by how often you defend.
 
 **Source.** A03 works it out next to the bluff share, in a simpler model than von Neumann's:
 a bluff never wins at showdown and giving up scores 0. A03 marks it as "not exactly von
@@ -254,6 +255,14 @@ hands (312 value, 152 bluffs left), so folding is right; Q♣ T♣ blocks bluffs
 bluffs left), so calling is right. The review counts these blockers exactly
 (`review_both_best_iff_one_third`, and the `#guard` checks in the same file).
 
+**The bot's half, also proved** (`engine/Engine/Proofs/Equilibrium.lean`). The bot really bets
+the pot on the river when it can (`bot_river_bet_is_pot_sized`). Against a pot-sized bet, a
+bluff breaks even exactly when you call half the time (`half_calls_bluff_breaks_even`), and a
+value bet is never worse than a check (`value_bet_never_worse`). Put together with the caller's
+half: with a bluff catcher, neither side can gain by changing only its own play exactly when one
+bet in three is a bluff and you call half the time (`river_equilibrium_iff`). That is the river
+equilibrium of this simple model. Risk 50 sits two bluffs off it.
+
 ## 4. The market-making reading
 
 Calling a river bet is like a market maker deciding whether to trade with a customer who may
@@ -332,7 +341,7 @@ The README's "What we trust" section is the list of record. The items that bear 
 |---|---|---|---|
 | One slider to two numbers | `Sliders.ofRisk` | `engine/Engine/Slider.lean` 39 | `ofRisk_bluff_le_60`, `ofRisk_bluff_monotone`, `ofRisk_caution_antitone`, `ideal_is_textbook` |
 | Loss weight 1 + caution/50 | `callPays` | `engine/Engine/Slider.lean` 98 | `callPays_iff_takes`, `risk_monotone`, `more_risk_takes_fewer_gambles`, `more_risk_never_folds_a_call` |
-| Pot-sized river bet | `View.potBetTarget`, `riverBetOrCheck` | `engine/Engine/Slider.lean` 165, 178 | none about the size: `bot_bets_its_set` says which hands bet; the pot sizing (`clampTo v.potBetTarget`) is code with no theorem |
+| Pot-sized river bet | `View.potBetTarget`, `riverBetOrCheck` | `engine/Engine/Slider.lean` 165, 178 | `bot_river_bet_is_pot_sized` (the bet is exactly the pot when that is a legal size); `bot_bets_its_set` says which hands bet |
 | The bot's move | `decideView`, `botDecide` | `engine/Engine/Slider.lean` 195, 230 | `botDecide_legal`, `botDecide_risk_monotone`, `botDecide_action_shown`, `botDecide_no_bet_off_river`, `more_risk_never_folds_a_call`, `more_bluff_never_checks_a_bet`, `more_risk_never_checks_a_bet` |
 | Value hands (30%) and bluff count | `valuePct`, `valueCount`, `bluffCount`, `riverBettingSet` | `engine/Engine/River.lean` 22, 70, 75, 81 | `bluff_frequency`, `value_and_bluffs_apart`, `value_strongest`, `bluffs_weakest`, `ideal_river_set` |
 | Exact counts | `riverCounts`, `turnCounts`, `countsFor` | `engine/Engine/Equity.lean` 79, 112, 175 | `enumeration_exact`, `countsFor_river`, `countsFor_turn` |

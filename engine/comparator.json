@@ -80,7 +80,15 @@
     "risk50_two_bluffs_short",
     "risk50_bluff_catcher_call_loses",
     "no_bluff_setting_is_exact",
-    "bluff_33_is_closest"
+    "bluff_33_is_closest",
+    "bluff_total",
+    "bluff_breaks_even_iff",
+    "half_calls_bluff_breaks_even",
+    "more_calls_bluff_loses",
+    "fewer_calls_bluff_wins",
+    "value_bet_never_worse",
+    "river_equilibrium_iff",
+    "bot_river_bet_is_pot_sized"
   ],
   "permitted_axioms": [
     "propext",

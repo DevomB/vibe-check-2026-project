@@ -5,6 +5,7 @@ import Engine.Proofs.EquitySpec
 import Engine.Proofs.BluffSpec
 import Engine.Proofs.ReviewSpec
 import Engine.Proofs.BluffCatcherSpec
+import Engine.Proofs.EquilibriumSpec
 import Engine.Proofs.EndsSpec
 import Engine.Proofs.BoardSpec
 import Engine.Protocol
@@ -593,3 +594,58 @@ value = 2 × bluffs, and 33% (Risk 50) is exactly 4 away. -/
 theorem bluff_33_is_closest :
     (∀ b ≤ 60, 4 ≤ ((324 : Int) - 2 * bluffCount 324 b).natAbs) ∧
       ((324 : Int) - 2 * bluffCount 324 33).natAbs = 4 := sorry
+
+/-! ## Game theory on the river: the bot's side and the equilibrium (see `Engine/Proofs/Equilibrium.lean`)
+
+The definitions (`bluffTotal`, `valueTotal`, `callCount`, `RiverEquilibrium`) are in
+`Engine/Proofs/EquilibriumSpec.lean`. -/
+
+/-- **What a bluff wins.** Betting a bluff of `bet` into `pot` wins the pot for each fold and
+loses the bet for each call, compared with checking it. -/
+theorem bluff_total (answers : List RiverChoice) (pot bet : Nat) :
+    bluffTotal answers pot bet =
+      (answers.count .fold : Int) * pot - (callCount answers : Int) * bet := sorry
+
+/-- **When a bluff breaks even, for any bet.** It gains nothing over checking exactly when
+calls × bet = folds × pot. -/
+theorem bluff_breaks_even_iff (answers : List RiverChoice) (pot bet : Nat) :
+    bluffTotal answers pot bet = 0 ↔ callCount answers * bet = answers.count .fold * pot := sorry
+
+/-- **Calling half the time makes a pot-sized bluff break even.** The bot bets `pot` into
+`pot`. Its bluff gains nothing over checking exactly when you call with half of your hands. -/
+theorem half_calls_bluff_breaks_even (answers : List RiverChoice) (pot : Nat) (hpot : 0 < pot) :
+    bluffTotal answers pot pot = 0 ↔ 2 * callCount answers = answers.length := sorry
+
+/-- **Call more than half the time, and a pot-sized bluff loses chips.** -/
+theorem more_calls_bluff_loses (answers : List RiverChoice) (pot : Nat) (hpot : 0 < pot) :
+    bluffTotal answers pot pot < 0 ↔ answers.length < 2 * callCount answers := sorry
+
+/-- **Call less than half the time, and a pot-sized bluff wins chips.** -/
+theorem fewer_calls_bluff_wins (answers : List RiverChoice) (pot : Nat) (hpot : 0 < pot) :
+    0 < bluffTotal answers pot pot ↔ 2 * callCount answers < answers.length := sorry
+
+/-- **Betting a value hand is never worse than checking it.** It gains the bet for each call
+and nothing for each fold. -/
+theorem value_bet_never_worse (answers : List RiverChoice) (bet : Nat) :
+    valueTotal answers bet = (callCount answers : Int) * bet ∧ 0 ≤ valueTotal answers bet := sorry
+
+/-- **The river equilibrium.** You hold a bluff catcher and the bot bets `pot` into `pot`.
+Neither of you can gain by changing your own play alone exactly when one of the bot's bets in
+three is a bluff and you call with half of your hands. -/
+theorem river_equilibrium_iff (mine : List Nat) (value bluffs : List RankedHand)
+    (answers : List RiverChoice) (pot : Nat) (hpot : 0 < pot)
+    (hc : CatchesBluffs mine value bluffs) :
+    RiverEquilibrium mine value bluffs answers pot ↔
+      3 * bluffs.length = value.length + bluffs.length ∧
+        2 * callCount answers = answers.length := sorry
+
+/-- **The bot's river bet is pot-sized.** On the river with nothing to call, if the bot bets
+(street total `n`) and the pot-sized total, its street bet plus the pot it can win, is a legal
+size, then `n` is exactly that pot-sized total. (When the pot is not a legal size, the bot
+bets the nearest legal size instead: all-in if it has less than the pot.) -/
+theorem bot_river_bet_is_pot_sized (sl : Sliders) (seed : Nat) (hole board : List Card)
+    (s : State) (shown : Option Nat) (h5 : board.length = 5) (h0 : s.toCall = 0)
+    (lo hi : Nat) (hr : s.raiseBounds = some (lo, hi))
+    (hlo : lo ≤ s.bet s.toAct + s.potToWin) (hhi : s.bet s.toAct + s.potToWin ≤ hi)
+    (n : Nat) (hbet : (botDecide sl seed hole board s shown).action = .raiseTo n) :
+    n = s.bet s.toAct + s.potToWin := sorry
