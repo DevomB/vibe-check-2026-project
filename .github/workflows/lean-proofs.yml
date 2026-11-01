@@ -1,0 +1,53 @@
+# Checks the Lean proofs on a fresh Linux machine: build, audit, Comparator, lake check.
+# Comparator and `lake check` need Linux (they build the project in a bubblewrap sandbox).
+#
+# Safe by design: read-only access to the repo, no secrets, runs only when Lean files or
+# this file change, cancels an older run on the same branch, and stops after 30 minutes.
+# It does not block merges; it only reports a pass or fail on the commit.
+name: Lean proofs
+
+on:
+  push:
+    branches: [main]
+    paths: ["engine/**", "checks/**", ".github/workflows/lean-proofs.yml"]
+  pull_request:
+    paths: ["engine/**", "checks/**", ".github/workflows/lean-proofs.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lean-proofs-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  proofs:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Lean (elan, pinned release; the toolchain comes from engine/lean-toolchain)
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/leanprover/elan/v4.2.4/elan-init.sh \
+            | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Install the sandbox Comparator uses (bubblewrap)
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q bubblewrap
+          # Ubuntu 24.04 blocks the user namespaces bubblewrap needs, unless this is 0.
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+
+      - name: Build and audit (no sorry, only the standard axioms)
+        run: checks/audit.sh
+
+      - name: Comparator (each proof states exactly the agreed theorem)
+        working-directory: engine
+        run: lake comparator
+
+      - name: lake check (the kernel re-checks the whole engine)
+        working-directory: engine
+        run: lake check
