@@ -119,7 +119,7 @@ export function Lobby({
           value={bluffPct}
           max={BLUFF_PCT_MAX}
           shown={`${bluffPct}%`}
-          help="How many of the bot's river bets are bluffs with weak hands, from 0% (never) to 60% (often)."
+          help="Target bluff share in the bot's river betting range, from 0% to 60%. The share in played hands can differ."
           onChange={setBluffPct}
         />
 

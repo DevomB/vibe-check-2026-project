@@ -18,7 +18,7 @@ export const TABLE = { startingStack: 500, smallBlind: 5, bigBlind: 10 } as cons
 export interface GameSettings {
   /** How heavily the bot weighs a lost chip when deciding to call, 0 to 100. */
   risk: number;
-  /** Target share of bluffs among the bot's river bets, 0 to 60 (percent). */
+  /** Target bluff share in the bot's defined river betting range, 0 to 60 (percent). */
   bluffPct: number;
   /** Game seed to replay; null deals a new random game. */
   seed: bigint | null;

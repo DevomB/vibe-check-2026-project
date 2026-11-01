@@ -75,7 +75,7 @@ export function RulesModal({ onClose, smallBlind, bigBlind }: { onClose: () => v
               </li>
               <li>
                 <b>Bet / Raise</b>: put in more. This is no-limit: you can bet any amount up to all your chips. A raise must be at least
-                as big as the last bet or raise.
+                as big as the last full bet or raise, unless you are all-in.
               </li>
               <li>
                 <b>All-in</b>: bet all your chips. If you can't match a bet, you can still call all-in for what you have.
@@ -84,8 +84,7 @@ export function RulesModal({ onClose, smallBlind, bigBlind }: { onClose: () => v
 
             <h3>Pots</h3>
             <p>
-              A player who is all-in can only win as much from each opponent as they put in. Extra chips form a <b>side pot</b> that only
-              the players who matched it can win. Equal hands split the pot.
+              With two players, any unmatched part of a bet is returned. Only matched chips can be won. Equal hands split the pot.
             </p>
             <p className="muted">Shortcuts: F fold · C check/call · R bet/raise · Space next hand</p>
           </section>

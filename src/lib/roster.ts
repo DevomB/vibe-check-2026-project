@@ -7,7 +7,7 @@ export interface Opponent {
   style: string;
   /** 0 to 100: how heavily it weighs a lost chip when deciding to call. */
   risk: number;
-  /** 0 to 60: the share of its river bets that are bluffs, in percent. */
+  /** 0 to 60: the target bluff share in its defined river betting range, in percent. */
   bluffPct: number;
 }
 
