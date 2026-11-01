@@ -399,6 +399,18 @@
   color: #e3c47e;
 }
 
+/* The source name opens the source: brass, underlined, never the browser's default blue. */
+.whyPanel cite a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: rgba(227, 196, 126, 0.45);
+  text-underline-offset: 3px;
+}
+
+.whyPanel cite a:hover {
+  text-decoration-color: currentColor;
+}
+
 .citeId {
   color: var(--muted);
   font-size: 12px;
