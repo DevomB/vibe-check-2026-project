@@ -211,7 +211,7 @@ Also check the integrated features:
 | --- | --- | --- | --- | --- | --- | --- |
 | 11 | Range viewer | Vex (0, 60%), seed 6 | Scene (a), open the review | The bot's set on 9s 5d 2c Ks 3d has 324 value hands and 486 bluffs, before your cards are removed (T7: bluffs are the whole number nearest to 324 × 60 / 40). Your cards block some. The beat, tie and lose counts give the 18.5% equity. | [ ] | [ ] |
 | 12 | Risk explorer | Ivy (100, 0%), seed 1 | Scene (b), open the review | The bot's preflop decision folds at Risk 100 and calls at Risk 0. There is one change point between them. | [ ] | [ ] |
-| 13 | Proofs drawer | any | Click "What is guaranteed?" | It lists T1 to T8 in plain words, each with its Lean names. Every name is in `engine/comparator.json`. | [ ] | [ ] |
+| 13 | Proofs drawer | any | Click "What is guaranteed?" | It lists T1 to T9 in plain words, each with its Lean names. Every name in `engine/comparator.json` appears in it. | [ ] | [ ] |
 | 14 | Practice challenges | buttons on the setup screen | Load each, then call or fold | Each stops at the river bet from the table above. The review gives the labels in the table. `right-and-lose` says "Right decision, unlucky result." | [ ] | [ ] |
 | 15 | Mystery game | Mystery on | Play 3 hands, guess, reveal | No slider values or bot reasons show before the reveal. The reveal shows the true Risk and Bluff, and how close the guess was. | [ ] | [ ] |
 
