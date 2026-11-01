@@ -205,12 +205,14 @@ otherwise try to run the 52-card shuffle on an unknown seed inside a proof.
 | `src/` | The Next.js app: `app/api/game/` (the server route), `lean/` (the bridge to the `poker` program), `components/`, `hooks/`, `lib/`. |
 | `checks/` | `audit.sh` (the proof audit) and `http-smoke.mjs` (the HTTP smoke test). |
 | `data/preflop.json` | The preflop table (estimates). |
-| `docs/` | [PITCH.md](docs/PITCH.md) (the pitch and its claim table), [DEMO.md](docs/DEMO.md) (the demo hands and checks), [research/](docs/research/) (background research). |
+| `docs/` | [PITCH.md](docs/PITCH.md) (the pitch and its claim table), [DEMO.md](docs/DEMO.md) (the demo hands and checks), [THEORY.md](docs/THEORY.md) (the formulas behind the slider and the review, with sources), [research/](docs/research/) (background research). |
 | `tests/diff/` | Differential tests and recorded results. |
 
 ## More
 
 - [SPEC.md](SPEC.md): what "correct" means, in plain words, for each theorem.
+- [docs/THEORY.md](docs/THEORY.md): each number the bot and the review use, where Lean
+  computes it, and the source behind it.
 - [MVP.txt](MVP.txt): the original plan and rule decisions. Sections 3-6 still define how
   the game and the bot behave.
 - [RULES.md](RULES.md): the hackathon's judging criteria.
