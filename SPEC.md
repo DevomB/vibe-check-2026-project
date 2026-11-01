@@ -47,10 +47,18 @@ T1 to T9 are proved on `main`. Each is listed with its Lean theorems. The statem
   when the call, with a lost chip counted (1 + caution/50) times, is worth it. The Risk the
   player sets runs the other way (higher means more risk-seeking) and is mapped to caution by
   `Sliders.ofRisk`. For the player's number the statement is `more_risk_never_folds_a_call`:
-  facing a bet, if the bot calls or raises at some Risk, it does so at every higher Risk.
+  facing a bet, if the bot calls or raises at some Risk, it does so at every higher Risk. On
+  the river, more Risk (or a bigger bluff share) never turns a bet into a check
+  (`more_risk_never_checks_a_bet`, `more_bluff_never_checks_a_bet`). Before the river, with
+  nothing to call, the settings play no part (`botDecide_no_bet_off_river`). Along the
+  slider, more Risk never raises caution and never lowers the bluff share
+  (`ofRisk_caution_antitone`, `ofRisk_bluff_monotone`); Risk 50 is caution 0 with a 33% bluff
+  share (`ideal_is_textbook`). The Risk quoted in the bot's reason never changes its move
+  (`botDecide_action_shown`).
 - **T5 the review's labels are sound** (MVP `review_sound`; Lean `review_worth`,
-  `review_lost`, `review_best_iff`, `review_label_monotone`, `review_call_best_iff_equity`).
-  For a graded river call or fold, Best means the choice was worth at least as much as the
+  `review_lost`, `review_best_iff`, `review_label_monotone`, `review_call_best_iff_equity`,
+  with `review_hands_ne_nil` and `botHands_ne_nil_of_board`: the review always has a hand
+  to count). For a graded river call or fold, Best means the choice was worth at least as much as the
   other one, averaged over the bot's possible hands. A decision that lost fewer big blinds
   never gets a worse label.
 - **T6 the exact counts see every outcome once** (MVP `enumeration_exact`; Lean
@@ -58,10 +66,14 @@ T1 to T9 are proved on `main`. Each is listed with its Lean theorems. The statem
   `countsFor_river`, `countsFor_turn`). On the river, each of the 990 opponent hands; on the
   turn, each of the 45,540 (river card, opponent hand) pairs.
 - **T7 the Bluff count** (MVP `bluff_frequency`; Lean `bluff_frequency`,
-  `value_and_bluffs_apart`, `bot_bets_its_set`). On any river board, the bot's betting set
+  `value_and_bluffs_apart`, `bot_bets_its_set`, `botDecide_river_follows_set`,
+  `rankRiverHands_sorted`, `value_strongest`, `bluffs_weakest`, `ideal_river_set`). On any
+  river board, the bot's betting set
   has 324 value hands, and the number of bluffs nearest to 324 x b / (100 - b), where b is the
   bluff share the player's Risk maps to (`Sliders.ofRisk`; `ofRisk_bluff_le_60` keeps it at most
-  60). This is a count in a set of hands, not how often the bot bluffs in play.
+  60). The value hands are the strongest candidates and the bluffs the weakest. At Risk 50
+  the set has 160 bluffs. This is a count in a set of hands, not how often the bot bluffs in
+  play.
 - **T8 no hindsight** (MVP `no_hindsight`; Lean `no_hindsight`, `bot_hand_in_review`). Two
   hands that look the same to the human get the same review, whatever cards the bot really
   holds. The bot's real hand is always one of the hands the review counts.
@@ -120,7 +132,7 @@ These follow `MVP.txt`, which is the team's agreed rule set.
 ## What is proven so far
 
 - **Every theorem in `engine/comparator.json`**: T1 to T9 with the Lean names above, plus
-  the app (session) and review-panel theorems. CI checks them with the axiom audit,
+  the one-slider, app (session) and review-panel theorems. CI checks them with the axiom audit,
   Comparator and `lake check`; the README's evidence line names the green run. Only
   `propext`, `Classical.choice` and `Quot.sound` are used.
 - `no_raise_against_all_in`, `all_in_player_cannot_act`, `player_ahead_cannot_act`,
