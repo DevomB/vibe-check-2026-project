@@ -19,7 +19,8 @@ permissions:
 
 concurrency:
   group: lean-proofs-${{ github.ref }}
-  cancel-in-progress: true
+  # Only cancel older runs on pull requests; every commit on main gets its own verdict.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   proofs:
