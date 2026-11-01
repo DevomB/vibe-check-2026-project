@@ -241,6 +241,19 @@ the river the bot bets on fixed 65% and 75% rules; its win chance is against a r
 your range; the river set ignores the earlier betting; the 30% value cut is ours; and nothing is
 proved about how often any setting wins.
 
+**Now proved, and measured exactly** (`engine/Engine/Proofs/BluffCatcher.lean`). For a hand
+that beats every bluff and loses to every value hand, against a pot-sized bet, calling and
+folding are worth the same exactly when one bet in three is a bluff
+(`one_third_bluffs_indifferent`). Risk 50 does not hit that exactly: 324 value hands need 162
+bluffs and the set has 160 (`risk50_two_bluffs_short`), because 33% is not 1/3. Before your
+own cards remove any hands, calling loses 1/121 of the bet (`risk50_bluff_catcher_call_loses`).
+No whole Bluff percent is exact; 33 is the closest (`bluff_33_is_closest`).
+
+Your two cards matter more than that gap. On A♠ K♥ 2♣ 5♦ 7♣ at Risk 50, T♣ T♦ blocks value
+hands (312 value, 152 bluffs left), so folding is right; Q♣ T♣ blocks bluffs (309 value, 156
+bluffs left), so calling is right. The review counts these blockers exactly
+(`review_both_best_iff_one_third`, and the `#guard` checks in the same file).
+
 ## 4. The market-making reading
 
 Calling a river bet is like a market maker deciding whether to trade with a customer who may

@@ -8,7 +8,7 @@
  */
 
 /** The ids the drawer can be opened at. The review uses "review", "risk" and "hindsight". */
-export type GuaranteeId = "chips" | "cards" | "legal" | "risk" | "review" | "equity" | "bluff" | "hindsight" | "ends";
+export type GuaranteeId = "chips" | "cards" | "legal" | "risk" | "review" | "equity" | "bluff" | "bluffcatcher" | "hindsight" | "ends";
 
 export interface Guarantee {
   id: GuaranteeId;
@@ -237,6 +237,41 @@ export const GUARANTEES: readonly Guarantee[] = [
     limits: [
       "It is about the set of hands, not how often the bot bluffs in played games.",
       "Your cards, the earlier betting and luck change what you see at the table.",
+    ],
+  },
+  {
+    id: "bluffcatcher",
+    code: "T7b",
+    title: "One bluff in three makes calling and folding equal",
+    says: [
+      "Say your hand beats every bluff the bot could hold and loses to every value hand. Against a pot-sized bet, calling and folding are worth the same exactly when one of the bot's bets in three is a bluff.",
+      "With more bluffs than that, calling is worth more. With fewer, folding is worth more.",
+      "For any bet size, they are equal exactly when the number of bluffs times the pot you would win equals the number of value hands times the call.",
+      "The review agrees: it grades both call and fold Best exactly when one third of the bot hands your cards do not block are bluffs.",
+      "At Risk 50 the bot's river set has 324 value hands and 160 bluffs, two short of one third. Before your cards remove any hands, calling a pot-sized bet with such a hand loses 1/121 of the bet on average.",
+      "No whole-number bluff share gives exactly one third beside 324 value hands. 33%, the Risk 50 share, is the closest.",
+    ],
+    theorems: [
+      "bluff_catcher_call_total",
+      "bluff_catcher_indifferent",
+      "one_third_bluffs_indifferent",
+      "more_bluffs_call_better",
+      "fewer_bluffs_fold_better",
+      "review_both_best_iff_one_third",
+      "risk50_two_bluffs_short",
+      "risk50_bluff_catcher_call_loses",
+      "no_bluff_setting_is_exact",
+      "bluff_33_is_closest",
+    ],
+    assumes: [
+      "Your hand beats every bluff and loses to every value hand: no ties.",
+      "For the pot-sized results: the bet equals the pot before it, and you can afford the call.",
+      "For the Risk 50 results: the board has five different cards.",
+    ],
+    limits: [
+      "Your own cards remove some of the bot's hands, so the real share at the table moves a little either way. The review counts this exactly.",
+      "This is one half of an equilibrium: it is about your call or fold, not about whether the bot should bet.",
+      "It ignores the earlier betting, like the rest of the river model.",
     ],
   },
   {

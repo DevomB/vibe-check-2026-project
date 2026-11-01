@@ -2,8 +2,8 @@
 
 Sun Nov 1, 2026, main at c2f4034. Every theorem named here is stated in
 [`engine/Checks/Challenge.lean`](../engine/Checks/Challenge.lean), proved under
-`engine/Engine/Proofs/`, listed in [`engine/comparator.json`](../engine/comparator.json) (69
-names since main at 6b9da7a and this update; see [GUARANTEES.md](GUARANTEES.md) for the full
+`engine/Engine/Proofs/`, listed in [`engine/comparator.json`](../engine/comparator.json) (79
+names since main at 6230d04, which added the ten bluff-catcher theorems; see [GUARANTEES.md](GUARANTEES.md) for the full
 table), and checked on every push to main by `checks/audit.sh`, `lake comparator` and
 `lake check`, using only the three standard axioms. The README's "What we trust" section lists
 the definitions a reader must still read. Most important first.
@@ -59,9 +59,21 @@ the definitions a reader must still read. Most important first.
    `exploreHand_risk_monotone`). The range viewer's numbers add up and are the review's own
    counts (`rangeOf_adds_up`, `rangeOf_counts`).
 
+7. **The bluff catcher (game theory, part 1).** Say your hand beats every bluff and loses to
+   every value hand. Against a pot-sized bet, calling and folding are worth the same exactly
+   when one bet in three is a bluff (`one_third_bluffs_indifferent`; any bet size:
+   `bluff_catcher_indifferent`). With more bluffs calling is better, with fewer folding is
+   (`more_bluffs_call_better`, `fewer_bluffs_fold_better`). The review grades both choices Best
+   exactly then (`review_both_best_iff_one_third`). The real Risk 50 set is two bluffs short of
+   one third, 160 against 162 (`risk50_two_bluffs_short`), so before your cards remove any
+   hands, calling loses 1/121 of the bet (`risk50_bluff_catcher_call_loses`). No whole Bluff
+   percent hits one third, and 33 is the closest (`no_bluff_setting_is_exact`,
+   `bluff_33_is_closest`). This is half of an equilibrium: your side, not the bot's.
+
 ## Not proved, most important first
 
-1. **That the bot plays well.** No theorem about winning, exploitability or equilibrium. It
+1. **That the bot plays well.** No theorem about winning or exploitability, and only the
+   caller's half of the river equilibrium (item 7 above). It
    would need a best-response computation over the whole game. The bot is a fixed-rule bot;
    Risk 50 matches the textbook bluff ratio inside its own river set, which is not a claim of
    optimal play. See [THEORY.md](THEORY.md), sections 3 and 6.
