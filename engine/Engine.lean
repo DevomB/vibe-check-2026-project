@@ -38,6 +38,9 @@ import Engine.Proofs.Buttons
 import Engine.Proofs.GameHands
 import Engine.Proofs.Liveness
 import Engine.Proofs.NoPeek
+import Engine.Proofs.Kuhn
+import Engine.KuhnGame
+import Engine.Proofs.KuhnGame
 import Engine.Proofs.Deck
 import Engine.Proofs.ReviewSpec
 import Engine.Proofs.Review

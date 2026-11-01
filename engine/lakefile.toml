@@ -32,3 +32,8 @@ root = "RiverBench"
 [[lean_exe]]
 name = "difftest"
 root = "DiffTest"
+
+# Play Kuhn poker in the terminal against the proven equilibrium bot (Engine/KuhnGame.lean).
+[[lean_exe]]
+name = "kuhn"
+root = "KuhnMain"
