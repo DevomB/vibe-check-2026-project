@@ -1,9 +1,9 @@
 # What is proved, and what is not
 
-Sun Nov 1, 2026, main after the river-game merge (85 Comparator names). Every theorem named here is stated in
+Sun Nov 1, 2026, main at c2f4034. Every theorem named here is stated in
 [`engine/Checks/Challenge.lean`](../engine/Checks/Challenge.lean), proved under
-`engine/Engine/Proofs/`, listed in [`engine/comparator.json`](../engine/comparator.json) (79
-names since main at 6230d04, which added the ten bluff-catcher theorems; see [GUARANTEES.md](GUARANTEES.md) for the full
+`engine/Engine/Proofs/`, listed in [`engine/comparator.json`](../engine/comparator.json) (87
+names since the bluff-catcher and equilibrium theorems were added; see [GUARANTEES.md](GUARANTEES.md) for the full
 table), and checked on every push to main by `checks/audit.sh`, `lake comparator` and
 `lake check`, using only the three standard axioms. The README's "What we trust" section lists
 the definitions a reader must still read. Most important first.
@@ -59,31 +59,33 @@ the definitions a reader must still read. Most important first.
    `exploreHand_risk_monotone`). The range viewer's numbers add up and are the review's own
    counts (`rangeOf_adds_up`, `rangeOf_counts`).
 
-7. **The one-street river model: both sides.** Say your hand beats every bluff and loses to
-   every value hand. Calling is worth `2 × (bluffs × prize − value × cost)` half-chips
-   (`bluff_catcher_call_total`); calling and folding are worth the same exactly when
-   `bluffs × prize = value × cost` (`bluff_catcher_indifferent`), and against a pot-sized bet
-   exactly when one bet in three is a bluff, with more bluffs favouring the call and fewer the
-   fold (`one_third_bluffs_indifferent`, `more_bluffs_call_better`, `fewer_bluffs_fold_better`);
-   for any bet size, more bluffs never make the call worth less (`more_bluffs_more_call_total`).
-   The review grades both choices Best exactly at one third of the hands you do not block
-   (`review_both_best_iff_one_third`). The real Risk 50 set is two bluffs short of one third,
-   160 against 162 (`risk50_two_bluffs_short`), so before your cards remove any hands calling
-   loses 1/121 of the bet (`risk50_bluff_catcher_call_loses`); no whole bluff percent hits one
-   third and 33 is the closest (`no_bluff_setting_is_exact`, `bluff_33_is_closest`). At Risk 100
-   calling it down gains 0.8 bets per call, at Risk 0 every call loses the bet
-   (`maniac_bluff_catcher_total`, `rock_bluff_catcher_total`). On the bot's side, a bluff breaks
-   even exactly when you call with `pot / (pot + bet)` of your bluff catchers, loses if you call
-   more and gains if you call less (`bettor_indifferent_iff`, `defend_more_bluff_loses`,
-   `defend_less_bluff_gains`). Both indifference equations of the one-street model, and only
-   that model: see THEORY.md section 7.
+7. **The bluff catcher (game theory, part 1).** Say your hand beats every bluff and loses to
+   every value hand. Against a pot-sized bet, calling and folding are worth the same exactly
+   when one bet in three is a bluff (`one_third_bluffs_indifferent`; any bet size:
+   `bluff_catcher_indifferent`). With more bluffs calling is better, with fewer folding is
+   (`more_bluffs_call_better`, `fewer_bluffs_fold_better`). The review grades both choices Best
+   exactly then (`review_both_best_iff_one_third`). The real Risk 50 set is two bluffs short of
+   one third, 160 against 162 (`risk50_two_bluffs_short`), so before your cards remove any
+   hands, calling loses 1/121 of the bet (`risk50_bluff_catcher_call_loses`). No whole Bluff
+   percent hits one third, and 33 is the closest (`no_bluff_setting_is_exact`,
+   `bluff_33_is_closest`). This is half of an equilibrium: your side, not the bot's.
+
+8. **The bot's side, and the river equilibrium (game theory, part 2).** The bot's river bet is
+   pot-sized whenever the pot is a legal size (`bot_river_bet_is_pot_sized`). A pot-sized bluff
+   gains nothing over checking exactly when you call with half of your hands
+   (`half_calls_bluff_breaks_even`; any bet size: `bluff_breaks_even_iff`); call more and bluffs
+   lose, call less and they win (`more_calls_bluff_loses`, `fewer_calls_bluff_wins`). Betting
+   a value hand is never worse than checking it (`value_bet_never_worse`). Together:
+   with a bluff catcher, neither side can gain by changing only its own play exactly when one
+   bet in three is a bluff and you call half the time (`river_equilibrium_iff`). Risk 50 is
+   two bluffs short of that (item 7), so the real bot is near this equilibrium, not on it.
 
 ## Not proved, most important first
 
-1. **That the bot plays well.** No theorem about winning or exploitability, and only the
-   one-street river model's two indifference equations (item 7 above); the bot as caller does
-   not defend at that frequency, and nothing is proved about earlier streets, bet sizing or
-   whole games. A real claim would need a best-response computation over the whole game. The bot is a fixed-rule bot;
+1. **That the bot plays well.** No theorem about winning or exploitability over whole
+   games. The river equilibrium is proved for one decision in a simple model (items 7 and 8):
+   bluffs always lose, value hands always win, and the earlier betting is ignored. It
+   would need a best-response computation over the whole game. The bot is a fixed-rule bot;
    Risk 50 matches the textbook bluff ratio inside its own river set, which is not a claim of
    optimal play. See [THEORY.md](THEORY.md), sections 3 and 6.
 

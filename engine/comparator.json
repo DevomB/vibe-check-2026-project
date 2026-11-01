@@ -81,12 +81,17 @@
     "risk50_bluff_catcher_call_loses",
     "no_bluff_setting_is_exact",
     "bluff_33_is_closest",
+    "bluff_total",
+    "bluff_breaks_even_iff",
+    "half_calls_bluff_breaks_even",
+    "more_calls_bluff_loses",
+    "fewer_calls_bluff_wins",
+    "value_bet_never_worse",
+    "river_equilibrium_iff",
+    "bot_river_bet_is_pot_sized",
     "more_bluffs_more_call_total",
     "maniac_bluff_catcher_total",
-    "rock_bluff_catcher_total",
-    "bettor_indifferent_iff",
-    "defend_more_bluff_loses",
-    "defend_less_bluff_gains"
+    "rock_bluff_catcher_total"
   ],
   "permitted_axioms": [
     "propext",

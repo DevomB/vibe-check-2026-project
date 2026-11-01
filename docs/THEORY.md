@@ -44,7 +44,7 @@ for every value `ofRisk` can produce. The theorems about the map itself are in s
 ### 1.1 The twelve theorems of the one-slider change, in plain words
 
 All twelve are registered in `engine/Checks/Challenge.lean` and `engine/comparator.json`
-(85 names in all after the river-game theorems of section 7), so Comparator checks
+(61 names in all, with the three merged from `sunday/review-fixes`), so Comparator checks
 each statement. Seven are in `engine/Engine/Proofs/OneSlider.lean`, three in
 `engine/Engine/Proofs/Explain.lean`, two in `engine/Engine/Proofs/OneSliderRiver.lean`.
 
@@ -148,11 +148,10 @@ weakest; registered on this branch from `sunday/review-fixes`).
 **Formula.** Against a bet S into a pot P, the caller must continue with share P / (P + S) of
 its hands for a pure bluff to break even. For a pot-sized bet that is 1/2.
 
-**Where.** Nowhere. We checked `engine/` on 2026-11-01: the engine does not compute this number.
-`bettor_indifferent_iff` (section 7) states it as a theorem about the model's `bluffGain`; the
-engine still computes no such number, and the bot's own calls do not use it.
-The review grades each call by pot odds against the bot's actual set (2.1), not by how often you
-defend.
+**Where.** Proved in `engine/Engine/Proofs/Equilibrium.lean`: a pot-sized bluff breaks even
+exactly when you call with half of your hands (`half_calls_bluff_breaks_even`; any bet size:
+`bluff_breaks_even_iff`). The engine still does not compute this number during play; the review
+grades each call by pot odds against the bot's actual set (2.1), not by how often you defend.
 
 **Source.** A03 works it out next to the bluff share, in a simpler model than von Neumann's:
 a bluff never wins at showdown and giving up scores 0. A03 marks it as "not exactly von
@@ -256,6 +255,14 @@ hands (312 value, 152 bluffs left), so folding is right; Q♣ T♣ blocks bluffs
 bluffs left), so calling is right. The review counts these blockers exactly
 (`review_both_best_iff_one_third`, and the `#guard` checks in the same file).
 
+**The bot's half, also proved** (`engine/Engine/Proofs/Equilibrium.lean`). The bot really bets
+the pot on the river when it can (`bot_river_bet_is_pot_sized`). Against a pot-sized bet, a
+bluff breaks even exactly when you call half the time (`half_calls_bluff_breaks_even`), and a
+value bet is never worse than a check (`value_bet_never_worse`). Put together with the caller's
+half: with a bluff catcher, neither side can gain by changing only its own play exactly when one
+bet in three is a bluff and you call half the time (`river_equilibrium_iff`). That is the river
+equilibrium of this simple model. Risk 50 sits two bluffs off it.
+
 ## 4. The market-making reading
 
 Calling a river bet is like a market maker deciding whether to trade with a customer who may
@@ -328,100 +335,13 @@ The README's "What we trust" section is the list of record. The items that bear 
   Matching the textbook bluff ratio inside a board-only river set is not a proof of good play.
 - The market-making reading in section 4 is an explanation, not a theorem.
 
-## 7. Equilibrium: what is proved, what is measured, what is not claimed
-
-Sixteen theorems cover the one-street river model behind "matches the textbook ratio": ten in
-`engine/Engine/Proofs/BluffCatcher.lean` (the caller's side and the real Risk 50 set) and six in
-`engine/Engine/Proofs/RiverGame.lean` (the other Risk settings, any bet size, and the bettor's
-side). All are registered in `engine/Checks/Challenge.lean` and `engine/comparator.json`. They
-use the review's own chip arithmetic (`choiceTotal`, `callResult`, section 2.1), so they are
-about the code the app runs.
-
-### The setting, copied from A03
-
-One final bet on the river. The bot has bet; you can only call or fold. Your hand is a **bluff
-catcher** (`CatchesBluffs`): it loses to every value hand and beats every bluff, with no ties.
-Chips count at face value, the bet is the effective bet, and there is no rake. These are A03's
-conditions (section 2.2). "The bot's hands" means its board-only river set (section 2.2); in
-the review theorem they are the hands of that set your cards do not block
-(`RiverSpot.valueHands`, `RiverSpot.bluffHands`).
-
-### The caller's side (BluffCatcher.lean)
-
-- `bluff_catcher_call_total`. With a bluff catcher, calling wins the prize against each bluff
-  and loses the call against each value hand: `2 × (bluffs × prize − value × cost)` half-chips
-  in all. Nothing else counts.
-- `bluff_catcher_indifferent`. For any bet size, calling and folding are worth the same exactly
-  when `bluffs × prize = value × cost`.
-- `one_third_bluffs_indifferent`, `more_bluffs_call_better`, `fewer_bluffs_fold_better`. For a
-  pot-sized bet that is exactly when one bet in three is a bluff; with more bluffs calling is
-  better, with fewer folding is better.
-- `review_both_best_iff_one_third`. The app's review, on a real spot with a pot-sized bet you
-  can afford, grades both call and fold Best exactly when one third of the bot hands you do not
-  block are bluffs. This is the theorem that goes through the real review, blockers included.
-- `risk50_two_bluffs_short`, `risk50_bluff_catcher_call_loses`. The Risk 50 set has 324 value
-  hands and 160 bluffs; one third would need 162. So against the whole set, before your cards
-  remove any hands, calling a pot-sized bet loses 8 × bet half-chips over 484 hands: 1/121 of
-  the bet per decision, under 1%.
-- `no_bluff_setting_is_exact`, `bluff_33_is_closest`. No whole-number bluff share from 0 to 60
-  gives exactly one third; every share is at least 4 hands away, and 33% (Risk 50) is exactly
-  4 away.
-
-### The other settings, any bet, and the bettor's side (RiverGame.lean)
-
-- `maniac_bluff_catcher_total`. Against the Risk 100 set (486 bluffs) and a pot-sized bet of `b`
-  chips, calling totals `+1296 × b` half-chips over 810 hands: 0.8 bets per call. Calling the
-  maniac down wins.
-- `rock_bluff_catcher_total`. Against the Risk 0 set (no bluffs), calling totals `−648 × b`
-  half-chips over 324 hands: every call loses the bet. Folding to the rock is right.
-- `more_bluffs_more_call_total`. For any bet size, adding bluffs to the set never makes a bluff
-  catcher's call worth less.
-- `bettor_indifferent_iff`. The bot's side of the same model. A bluff gains over checking what
-  it wins when you fold (the pot) less what it loses when you call (the bet):
-  `bluffGain = (hands − calls) × pot − calls × bet`. It breaks even exactly when
-  `calls × (pot + bet) = hands × pot`, that is when you call with `pot / (pot + bet)` of your
-  bluff catchers: the minimum defence frequency of section 2.3, one half against a pot-sized
-  bet.
-- `defend_more_bluff_loses`, `defend_less_bluff_gains`. Defend more than that share and every
-  bluff loses chips; defend less and every bluff gains.
-
-Together the two sides are the two indifference equations of A03's model: the bettor's bluff
-share makes the caller indifferent, and the caller's defence share makes the bettor indifferent.
-
-### What is measured, not chosen
-
-The numbers come from the set sizes the engine really uses (324 value hands; 160, 486 or 0
-bluffs), proved by computing them; the 30% value cut and the 33% share are our choices
-(section 3). Your two cards move the result more than the two-hand gap does: on
-A♠ K♥ 2♣ 5♦ 7♣ at Risk 50, T♣ T♦ blocks value hands (312 value, 152 bluffs left) and folding is
-right, while Q♣ T♣ blocks bluffs (309 value, 156 bluffs left) and calling is right (the `#guard`
-checks in BluffCatcher.lean; section 3). The three Risk-setting totals are over the whole set,
-before blockers; only `review_both_best_iff_one_third` is stated with them removed. The
-real-board instances of the whole-set theorems are checked by compiled `#guard`s, because the
-kernel's `decide` would have to rank 1,081 hands; the small-range theorems have kernel examples.
-
-### What is not claimed
-
-- **The bot as caller is not at the defence frequency.** When the bot faces a river bet it calls
-  by `callPays` (section 2.4), a count against a random hand, not a share of its own hands. The
-  bettor-side theorems describe your choice against the bot's bluffs; they say nothing about
-  how the bot defends, so the bot does not play the equilibrium strategy on both sides.
-- **Nothing beyond one street.** No theorem looks at the flop, the turn, the betting that led to
-  the river, or the bet size the bot chooses (its pot-sized bet is a fixed rule, section 2.2).
-- **A bluff catcher is an assumption.** With a hand that beats some value hands or loses to some
-  bluffs, or with ties, `CatchesBluffs` fails and these totals do not apply; the review's grade
-  still does, because it counts the real hands.
-- **"Equilibrium" means the one-street indifference of A03's model**, with the bot's board-only
-  set as its range. It is not a claim that the bot, or any Risk setting, is unexploitable in
-  Hold'em, and sections 3 and 6 still apply: nothing here says the bot plays well.
-
 ## Appendix: where each number lives
 
 | Number | Lean function | File and line | Theorems |
 |---|---|---|---|
 | One slider to two numbers | `Sliders.ofRisk` | `engine/Engine/Slider.lean` 39 | `ofRisk_bluff_le_60`, `ofRisk_bluff_monotone`, `ofRisk_caution_antitone`, `ideal_is_textbook` |
 | Loss weight 1 + caution/50 | `callPays` | `engine/Engine/Slider.lean` 98 | `callPays_iff_takes`, `risk_monotone`, `more_risk_takes_fewer_gambles`, `more_risk_never_folds_a_call` |
-| Pot-sized river bet | `View.potBetTarget`, `riverBetOrCheck` | `engine/Engine/Slider.lean` 165, 178 | none about the size: `bot_bets_its_set` says which hands bet; the pot sizing (`clampTo v.potBetTarget`) is code with no theorem |
+| Pot-sized river bet | `View.potBetTarget`, `riverBetOrCheck` | `engine/Engine/Slider.lean` 165, 178 | `bot_river_bet_is_pot_sized` (the bet is exactly the pot when that is a legal size); `bot_bets_its_set` says which hands bet |
 | The bot's move | `decideView`, `botDecide` | `engine/Engine/Slider.lean` 195, 230 | `botDecide_legal`, `botDecide_risk_monotone`, `botDecide_action_shown`, `botDecide_no_bet_off_river`, `more_risk_never_folds_a_call`, `more_bluff_never_checks_a_bet`, `more_risk_never_checks_a_bet` |
 | Value hands (30%) and bluff count | `valuePct`, `valueCount`, `bluffCount`, `riverBettingSet` | `engine/Engine/River.lean` 22, 70, 75, 81 | `bluff_frequency`, `value_and_bluffs_apart`, `value_strongest`, `bluffs_weakest`, `ideal_river_set` |
 | Exact counts | `riverCounts`, `turnCounts`, `countsFor` | `engine/Engine/Equity.lean` 79, 112, 175 | `enumeration_exact`, `countsFor_river`, `countsFor_turn` |

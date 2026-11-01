@@ -24,7 +24,6 @@ import Engine.Proofs.BotLegal
 import Engine.Proofs.BotRisk
 import Engine.Proofs.OneSlider
 import Engine.Proofs.OneSliderRiver
-import Engine.Proofs.RiverGameSpec
 import Engine.Proofs.RiverGame
 import Engine.Proofs.Reachable
 import Engine.Proofs.Legal
@@ -49,3 +48,4 @@ import Engine.Explain
 import Engine.ExplainTests
 import Engine.Proofs.Explain
 import Engine.Proofs.BluffCatcher
+import Engine.Proofs.Equilibrium
