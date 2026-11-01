@@ -5,14 +5,17 @@ uses (`engine/Engine/Equity.lean`). For the rules of the game itself, see `SPEC.
 
 ## What the bot does
 
-The bot has two sliders: Risk (0 to 100) and Bluff (0 to 60%). It sees its own two cards,
-the board and the chips. It never sees the other player's cards.
+The player sets one Risk slider (0 to 100). `Sliders.ofRisk` turns it into the bot's two
+internal settings: caution (0 to 100, how heavily a lost chip counts; the Lean field is
+`risk`) and the bluff share (0 to 60%). Caution falls as the player's Risk rises; see
+[THEORY.md](THEORY.md). The bot sees its own two cards, the board and the chips. It never
+sees the other player's cards.
 
 1. It counts how many of the other player's possible hands it beats, ties and loses to
    (`countsFor`). The sliders are not an input to this step.
 2. It decides from those counts (`decideWithCounts`):
    - Facing a bet: raise pot-sized if it wins at least 75% (ties count half) and a raise is
-     legal. Otherwise call if the call pays at its Risk (`callPays`). Otherwise fold.
+     legal. Otherwise call if the call pays at its caution (`callPays`). Otherwise fold.
    - No bet to face, before the river: bet the pot if it wins at least 65%. Otherwise check.
    - No bet to face, on the river: bet the pot if its hand is in the river betting set.
      Otherwise check.
@@ -29,15 +32,16 @@ Each theorem is checked by Lean. `#print axioms` shows only Lean's standard axio
 | Theorem | In plain words | File |
 | --- | --- | --- |
 | `botDecide_legal` (T3, bot half) | Whenever the player to act may act at all, the bot's move is legal. This holds for every slider setting, seed, set of cards and board. | `Engine/Proofs/BotLegal.lean` |
-| `botDecide_risk_monotone` (T4) | Take one spot. If the bot calls or raises at some Risk, it also calls or raises at every lower Risk. So more Risk can turn a call into a fold, but never a fold into a call. | `Engine/Proofs/BotRisk.lean` |
+| `botDecide_risk_monotone` (T4) | Take one spot. If the bot calls or raises at some caution, it also calls or raises at every lower caution. So more caution can turn a call into a fold, but never a fold into a call. | `Engine/Proofs/BotRisk.lean` |
 | `risk_monotone` (T4, for given counts) | The same, for any win/tie/loss counts. | `Engine/Proofs/BotRisk.lean` |
+| `more_risk_never_folds_a_call` (T4, the player's Risk) | Facing a bet in one spot, if the bot calls or raises at some Risk the player sets, it also calls or raises at every higher Risk. | `Engine/Proofs/OneSlider.lean` |
 | `enumeration_exact` (T6) | The exact river and turn counts look at every possible outcome exactly once, and score each one with the spec's `showdown`. On the river, that is every hand the opponent can hold (990 of them, when the bot's two cards and the five board cards are all different). On the turn, it is every (river card, opponent hand) pair. | `Engine/Proofs/EquityExact.lean` |
-| `bot_calls_only_when_worth_it`, `bot_folds_only_when_not_worth_it` | The bot calls only when the call is worth it at its Risk, and folds only when it is not. The required pot/call inequality is proved by `viewOf_toCall_le_pot`. "Worth it" means that a lost chip counts (1 + Risk/50) times as much as a won chip (MVP §3; `RiskSpec.lean`). | `Engine/Proofs/RiskUtility.lean` |
+| `bot_calls_only_when_worth_it`, `bot_folds_only_when_not_worth_it` | The bot calls only when the call is worth it at its caution, and folds only when it is not. The required pot/call inequality is proved by `viewOf_toCall_le_pot`. "Worth it" means that a lost chip counts (1 + caution/50) times as much as a won chip (MVP §3; `RiskSpec.lean`). | `Engine/Proofs/RiskUtility.lean` |
 
 The two properties are written out on their own in `Engine/Proofs/BotSpec.lean`
 (`AlwaysLegal`, `RiskMonotone`). That file also shows that each property rejects a bad bot:
 a bot that always checks, a bot that bets more chips than it has, and a decision table that
-calls at Risk 100 but folds at Risk 0. T3 and T4 each also have a worked example on a real
+calls at caution 100 but folds at caution 0. T3 and T4 each also have a worked example on a real
 spot, with every condition met.
 
 `Classical.choice` comes in only through the preflop lookup: `rankLetters` (the letters
@@ -57,7 +61,7 @@ A theorem means what its statement says, so these definitions are the ones to re
   `clampTo`.
 
 The reason text (`chanceText`, `betVerb`) never changes the move. The counts do not matter
-for T3 or T4: both hold for any counts. T4 only needs the fact that `countsFor` has no Risk
+for T3 or T4: both hold for any counts. T4 only needs the fact that `countsFor` has no caution
 input (`botDecide_eq`, true by definition).
 
 ## What is trusted, not proven
