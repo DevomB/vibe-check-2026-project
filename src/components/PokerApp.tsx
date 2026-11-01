@@ -60,6 +60,7 @@ export function PokerApp() {
   }
 
   const { hand, seatOf } = game.dealt;
+  const replaySeed = game.seed;
   const youIndex = seatOf.indexOf(HUMAN_SEAT);
   const you = youIndex >= 0 ? hand.players[youIndex]! : null;
   // While the bot "thinks", the previous state stays on screen and the human cannot act.
@@ -91,9 +92,11 @@ export function PokerApp() {
           <span title="The bot's sliders for this game">
             Bot <b>Risk {game.settings.risk} · Bluff {game.settings.bluffPct}%</b>
           </span>
-          <span title="Enter this seed in the lobby to replay the same cards">
-            Seed <b>{game.seed.toString()}</b>
-          </span>
+          {replaySeed !== null && (
+            <span title="Enter this seed in the lobby to replay the same cards">
+              {status === "gameOver" ? "Seed" : "Replay seed"} <b>{replaySeed.toString()}</b>
+            </span>
+          )}
         </div>
         <div className="topbar-actions">
           <button className="btn btn-ghost btn-sm" onClick={() => setShowRules(true)}>
@@ -130,14 +133,14 @@ export function PokerApp() {
         </div>
       </main>
 
-      {status === "gameOver" && (
+      {status === "gameOver" && replaySeed !== null && (
         <GameOver
           delay={resultDelay(game) + 1.2}
           won={game.session.seats[HUMAN_SEAT]!.stack > 0}
           stats={game.stats}
-          seed={game.seed}
+          seed={replaySeed}
           onAgain={() => start({ ...game.settings, seed: null })}
-          onReplay={() => start({ ...game.settings, seed: game.seed })}
+          onReplay={() => start({ ...game.settings, seed: replaySeed })}
           onReview={() => void openReview()}
           onLobby={quit}
         />

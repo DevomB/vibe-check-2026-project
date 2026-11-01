@@ -34,6 +34,37 @@ describe("/api/game input checks", () => {
 });
 
 describe.skipIf(!existsSync(leanBinaryPath()))("/api/game with the Lean program", () => {
+  it.each([undefined, ""])("keeps a server-generated seed private through hand end (%s)", async (seed) => {
+    const start = await post({ cmd: "new_game", seed, risk: 0, bluff_pct: 0 });
+    if (!("ok" in start.reply)) throw new Error(start.reply.error);
+    expect(start.reply.state.seed).toBeNull();
+    const illegal = await post({ cmd: "act", action: "check" });
+    expect("error" in illegal.reply).toBe(true);
+    expect(illegal.reply.state?.seed).toBeNull();
+    const folded = await post({ cmd: "act", action: "fold" });
+    if (!("ok" in folded.reply)) throw new Error(folded.reply.error);
+    expect(folded.reply.state.status).toBe("handOver");
+    expect(folded.reply.state.seed).toBeNull();
+    const review = await post({ cmd: "review", hand: folded.reply.state.hand });
+    expect("ok" in review.reply).toBe(true);
+    expect(review.reply.state?.seed).toBeNull();
+  });
+
+  it("reveals a finished game's seed and replays its cards", async () => {
+    const finishes: LeanReply[] = [];
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const start = await post({ cmd: "new_game", seed: "1", risk: 0, bluff_pct: 0 });
+      if (!("ok" in start.reply)) throw new Error(start.reply.error);
+      expect(start.reply.state.seed).toBeNull();
+      const { reply } = await post({ cmd: "act", action: "raise", amount: 500 });
+      if (!("ok" in reply)) throw new Error(reply.error);
+      expect(reply.state.status).toBe("gameOver");
+      expect(reply.state.seed).toBe("1");
+      finishes.push(reply);
+    }
+    expect(finishes[1]).toEqual(finishes[0]);
+  });
+
   it("accepts bet as a street-total raise", { timeout: 30_000 }, async () => {
     const start = await post({ cmd: "new_game", seed: "42", risk: 50, bluff_pct: 33 });
     if (!("ok" in start.reply)) throw new Error(start.reply.error);

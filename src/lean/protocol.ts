@@ -11,6 +11,7 @@ export const RISK_MAX = 100;
 export const BLUFF_PCT_MAX = 60;
 
 export type LeanCommand =
+  /** At the HTTP boundary, an empty seed requests a private server-generated game. */
   | { cmd: "new_game"; seed: string; risk: number; bluff_pct: number }
   | { cmd: "act"; action: "fold" | "check" | "call" }
   /** A bet or raise to `amount` chips this round. Lean treats "bet" and "raise" the same. */
@@ -56,7 +57,8 @@ export type LeanEvent =
 
 export interface LeanState {
   hand: number;
-  seed: string;
+  /** Public HTTP replies reveal the seed only once the whole game is over. */
+  seed: string | null;
   street: "preflop" | "flop" | "turn" | "river" | "showdown";
   button: number;
   toAct: number | null;
