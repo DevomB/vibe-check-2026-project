@@ -22,6 +22,7 @@ import Engine.Protocol
 import Engine.SessionTests
 import Engine.Proofs.BotLegal
 import Engine.Proofs.BotRisk
+import Engine.Proofs.OneSlider
 import Engine.Proofs.Reachable
 import Engine.Proofs.Legal
 import Engine.Proofs.RiskUtility

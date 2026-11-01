@@ -1,9 +1,9 @@
 # Source index
 
-40 source folders: A 8, B 7, C 8, D 7, E 10. Each folder has one `notes.md`. Its
+43 source folders: A 8, B 7, C 8, D 7, E 10, F 3. Each folder has one `notes.md`. Its
 **Summary** section comes first: the citation with a link to the original, a short TL;DR,
 the points that matter for us, and the verdict. The full extraction follows, with every URL
-fetched on 2026-10-31. Some folders bundle several closely related items; the notes list
+fetched on 2026-10-31 (group F, market making: 2026-11-01). Some folders bundle several closely related items; the notes list
 each one. Items the agents could not open are marked UNVERIFIED in the notes and are not
 counted here. The papers themselves are not stored in the repo; use the citation links.
 
@@ -51,6 +51,9 @@ Verdicts: **use** = we build on it; **maybe** = background or a stretch goal; **
 | E08 | Jacovi and Goldberg, Towards Faithfully Interpretable NLP Systems (ACL) | 2020 | peer-reviewed (position paper) | E | use (framing) | [E08](sources/E08-faithfulness-jacovi-goldberg/) |
 | E09 | Zinkevich et al., Optimal Unbiased Estimators for Evaluating Agent Performance (AAAI) | 2006 | peer-reviewed | E | use | [E09](sources/E09-advantage-sum-zinkevich/) |
 | E10 | White and Bowling, MIVAT: Learning a Value Analysis Tool for Agent Evaluation (IJCAI) | 2009 | peer-reviewed | E | use | [E10](sources/E10-mivat-white-bowling/) |
+| F01 | Kyle, Continuous Auctions and Insider Trading (Econometrica) | 1985 | peer-reviewed | F | use (framing) | [F01](sources/F01-kyle-1985-insider-trading/) |
+| F02 | Glosten and Milgrom, Bid, Ask and Transaction Prices in a Specialist Market with Heterogeneously Informed Traders (J. Financial Economics) | 1985 | peer-reviewed | F | use (framing) | [F02](sources/F02-glosten-milgrom-1985-bid-ask-spread/) |
+| F03 | Avellaneda and Stoikov, High-frequency Trading in a Limit Order Book (Quantitative Finance) | 2008 | peer-reviewed | F | use (framing) | [F03](sources/F03-avellaneda-stoikov-2008-market-making/) |
 
 ## Not opened (UNVERIFIED, not counted)
 
