@@ -299,7 +299,7 @@ export function PokerApp() {
             <ActionBar
               hand={hand}
               legal={yourTurn && !showRules && !proofs && !guessOpen ? game.legal : null}
-              waiting={you?.folded ? "You folded — watching the rest" : actor ? `${actor.name} is thinking…` : ""}
+              waiting={you?.folded ? "You folded — watching the rest" : yourTurn ? "Your turn" : actor ? `${actor.name} is thinking…` : ""}
               botMessage={thinking ? null : game.botLine}
               handStrength={strength}
               onAct={humanAct}
