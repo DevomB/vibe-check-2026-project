@@ -4,9 +4,11 @@ import Engine.Proofs.BluffFrequency
 /-!
 # The review is sound (T5) and never uses hindsight (T8)
 
-T5 `review_sound` (MVP §8): for a graded call or fold, Best means no chips lost against the
-better of the two choices, under the review's model of the bot's hands, and a bigger loss
-never gets a better label. It says nothing about raising.
+T5, the review is sound (MVP §8). In Lean it is the five theorems `review_worth`,
+`review_lost`, `review_best_iff`, `review_label_monotone` and `review_call_best_iff_equity`
+below: for a graded call or fold, Best means no chips lost against the better of the two
+choices, under the review's model of the bot's hands, and a bigger loss never gets a better
+label. It says nothing about raising.
 
 1. `review_worth`: the review's worth of calling is the chips calling wins against each of
    the bot's possible hands (`choiceTotal`), averaged, in big blinds. Folding is worth 0.
