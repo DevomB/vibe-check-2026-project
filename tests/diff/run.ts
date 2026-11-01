@@ -18,10 +18,12 @@
  * "Ah", and never asks the library for exact preflop equity (minutes per call).
  *
  * Writes tests/diff/cases.json (every case, except the ranking deals: their seed, count and
- * SHA-256) and tests/diff/results.json. Exits with code 1 if any check fails.
+ * SHA-256) and tests/diff/results.json, which also records the git commit, whether the
+ * checkout had uncommitted changes, and the Lean toolchain. Exits with code 1 if any check
+ * fails.
  * `--deals=N` changes the number of random ranking deals, for a quick trial run.
  */
-import { spawnSync } from "node:child_process";
+import { execSync, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -60,6 +62,12 @@ const MAX_ERRORS = 4;
 const EXACT_TOLERANCE = 1e-9;
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
+/** The engine commit the run used, and whether the checkout had uncommitted changes. */
+const git = (args: string) => execSync(`git ${args}`, { cwd: root, encoding: "utf8" }).trim();
+const COMMIT = git("rev-parse HEAD");
+const DIRTY = git("status --porcelain") !== "";
+/** The pinned Lean toolchain (engine/lean-toolchain), for example "leanprover/lean4:v4.35.0". */
+const LEAN_TOOLCHAIN = readFileSync(`${root}engine/lean-toolchain`, "utf8").trim();
 const leanBin = `${root}engine/.lake/build/bin/difftest${process.platform === "win32" ? ".exe" : ""}`;
 if (!existsSync(leanBin)) throw new Error(`No Lean driver at ${leanBin}. Build it first: cd engine && lake build difftest`);
 
@@ -202,6 +210,9 @@ for (const [street, spots] of Object.entries(RANDOM_HAND_SPOTS)) {
 const failed = checks.filter((c) => c.failures.length > 0);
 const results = {
   library: LIBRARY,
+  commit: COMMIT,
+  dirty: DIRTY,
+  leanToolchain: LEAN_TOOLCHAIN,
   seed: SEED,
   ranOn: new Date().toISOString().slice(0, 10),
   platform: `${process.platform} ${process.arch}, Node ${process.version}`,
