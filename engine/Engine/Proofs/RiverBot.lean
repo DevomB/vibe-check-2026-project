@@ -75,7 +75,7 @@ theorem hole_apart_of_nodup {h : Hand} (hnd : h.dealtCards.Nodup) :
 nothing to call and some bet legal, the slider bot bets (its move is a `raiseTo`) exactly
 when its two cards `a`, `b` are a value hand or a designated bluff of `riverBettingSet` at
 its Bluff setting, in either order; and it checks exactly when they are not. The seed and
-the Risk setting play no part. -/
+the caution setting (the internal `risk`) play no part. -/
 theorem botDecide_river_follows_set (sl : Sliders) (seed : Nat) (a b : Card)
     (board : List Card) (s : State) (h5 : board.length = 5) (h0 : s.toCall = 0)
     (hbet : ∃ n, Legal s (.raiseTo n)) :

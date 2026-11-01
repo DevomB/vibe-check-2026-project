@@ -95,6 +95,14 @@ theorem decideView_no_bet_sliders (v : View) (c : Counts) (sl sl' : Sliders) (hc
   simp only [decideView, hc', ↓reduceIte, h5, decideView.checkMove, View.potBetTarget]
   split <;> (try split) <;> rfl
 
+/-- With no bet to face before the river, the bot reads neither setting: any two settings give
+the same move. -/
+theorem botDecide_no_bet_off_river (sl sl' : Sliders) (seed : Nat) (hole board : List Card)
+    (s : State) (hc : s.toCall = 0) (h5 : board.length ≠ 5) :
+    (botDecide sl seed hole board s).action = (botDecide sl' seed hole board s).action :=
+  decideView_no_bet_sliders (viewOf sl' hole board s) (countsFor seed hole board) sl sl'
+    (by simpa [viewOf] using hc) (by simpa [viewOf] using h5)
+
 /-- `movesBySetting` always has 101 entries. -/
 theorem movesBySetting_length (sliderAt : Nat → Sliders) (c : Counts) (m : BotMoveRecord) :
     (movesBySetting sliderAt c m).length = 101 := by
@@ -248,6 +256,7 @@ example : (rangeOf exRiverSpot).value + (rangeOf exRiverSpot).bluffs =
       ((rangeOf exRiverSpot).beat + (rangeOf exRiverSpot).tie + (rangeOf exRiverSpot).lose) :=
   rangeOf_adds_up exRiverSpot
 
+#print axioms botDecide_no_bet_off_river
 #print axioms exploreHandAt_moves
 #print axioms exploreHandAt_more_risk_continues
 #print axioms exploreHand_moves

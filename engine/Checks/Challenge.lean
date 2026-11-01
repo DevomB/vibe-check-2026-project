@@ -63,7 +63,8 @@ is is allowed to act: they have chips and have not bet more than the other playe
 theorem player_to_act_may_act (g : Game) (hg : g.Reachable) (hnot : g.hand.ended = none) :
     g.hand.chips.MayAct := sorry
 
-/-! ## Risk: the bot follows its Risk setting (see `Engine/Proofs/RiskSpec.lean`) -/
+/-! ## Caution: the bot follows its internal caution setting, the `risk` field (see
+`Engine/Proofs/RiskSpec.lean`). The player's Risk runs the other way; see the one-slider section. -/
 
 /-- The bot's call rule calls exactly when the call, weighted by Risk, is worth at least as
 much as folding. -/
@@ -96,7 +97,7 @@ theorem botDecide_legal (sl : Sliders) (seed : Nat) (hole board : List Card) :
     AlwaysLegal fun s => (botDecide sl seed hole board s).action := sorry
 
 /-- For one spot (same state, counts, cards and Bluff): if the bot calls or raises at some
-Risk, it also calls or raises at every lower Risk. -/
+internal caution (the `risk` field), it also calls or raises at every lower caution. -/
 theorem risk_monotone (bluff : Nat) (c : Counts) (hole board : List Card) (s : State) :
     RiskMonotone fun r => (decideWithCounts ⟨r, bluff⟩ c hole board s).action := sorry
 
@@ -359,9 +360,9 @@ theorem rangeOf_counts (spot : RiverSpot) (choice : RiverChoice) :
 The player sets one number, Risk (0 to 100). `Sliders.ofRisk` turns it into the bot's two
 internal settings: caution (the `risk` field: how heavily a lost chip counts) and Bluff. -/
 
-/-- The Risk number the bot quotes in its reason never changes its move. So the app's
-`Session.botChoice`, which quotes the player's Risk, makes the move every theorem about
-`botDecide` describes. -/
+/-- The Risk number the bot quotes in its reason never changes its move. (This is the link
+between the theorems about `botDecide` and the app's `Session.botChoice`, which passes the
+player's Risk; that link itself is in `Engine/Proofs/Session.lean`.) -/
 theorem botDecide_action_shown (sl : Sliders) (seed : Nat) (hole board : List Card) (s : State)
     (shown : Option Nat) :
     (botDecide sl seed hole board s shown).action = (botDecide sl seed hole board s).action := sorry
@@ -393,12 +394,18 @@ theorem ideal_river_set (board : List Card) (h5 : board.length = 5) (hd : board.
     (riverBettingSet (Sliders.ofRisk 50).bluffPct board).value.length = 324 ∧
     (riverBettingSet (Sliders.ofRisk 50).bluffPct board).bluffs.length = 160 := sorry
 
+/-- With no bet to face before the river, the bot reads neither setting: any two settings give
+the same move. (This is why the explorer's `noBet` entries say Risk plays no part.) -/
+theorem botDecide_no_bet_off_river (sl sl' : Sliders) (seed : Nat) (hole board : List Card)
+    (s : State) (hc : s.toCall = 0) (h5 : board.length ≠ 5) :
+    (botDecide sl seed hole board s).action = (botDecide sl' seed hole board s).action := sorry
+
 /-! ## The Risk explorer over the player's Risk (see `Engine/Proofs/Explain.lean`) -/
 
 /-- The Risk explorer shows the real bot. For move number `i` of a hand's recorded bot moves
 and every Risk `r` from 0 to 100, the explorer's move at Risk `r` is what `botDecide` returns
-with the settings a new game at Risk `r` would use (`Sliders.ofRisk r`) and the move's
-recorded seed, cards, board and betting state. -/
+with the settings `Sliders.ofRisk r` (which `Session.start` uses for a new game at Risk `r`)
+and the move's recorded seed, cards, board and betting state. -/
 theorem exploreHandAt_moves (risk : Nat) (ms : List BotMoveRecord) (i r : Nat)
     (hi : i < ms.length) (hr : r ≤ 100) :
     ((exploreHandAt risk ms)[i]?.bind fun e => e.moves[r]?) =
