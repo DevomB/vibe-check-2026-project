@@ -12,6 +12,7 @@ import Engine.River
 import Engine.RiverTests
 import Engine.Slider
 import Engine.SliderTests
+import Engine.SliderRiverTests
 import Engine.EquityTests
 import Engine.Proofs.BotLegal
 import Engine.Proofs.BotRisk

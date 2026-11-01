@@ -26,7 +26,7 @@ theorem decideView_cases (v : View) (c : Counts) :
     ((decideView v c).action = .call ∧ 0 < v.toCall) ∨
     ((decideView v c).action = .check ∧ v.toCall = 0) ∨
     ∃ t lo hi, v.raise = some (lo, hi) ∧ (decideView v c).action = .raiseTo (clampTo t lo hi) := by
-  unfold decideView decideView.callOrFold decideView.checkMove riverOpening
+  unfold decideView decideView.callOrFold decideView.checkMove riverOpening riverBetOrCheck
   by_cases hc : 0 < v.toCall
   · simp only [hc, ↓reduceIte]
     split
@@ -42,7 +42,11 @@ theorem decideView_cases (v : View) (c : Counts) :
   · have h0 : v.toCall = 0 := by omega
     simp only [hc, ↓reduceIte]
     split
-    · split
+    · -- the river: a value hand or a bluff bets if it may, anything else checks
+      split
+      · split
+        · next lo hi hr => exact .inr (.inr (.inr ⟨_, lo, hi, hr, rfl⟩))
+        · exact .inr (.inr (.inl ⟨rfl, h0⟩))
       · split
         · next lo hi hr => exact .inr (.inr (.inr ⟨_, lo, hi, hr, rfl⟩))
         · exact .inr (.inr (.inl ⟨rfl, h0⟩))

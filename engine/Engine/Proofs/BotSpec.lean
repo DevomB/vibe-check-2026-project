@@ -14,7 +14,7 @@ What to review (the definitions these statements depend on):
 - From the spec: `Legal`, `State.MayAct`, `State.toCall`, `State.minRaise`.
 - Here: `AlwaysLegal`, `RiskMonotone`, `Action.continues`.
 - The bot (`Engine/Slider.lean`): `botDecide`, `decideWithCounts`, `viewOf`, `decideView`,
-  `riverOpening`, `callPays`, `Counts.atLeast`, `State.raiseBounds`, `State.allIn`,
+  `riverOpening`, `riverBetOrCheck`, `callPays`, `Counts.atLeast`, `State.raiseBounds`, `State.allIn`,
   `State.potToWin`, `clampTo`. The reason text (`chanceText`, `betVerb`) does not affect the
   move.
 - The counts (`countsFor`, `Engine/Equity.lean`) do not matter for either theorem: both hold

@@ -57,14 +57,16 @@ theorem callPays_iff_takes (c : Counts) (pot toCall risk : Nat) (h : toCall ≤ 
 /-- The bot calls only through its call rule: if it calls, `callPays` said yes. -/
 theorem decideView_call_pays (v : View) (c : Counts) (hcall : (decideView v c).action = .call) :
     callPays c v.pot v.toCall v.sliders.risk = true := by
-  simp only [decideView, decideView.callOrFold, decideView.checkMove, riverOpening] at hcall
+  simp only [decideView, decideView.callOrFold, decideView.checkMove, riverOpening,
+    riverBetOrCheck] at hcall
   split at hcall <;> (try split at hcall) <;> (try split at hcall) <;> (try split at hcall) <;>
     simp_all
 
 /-- The bot folds only through its call rule: if it folds, `callPays` said no. -/
 theorem decideView_fold_not_pays (v : View) (c : Counts) (hfold : (decideView v c).action = .fold) :
     callPays c v.pot v.toCall v.sliders.risk = false := by
-  simp only [decideView, decideView.callOrFold, decideView.checkMove, riverOpening] at hfold
+  simp only [decideView, decideView.callOrFold, decideView.checkMove, riverOpening,
+    riverBetOrCheck] at hfold
   split at hfold <;> (try split at hfold) <;> (try split at hfold) <;> (try split at hfold) <;>
     simp_all
 
