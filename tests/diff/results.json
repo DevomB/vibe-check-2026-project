@@ -1,8 +1,11 @@
 {
  "library": "poker-calculations@4.0.3",
+ "commit": "855d9fd35c400928246a2266ef36ff4055d6f0fc",
+ "dirty": false,
+ "leanToolchain": "leanprover/lean4:v4.35.0",
  "seed": 20261031,
- "ranOn": "2026-10-31",
- "platform": "win32 x64, Node v22.20.0",
+ "ranOn": "2026-11-01",
+ "platform": "linux x64, Node v22.21.1",
  "passed": true,
  "checks": [
   {

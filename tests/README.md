@@ -14,7 +14,7 @@ cd tests && npm ci && npm run diff
 ```
 
 `npm run diff -- --deals=2000` does a quick run with fewer random ranking deals. The full run
-took about 4.5 minutes on the machine below.
+took about 4 minutes on the machine below.
 
 ## What is compared
 
@@ -35,7 +35,9 @@ The library's royal flush counts as a straight flush, since the spec has no sepa
 
 ## Last result
 
-Oct 31, 2026, Windows x64, Node 22.20.0, seed 20261031: **all 11 checks passed, 0 failures.**
+Nov 1, 2026, commit 855d9fd (`leanprover/lean4:v4.35.0`), Linux x64 (WSL2), Node 22.21.1,
+seed 20261031: **all 11 checks passed, 0 failures.** `results.json` records the commit, the
+toolchain and whether the checkout had uncommitted changes (it did not).
 
 | Check | Passed |
 | --- | --- |
@@ -45,7 +47,10 @@ Oct 31, 2026, Windows x64, Node 22.20.0, seed 20261031: **all 11 checks passed, 
 | Exact vs random hand (`countsFor`), turn, 45,540 outcomes | 20 / 20 |
 | Exact vs random hand (`countsFor`), river, 990 outcomes | 60 / 60 |
 | Flop estimate within 4 standard errors | 12 / 12 (largest gap 1.17 SE) |
-| Preflop table within 4 standard errors | 36 / 36 (largest gap 2.19 SE) |
+| Preflop table within 4 standard errors | 36 / 36 (largest gap 1.97 SE) |
+
+The run before it (Oct 31, 2026, Windows x64, Node 22.20.0, same seed) also passed every
+check, with largest gaps of 1.17 SE and 2.19 SE.
 
 ## Files
 
