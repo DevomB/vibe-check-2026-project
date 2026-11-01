@@ -7,21 +7,23 @@ Every hand here was played on the compiled Lean engine, with scripted human move
 user has now confirmed all three practice scenes in the browser with the expected grades
 and outcomes. The remaining visual checks are tracked in `DEMO_QUICKSTART.md`.
 
-Integration recheck, November 1: all six scenes and challenges passed again on the
-integrated program, and CI's fresh Linux clone passed `make run` and the production HTTP
-checks. The CI run is the evidence line in the [README](../README.md#run-it). See
-`INTEGRATION_REVIEW.md` for that binary's hash and the limits of the check. The engine
-record below is from the first discovery run; replace it after the final build.
+One-slider recheck, November 1: the bot now has one setting, Risk. The hands were found with
+the old two sliders, at the settings that map exactly to a Risk: Risk 0, Bluff 60 is now
+Risk 100 (Vex), and Risk 100, Bluff 0 is now Risk 0 (Ivy). All six scenes and challenges
+passed again on the one-slider engine below, with the same cards, moves, grades and
+results. Only scene (b)'s reason changed, because it quotes the Risk. Rook (Risk 0, Bluff
+0%) has no exact Risk, so checklist rows 3, 4 and 7 now use Mia (Risk 50), checked on the
+same engine.
 
 ## What the hands were checked on
 
 - **Engine.** `poker.exe` with SHA-256
-  `19a7b9be2c2528587d86eb8bba22e1d0ab9e48de028a44eaa3802d3ed609dbf4`. It was linked on
-  Oct 31, 2026 at 18:42 PDT in the main checkout, at commit `3356666`.
-  - Its engine sources match `main` at `df6904a`, apart from one doc comment in
-    `engine/Engine/River.lean` (commit `6384ca5`, added after the build).
-  - `df6904a` changes only `engine/Checks/Challenge.lean` and `engine/comparator.json`.
-- **Checked on** Nov 1, 2026, 12:02 AM PDT. Each river spot was replayed twice from
+  `3a392d797dac0ba47e19164482fc136cf6f244a7d91d337e917851c8e313f9d6`. It was linked on
+  Nov 1, 2026 at 12:09 PM PST, from branch `sunday/one-slider-web` at commit `f81df9d`,
+  which holds lane 1's one-slider engine (`sunday/one-slider` at `073e2e5`, with
+  `sunday/review-fixes`). Lane 1's later engine commits, up to `71ee280`, change only
+  comments and proofs, not the code the program runs.
+- **Checked on** Nov 1, 2026, 12:48 PM PST. Each river spot was replayed twice from
   `new_game`, with the same seed and moves: once ending in a call, once in a fold. Both
   replays reached the same river state and the same `worth_bb`.
 - **Turn mode: exact.** The bot counts every river card and every opponent hand (45,540
@@ -51,30 +53,32 @@ a `FAIL`. `npm test` also replays scene (a) through the route (`src/app/api/game
 
 | Scene | Pitch time | Opponent | Seed | Your moves | What it shows |
 | --- | --- | --- | --- | --- | --- |
-| (b) | 0:30 | Ivy (Risk 100, Bluff 0%) | 1 | Raise to 150 | The bot folds a 58% hand to a big raise. |
-| (c) | 1:30 | Vex (Risk 0, Bluff 60%) | 1 | Call, Check, Check, then Call | The bot bets king-high on the river as a designated bluff. |
-| (a) | 2:30 | Vex (Risk 0, Bluff 60%) | 6 | Raise to 30, Check, Check, then Call | The review grades the river call Mistake. |
+| (b) | 0:30 | Ivy (Risk 0) | 1 | Raise to 150 | The bot folds a 58% hand to a big raise. |
+| (c) | 1:30 | Vex (Risk 100) | 1 | Call, Check, Check, then Call | The bot bets king-high on the river as a designated bluff. |
+| (a) | 2:30 | Vex (Risk 100) | 6 | Raise to 30, Check, Check, then Call | The review grades the river call Mistake. |
 
-Ivy and Vex are named opponents on the setup screen. Picking one sets both sliders.
+Ivy and Vex are named opponents on the setup screen. Picking one sets the Risk slider. Lean
+sets the bluff share from Risk: 0% for Ivy, 60% for Vex. The table shows both at the top.
 
-### Scene (b): Risk 100, Bluff 0%. The bot folds to a big bet.
+### Scene (b): Risk 0. The bot folds to a big bet.
 
-- **Setup.** Pick Ivy (Risk 100, Bluff 0%). Enter seed `1`. Click Start.
+- **Setup.** Pick Ivy (Risk 0). Enter seed `1`. Click Start.
 - **You hold** 3c 8c. The bot holds Ks 9d (hidden).
 - **Move 1.** Type `150` in the raise box. Click "Raise to 150".
 - **The screen shows:**
   - Ivy folds. You win the blinds. Your stack is 510 (+10).
   - Click Review. "No river call or fold to grade in this hand." Under other decisions:
     "Preflop: you raised", "not graded yet".
-  - Why the bot played this way: "Fold: not worth calling 140 to win 160 at Risk 100, with
+  - Why the bot played this way: "Fold: not worth calling 140 to win 160 at Risk 0, with
     win chance 58%."
-- **Optional contrast.** The same seed with Rook (Risk 0, Bluff 0%) and the same raise: the
-  bot calls 140. This is the direction T4 allows: more Risk can turn a call into a fold,
-  never a fold into a call.
+- **Optional contrast.** The same seed with Mia (Risk 50) or Vex (Risk 100) and the same
+  raise: the bot calls 140. The review's Risk explorer for Ivy's fold says "Folds at Risk
+  0-35, calls at 36-100." This is the direction T4 proves: more Risk can turn a fold into a
+  call, never a call into a fold.
 
-### Scene (c): Risk 0, Bluff 60%. The bot bluffs the river.
+### Scene (c): Risk 100. The bot bluffs the river.
 
-- **Setup.** Pick Vex (Risk 0, Bluff 60%). Enter seed `1`. Click Start. These are the same
+- **Setup.** Pick Vex (Risk 100). Enter seed `1`. Click Start. These are the same
   cards as scene (b).
 - **You hold** 3c 8c. The bot holds Ks 9d.
 - **Moves.**
@@ -98,7 +102,7 @@ Ivy and Vex are named opponents on the setup screen. Picking one sets both slide
 
 ### Scene (a): the game review of a bad river call
 
-- **Setup.** Pick Vex (Risk 0, Bluff 60%). Enter seed `6`. Click Start.
+- **Setup.** Pick Vex (Risk 100). Enter seed `6`. Click Start.
 - **You hold** 4h Jh. The bot holds 6s 4c.
 - **Moves.**
   1. Preflop: type `30` in the raise box. Click "Raise to 30". The bot calls.
@@ -124,7 +128,7 @@ Send these bodies in order, each as a `POST` to `/api/game`. Every reply must ha
 
 | # | Request body | Expected reply |
 | --- | --- | --- |
-| 1 | `{"cmd":"new_game","seed":"6","risk":0,"bluff_pct":60}` | hand 1, preflop, your cards `["4h","Jh"]` |
+| 1 | `{"cmd":"new_game","seed":"6","risk":100}` | hand 1, preflop, your cards `["4h","Jh"]` |
 | 2 | `{"cmd":"act","action":"raise","amount":30}` | flop `9s 5d 2c`; the bot called, then checked |
 | 3 | `{"cmd":"act","action":"check"}` | turn `Ks`; the bot checked |
 | 4 | `{"cmd":"act","action":"check"}` | river `3d`; the bot bet 60; `legal.call` is 60 |
@@ -144,7 +148,7 @@ review has the Mistake label.
 ```bash
 URL=http://localhost:3000/api/game
 for body in \
-  '{"cmd":"new_game","seed":"6","risk":0,"bluff_pct":60}' \
+  '{"cmd":"new_game","seed":"6","risk":100}' \
   '{"cmd":"act","action":"raise","amount":30}' \
   '{"cmd":"act","action":"check"}' \
   '{"cmd":"act","action":"check"}' \
@@ -170,11 +174,11 @@ process.stdin.on("end", () => {
 Each spot is hand 1 of a new game. `moves` are your moves before the river decision. The
 file also has the river state, the bot's river reason, both results and how it was checked.
 
-| `id` | Seed | Risk, Bluff | Your moves | Best | Labels (call, fold) | `worth_bb` call | If you choose Best |
+| `id` | Seed | Risk | Your moves | Best | Labels (call, fold) | `worth_bb` call | If you choose Best |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `catch-bluff` | 1 | 0, 60 | call, check, check | call | Best, Inaccuracy | +1.57 | Pair of eights beats the bot's Ks 9d bluff: +30 chips. |
-| `avoid-bad-call` | 6 | 0, 60 | raise to 30, check, check | fold | Mistake, Best | −2.67 | You lose only your 30: −30 chips. Calling loses 90 to 6s 4c. |
-| `right-and-lose` | 4 | 0, 60 | call, check, call | call | Best, Blunder | +10.32 | Your three sevens lose to the bot's 6s 4c straight: −90 chips. |
+| `catch-bluff` | 1 | 100 | call, check, check | call | Best, Inaccuracy | +1.57 | Pair of eights beats the bot's Ks 9d bluff: +30 chips. |
+| `avoid-bad-call` | 6 | 100 | raise to 30, check, check | fold | Mistake, Best | −2.67 | You lose only your 30: −30 chips. Calling loses 90 to 6s 4c. |
+| `right-and-lose` | 4 | 100 | call, check, call | call | Best, Blunder | +10.32 | Your three sevens lose to the bot's 6s 4c straight: −90 chips. |
 
 - `right-and-lose` is a real, worthwhile call. With 6h 7d on 8c 2d 5s 7h 7s, you have three
   sevens. You win 90.7% against the hands the bot bets there, and need 33.3%. Folding would
@@ -191,16 +195,16 @@ expected results come from the engine replays above, and from reading the code w
 
 | # | Check | Opponent, seed | Moves | Expected | Pass | Fail |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | Fold | Mia (50, 33%), seed 1 | Fold | Hand over. You 495, bot 505. Review: "Preflop: you folded", "not graded yet"; "The bot made no moves this hand." Next hand deals hand 2. | [ ] | [ ] |
-| 2 | Showdown | Vex (0, 60%), seed 1 | Scene (c) | Both hands shown with names: Pair beats High Card. You 530. | [ ] | [ ] |
-| 3 | All-in and game over | Rook (0, 0%), seed 1 | Click the All-in chip, then "All-in 500" | The bot calls 490 all-in. The board runs out to 8d. Your pair of eights wins. Game over: you have 1,000. Seed 1 is shown, with "Replay these cards". No Next hand. | [ ] | [ ] |
-| 4 | Short stack | Rook (0, 0%), seed 1 | Hand 1: Call 5, Check, Check, Check. Next hand. Hand 2: click the All-in chip, then "All-in 510". | Hand 1: the bot checks every street; you win at showdown (510). Hand 2: the bot calls 5, you go all-in for 510, and the bot calls 480 all-in, all it has. The 20 it cannot match comes back to you. Board Qh 6c 6s 2s Th: your Ac Js beats its Ah 8s on the kicker. Game over: you have 1,000. | [ ] | [ ] |
-| 5 | Graded review | Vex (0, 60%), seed 6 | Scene (a) | Mistake, −2.7 BB, 19% vs 33%. | [ ] | [ ] |
-| 6 | Ungraded review | Ivy (100, 0%), seed 1 | Scene (b) | "No river call or fold to grade in this hand." The raise shows "not graded yet". | [ ] | [ ] |
-| 7 | Replay by seed | Rook (0, 0%), seed 1 | After check 3, click "Replay these cards", then All-in 500 again | The same cards (3c 8c) and the same result. Starting seed 1 by hand gives the same cards too. | [ ] | [ ] |
+| 1 | Fold | Mia (Risk 50), seed 1 | Fold | Hand over. You 495, bot 505. Review: "Preflop: you folded", "not graded yet"; "The bot made no moves this hand." Next hand deals hand 2. | [ ] | [ ] |
+| 2 | Showdown | Vex (Risk 100), seed 1 | Scene (c) | Both hands shown with names: Pair beats High Card. You 530. | [ ] | [ ] |
+| 3 | All-in and game over | Mia (Risk 50), seed 1 | Click the All-in chip, then "All-in 500" | The bot calls 490 all-in. The board runs out to 8d. Your pair of eights wins. Game over: you have 1,000. Seed 1 is shown, with "Replay these cards". No Next hand. | [ ] | [ ] |
+| 4 | Short stack | Mia (Risk 50), seed 1 | Hand 1: Call 5, Check, Check, Check. Next hand. Hand 2: click the All-in chip, then "All-in 510". | Hand 1: the bot checks every street (at Risk 50 its king-high is not in the river betting set); you win at showdown (510). Hand 2: the bot calls 5, you go all-in for 510, and the bot calls 480 all-in, all it has. The 20 it cannot match comes back to you. Board Qh 6c 6s 2s Th: your Ac Js beats its Ah 8s on the kicker. Game over: you have 1,000. | [ ] | [ ] |
+| 5 | Graded review | Vex (Risk 100), seed 6 | Scene (a) | Mistake, −2.7 BB, 19% vs 33%. | [ ] | [ ] |
+| 6 | Ungraded review | Ivy (Risk 0), seed 1 | Scene (b) | "No river call or fold to grade in this hand." The raise shows "not graded yet". | [ ] | [ ] |
+| 7 | Replay by seed | Mia (Risk 50), seed 1 | After check 3, click "Replay these cards", then All-in 500 again | The same cards (3c 8c) and the same result. Starting seed 1 by hand gives the same cards too. | [ ] | [ ] |
 | 8 | Rejected input | any, seed 1 | Type `15` in the raise box | The UI keeps raises inside Lean's bounds: the box goes back to 20 when it loses focus, so the UI cannot send 15. To see Lean reject it, send `{"cmd":"act","action":"raise","amount":15}` after `new_game` (seed 1): the reply is `{"error":"illegal move",...}` with the state unchanged (checked on the engine). | [ ] | [ ] |
 | 9 | Engine restart error | any | Start a game. Stop the `poker.exe` that this server started. Click any action. | A Game lost dialog offers New game. No live action buttons remain available; subsequent requests continue to report the lost game until a new one starts. | [ ] | [ ] |
-| 10 | Peek toggle | Vex (0, 60%), seed 1 | Scene (c), Peek on from the start | Off by default. When on, Ks 9d show, marked as peeked. Nothing else changes: the same bot moves, the same showdown and the same review (+1.6 BB, 60% vs 33%). | [ ] | [ ] |
+| 10 | Peek toggle | Vex (Risk 100), seed 1 | Scene (c), Peek on from the start | Off by default. When on, Ks 9d show, marked as peeked. Nothing else changes: the same bot moves, the same showdown and the same review (+1.6 BB, 60% vs 33%). | [ ] | [ ] |
 
 Stop only the `poker.exe` of your own server (Task Manager shows it under Node). Other
 servers may run their own copies.
@@ -209,11 +213,11 @@ Also check the integrated features:
 
 | # | Feature | Opponent, seed | Moves | Expected | Pass | Fail |
 | --- | --- | --- | --- | --- | --- | --- |
-| 11 | Range viewer | Vex (0, 60%), seed 6 | Scene (a), open the review | The bot's set on 9s 5d 2c Ks 3d has 324 value hands and 486 bluffs, before your cards are removed (T7: bluffs are the whole number nearest to 324 × 60 / 40). Your cards block some. The beat, tie and lose counts give the 18.5% equity. | [ ] | [ ] |
-| 12 | Risk explorer | Ivy (100, 0%), seed 1 | Scene (b), open the review | The bot's preflop decision folds at Risk 100 and calls at Risk 0. There is one change point between them. | [ ] | [ ] |
+| 11 | Range viewer | Vex (Risk 100), seed 6 | Scene (a), open the review | The bot's set on 9s 5d 2c Ks 3d has 324 value hands and 486 bluffs, before your cards are removed (T7: bluffs are the whole number nearest to 324 × 60 / 40). Your cards block some. The beat, tie and lose counts give the 18.5% equity. | [ ] | [ ] |
+| 12 | Risk explorer | Ivy (Risk 0), seed 1 | Scene (b), open the review | The bot's preflop fold reads "Folds at Risk 0-35, calls at 36-100." There is one change point: it folds at Ivy's Risk 0 and calls from Risk 36 up. | [ ] | [ ] |
 | 13 | Proofs drawer | any | Click "What is guaranteed?" | It lists T1 to T9 in plain words, each with its Lean names. Every name in `engine/comparator.json` appears in it. | [ ] | [ ] |
 | 14 | Practice challenges | buttons on the setup screen | Load each, then call or fold | Each stops at the river bet from the table above. The review gives the labels in the table. `right-and-lose` says "Right decision, unlucky result." | [ ] | [ ] |
-| 15 | Mystery game | Mystery on | Play 3 hands, guess, reveal | No slider values or bot reasons show before the reveal. The reveal shows the true Risk and Bluff, and how close the guess was. | [ ] | [ ] |
+| 15 | Mystery game | Mystery on | Play 3 hands, guess, reveal | No Risk, bluff share or bot reasons show before the reveal. The guess is one number, Risk. The reveal shows your guess, the bot's real Risk and the difference, and the bluff share Lean set from that Risk. | [ ] | [ ] |
 
 ### After an engine change
 

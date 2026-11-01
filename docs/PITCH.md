@@ -10,9 +10,9 @@ Before you start: have the setup screen open. Check that `node docs/demo/find-de
 | Time | Part | Opponent | Seed | Your moves |
 | --- | --- | --- | --- | --- |
 | 0:00 | The hook | | | |
-| 0:30 | Build your opponent: scene (b) | Ivy (Risk 100, Bluff 0%) | 1 | Raise to 150 |
-| 1:30 | Change its personality: scene (c) | Vex (Risk 0, Bluff 60%) | 1 | Call 5, Check, Check, Call 20 |
-| 2:30 | The game review: scene (a) | Vex (Risk 0, Bluff 60%) | 6 | Raise to 30, Check, Check, Call 60 |
+| 0:30 | Build your opponent: scene (b) | Ivy (Risk 0) | 1 | Raise to 150 |
+| 1:30 | Change its personality: scene (c) | Vex (Risk 100) | 1 | Call 5, Check, Check, Call 20 |
+| 2:30 | The game review: scene (a) | Vex (Risk 100) | 6 | Raise to 30, Check, Check, Call 60 |
 | 3:30 | What is proven | | | |
 | 4:30 | The close | | | |
 
@@ -23,32 +23,34 @@ Before you start: have the setup screen open. Check that `node docs/demo/find-de
 
 ## 0:30 Build your opponent (1 minute): scene (b)
 
-Pick Ivy: Risk 100, Bluff 0%. Enter seed 1 and start. Type 150 and click "Raise to 150".
+Pick Ivy: Risk 0, the Rock. Enter seed 1 and start. Type 150 and click "Raise to 150".
 
-> "Risk says how much a lost chip hurts. At Risk 100, a lost chip counts three times as much
-> as a won chip. I raise to 150 from the small blind. Ivy folds."
+> "Risk is the bot's appetite for risk, from 0 to 100. Ivy is at 0, the Rock: a lost chip
+> counts three times as much as a won chip, and it never bluffs. I raise to 150 from the
+> small blind. Ivy folds."
 
 Click Review and point at the bot's reason: "Fold: not worth calling 140 to win 160 at Risk
-100, with win chance 58%."
+0, with win chance 58%."
 
 > "It had a 58% hand, and it still folded: at this Risk, the call was not worth it. The bot
 > folds only when that is true, and we proved it."
 
-Optional, if time allows: the same seed with Rook (Risk 0) and the same raise. The bot calls.
+Optional, if time allows: the same seed with Mia (Risk 50, the textbook setting) and the same
+raise. The bot calls.
 
-> "Same cards, same raise, less Risk: now it calls. Lowering Risk can turn a fold into a call.
-> Raising Risk can never turn a fold into a call."
+> "Same cards, same raise, more Risk: now it calls. Raising Risk can turn a fold into a call.
+> It can never turn a call into a fold."
 
 ## 1:30 Change its personality (1 minute): scene (c)
 
-Pick Vex: Risk 0, Bluff 60%. Enter seed 1 again: the same cards. Click "Call 5", "Check",
+Pick Vex: Risk 100, the Maniac. Enter seed 1 again: the same cards. Click "Call 5", "Check",
 "Check". On the river the bot bets 20.
 
 Both versions work on the current build. Peek on shows the bluff before the bet; Peek off
 keeps the surprise for the showdown.
 
 - **Peek off.**
-  > "Bluff 60% means 60% of the hands it bets on the river are bluffs. Is this one?"
+  > "At Risk 100, 60% of the hands it bets on the river are bluffs. Is this one?"
 
   Click "Call 20". The showdown shows the bot's king-high. Your pair of eights wins. Open
   the review: "Bet 20: a bluff, picked at Bluff 60%."
