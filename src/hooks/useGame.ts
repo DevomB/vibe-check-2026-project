@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Action, DealtHand, HandState, LegalActions, Session } from "@/lib/table";
-import type { ApiCommand, LeanCommand, LeanEvent, LeanReview, MysteryReveal, RouteReply, RouteState } from "@/lean/protocol";
+import type { ApiCommand, LeanCommand, LeanEvent, LeanReview, MysteryReveal, ReviewDecision, RouteReply, RouteState } from "@/lean/protocol";
 import { type Challenge, atRiverDecision } from "@/lib/challenges";
 import { cardText, chips } from "@/lib/format";
 import { CUSTOM_BOT, HUMAN_COLOR, botFor } from "@/lib/roster";
@@ -90,6 +90,12 @@ export interface Game {
 }
 
 export type Status = "playing" | "handOver" | "gameOver";
+
+/** Lean's grades for one finished hand: the moves it graded, in order. Empty when it graded none. */
+export interface HandGrades {
+  hand: number;
+  decisions: ReviewDecision[];
+}
 
 declare global {
   interface Window {
@@ -298,6 +304,16 @@ export function gameStatus(game: Game): Status {
   return game.lean.status;
 }
 
+/** How many hands of the game are over. */
+function handsFinished(g: Game): number {
+  return g.lean.result !== null ? g.lean.hand : g.lean.hand - 1;
+}
+
+/** True while a Mystery bot is hidden: the server keeps the reviews until the guess. */
+function reviewsHidden(g: Game): boolean {
+  return g.mode.kind === "mystery" && g.mode.reveal === null;
+}
+
 /** Runs a table against the Lean game program: sends the human's moves and shows Lean's replies, which include the bot's moves. */
 export function useGame() {
   const [game, setGame] = useState<Game | null>(null);
@@ -321,6 +337,12 @@ export function useGame() {
   /** A refresh of the table (after the peek toggle changed) waits for the request on its way. */
   const refreshPending = useRef(false);
   const refreshRef = useRef<() => void>(() => {});
+  /** Lean's grades for each finished hand, asked for in the background for the result bar and Game Over. */
+  const [grades, setGrades] = useState<HandGrades[]>([]);
+  /** Hands of this game whose grades were asked for, so each is asked for once. */
+  const gradesAsked = useRef(new Set<number>());
+  /** The game (its `generation`) whose grading loop is running, or null. */
+  const grading = useRef<number | null>(null);
 
   const markPeeked = useCallback((s: RouteState) => {
     if (s.status === "playing") setPeekedHands((hands) => (hands.includes(s.hand) ? hands : [...hands, s.hand]));
@@ -415,6 +437,49 @@ export function useGame() {
     [markPeeked, refresh],
   );
 
+  const resetGrades = useCallback(() => {
+    setGrades([]);
+    gradesAsked.current = new Set();
+  }, []);
+
+  /**
+   * Ask Lean for the review of every finished hand not yet asked for, one at a time. Lean answers
+   * commands in order, so a burst of reviews (all the hands before a Mystery reveal) would hold
+   * up the player's next move and could run past the server's reply timeout. This does not use
+   * `busy`, so Next hand never waits for it here.
+   */
+  const gradeFinishedHands = useCallback(async () => {
+    const gen = generation.current;
+    if (grading.current === gen) return;
+    grading.current = gen;
+    try {
+      for (;;) {
+        const g = gameRef.current;
+        if (gen !== generation.current || !g || g.lost !== null || reviewsHidden(g)) return;
+        let hand = 1;
+        while (gradesAsked.current.has(hand)) hand++;
+        if (hand > handsFinished(g)) return;
+        gradesAsked.current.add(hand);
+        const reply = await sendToLean({ cmd: "review", hand });
+        if (gen !== generation.current) return;
+        if ("ok" in reply && reply.review) {
+          const graded: HandGrades = { hand, decisions: reply.review.decisions.filter((d) => d.label !== null) };
+          setGrades((gs) => [...gs, graded].sort((a, b) => a.hand - b.hand));
+        }
+      }
+    } catch {
+      // That hand shows no grade. The Review button still says what went wrong.
+    } finally {
+      if (grading.current === gen) grading.current = null;
+    }
+  }, []);
+
+  // Grade each hand once it is over; in a Mystery game, once the bot is revealed.
+  const finishedCount = game && game.lost === null && !reviewsHidden(game) ? handsFinished(game) : 0;
+  useEffect(() => {
+    if (finishedCount > 0) void gradeFinishedHands();
+  }, [finishedCount, gradeFinishedHands]);
+
   const resetPeek = useCallback(() => {
     peekRef.current = false;
     setPeekState(false);
@@ -430,6 +495,7 @@ export function useGame() {
       setReview(null);
       setLoading(null);
       resetPeek();
+      resetGrades();
       const players: Player[] = [
         { name: "You", color: HUMAN_COLOR },
         // A preset's name would tell the hidden Risk, so a Mystery bot gets a plain one.
@@ -444,7 +510,7 @@ export function useGame() {
         : { cmd: "new_game", seed: seed?.toString() ?? "", risk: settings.risk };
       void request(command, (s) => withReply(base, null, s));
     },
-    [request, resetPeek],
+    [request, resetPeek, resetGrades],
   );
 
   /**
@@ -462,6 +528,7 @@ export function useGame() {
       setReview(null);
       setError(null);
       resetPeek();
+      resetGrades();
       setGame(null);
       setLoading(challenge);
       const settings: GameSettings = { risk: challenge.risk, seed: BigInt(challenge.seed), fast, mystery: false };
@@ -497,7 +564,7 @@ export function useGame() {
         }
       }
     },
-    [release, resetPeek],
+    [release, resetPeek, resetGrades],
   );
 
   const humanAct = useCallback(
@@ -602,8 +669,9 @@ export function useGame() {
     setError(null);
     setLoading(null);
     resetPeek();
+    resetGrades();
     setGame(null);
-  }, [resetPeek]);
+  }, [resetPeek, resetGrades]);
 
   // The hand history isn't shown on screen; expose it for testing.
   const log = game?.log;
@@ -611,5 +679,5 @@ export function useGame() {
     window.__holdemLog = log ?? [];
   }, [log]);
 
-  return { game, error, thinking, review, loading, peek, peekedHands, setPeek, start, startChallenge, humanAct, nextHand, openReview, closeReview, reveal, quit };
+  return { game, error, thinking, review, loading, grades, peek, peekedHands, setPeek, start, startChallenge, humanAct, nextHand, openReview, closeReview, reveal, quit };
 }
