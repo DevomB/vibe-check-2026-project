@@ -1,13 +1,16 @@
 import type { LeanRange } from "@/lean/protocol";
+import type { GuaranteeId } from "@/lib/guarantees";
+import { WhyChip } from "./WhyChip";
+import styles from "./review.module.css";
 
 interface Props {
   range: LeanRange;
-  /** Shows a "Why can I trust this?" link that opens the Bluff guarantee. */
-  onShowProof?: (id: string) => void;
+  /** Shows a link that opens the review guarantee, whose theorems cover these counts. */
+  onShowProof?: (id: GuaranteeId) => void;
 }
 
-function plural(n: number, one: string, many: string): string {
-  return `${n} ${n === 1 ? one : many}`;
+function count(n: number): string {
+  return n.toLocaleString("en-US");
 }
 
 /**
@@ -20,27 +23,35 @@ export function RangeViewer({ range, onShowProof }: Props) {
   const left = range.beat + range.tie + range.lose;
   const share = (n: number) => (left > 0 ? `${(100 * n) / left}%` : "0%");
   return (
-    <div className="range-viewer" style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--line)", fontSize: 14 }}>
-      <p style={{ margin: 0 }}>
-        The bot bets {plural(bets, "hand", "hands")} here: {range.value} for value and {plural(range.bluffs, "bluff", "bluffs")}. Your
-        cards block {range.blocked}. Of the {left} left, you beat {range.beat}, tie {range.tie} and lose to {range.lose}.
+    <div className={styles.range}>
+      <h4>The hands the grade counts</h4>
+      <p>
+        On this board the bot bets with {count(bets)} two-card hands: {count(range.value)} for value and {count(range.bluffs)}{" "}
+        {range.bluffs === 1 ? "bluff" : "bluffs"}. Your cards block {count(range.blocked)} of them. Of the {count(left)} left, you beat{" "}
+        {count(range.beat)}, tie {count(range.tie)} and lose to {count(range.lose)}.
       </p>
       {left > 0 && (
-        <div
-          role="img"
-          aria-label={`Of ${left} hands: you beat ${range.beat}, tie ${range.tie}, lose to ${range.lose}`}
-          style={{ display: "flex", height: 8, marginTop: 8, borderRadius: 4, overflow: "hidden", background: "var(--panel-2)" }}
-        >
-          <span style={{ width: share(range.beat), background: "var(--green)" }} />
-          <span style={{ width: share(range.tie), background: "var(--muted)" }} />
-          <span style={{ width: share(range.lose), background: "var(--red)" }} />
-        </div>
+        <>
+          <div className={styles.rangeBar} role="img" aria-label={`Of ${left} hands: you beat ${range.beat}, tie ${range.tie}, lose to ${range.lose}`}>
+            <span className={styles.beat} style={{ width: share(range.beat) }} />
+            <span className={styles.tie} style={{ width: share(range.tie) }} />
+            <span className={styles.lose} style={{ width: share(range.lose) }} />
+          </div>
+          <div className={styles.rangeKey} aria-hidden="true">
+            <span className={styles.keyBeat}>you beat</span>
+            <span className={styles.keyTie}>tie</span>
+            <span className={styles.keyLose}>you lose to</span>
+          </div>
+        </>
       )}
-      {onShowProof && (
-        <button className="btn-link" style={{ marginTop: 6, fontSize: 13 }} onClick={() => onShowProof("bluff")}>
-          Why can I trust this?
-        </button>
-      )}
+      <div className={styles.linkRow}>
+        <WhyChip ideas={["bluff-ratio", "min-defense"]} />
+        {onShowProof && (
+          <button type="button" className={styles.proofLink} onClick={() => onShowProof("review")}>
+            Why can I trust these counts?
+          </button>
+        )}
+      </div>
     </div>
   );
 }

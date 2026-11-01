@@ -1,11 +1,16 @@
 import { useState } from "react";
 import type { LeanRiskExplorerEntry } from "@/lean/protocol";
+import type { GuaranteeId } from "@/lib/guarantees";
+import styles from "./review.module.css";
 
 interface Props {
   /** One entry per bot move in the hand, in order. */
   entries: LeanRiskExplorerEntry[];
-  /** Shows a "Why can I trust this?" link that opens the Risk guarantee. */
-  onShowProof?: (id: string) => void;
+  /** The bot move to show. Set it to follow the review's move list; leave it out to let the explorer keep its own. */
+  selected?: number;
+  onSelect?: (index: number) => void;
+  /** Shows a link that opens the Risk guarantee. */
+  onShowProof?: (id: GuaranteeId) => void;
 }
 
 const STREET: Record<LeanRiskExplorerEntry["street"], string> = {
@@ -21,7 +26,7 @@ function count(n: number): string {
 }
 
 /** Start on the first move where Risk matters, else the first move facing a bet, else the first move. */
-function firstInteresting(entries: LeanRiskExplorerEntry[]): number {
+export function firstInteresting(entries: LeanRiskExplorerEntry[]): number {
   const changes = entries.findIndex((e) => e.riskMatters);
   if (changes >= 0) return changes;
   const facing = entries.findIndex((e) => e.toCall > 0);
@@ -29,74 +34,90 @@ function firstInteresting(entries: LeanRiskExplorerEntry[]): number {
 }
 
 /**
+ * Where the bot's counts come from (the T6 guarantee): every outcome on the turn and river, an
+ * estimate on the flop (sampled deals) and preflop (a table of sampled deals).
+ */
+function countsNote(street: LeanRiskExplorerEntry["street"], total: number): string {
+  return street === "turn" || street === "river"
+    ? `of all ${count(total)} possible outcomes (every one counted)`
+    : `of ${count(total)} sampled deals (an estimate)`;
+}
+
+/**
  * The Risk explorer: pick one of the bot's moves, keep everything else about it the same,
  * and move Risk from 0 to 100. Lean computes the move at every Risk and the summary sentence
  * (`exploreHand` in `engine/Engine/Explain.lean`); this only shows them.
  */
-export function RiskExplorer({ entries, onShowProof }: Props) {
-  const [selected, setSelected] = useState(() => firstInteresting(entries));
-  const entry = entries[selected] ?? entries[0];
+export function RiskExplorer({ entries, selected, onSelect, onShowProof }: Props) {
+  const [own, setOwn] = useState(() => firstInteresting(entries));
+  const index = selected ?? own;
+  const entry = entries[index] ?? entries[0];
   const [risk, setRisk] = useState(() => entry?.risk ?? 0);
   if (!entry) return null;
 
+  const pick = (i: number) => {
+    setOwn(i);
+    onSelect?.(i);
+  };
   const outcomes = entry.counts.win + entry.counts.tie + entry.counts.loss;
   const atRisk = entry.actions[risk] ?? entry.action;
 
   return (
-    <div className="risk-explorer" style={{ display: "grid", gap: 10, fontSize: 14 }}>
-      <div role="radiogroup" aria-label="The bot's moves this hand" style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+    <div className={styles.explorer}>
+      <div role="radiogroup" aria-label="The bot's moves this hand" className={styles.explorerMoves}>
         {entries.map((e, i) => (
           <button
             key={i}
+            type="button"
             role="radio"
-            aria-checked={i === selected}
-            className={`btn btn-sm ${i === selected ? "btn-primary" : "btn-ghost"}`}
-            onClick={() => setSelected(i)}
+            aria-checked={i === index}
+            className={`${styles.pill} ${i === index ? styles.isSelected : ""}`}
+            onClick={() => pick(i)}
           >
             {STREET[e.street]}: {e.action}
           </button>
         ))}
       </div>
 
-      <div className="review-item" style={{ display: "grid", gap: 8 }}>
-        <div className="muted">
-          {entry.toCall > 0 ? `The bot had to call ${entry.toCall} to win ${entry.pot}.` : `No bet to face, ${entry.pot} in the pot.`} Its
-          cards won {count(entry.counts.win)}, tied {count(entry.counts.tie)} and lost {count(entry.counts.loss)} of {count(outcomes)}{" "}
-          outcomes.
-        </div>
+      <div className={styles.explorerCard}>
+        <p className={styles.explorerSpot}>
+          {entry.toCall > 0 ? `The bot had to call ${count(entry.toCall)} to win ${count(entry.pot)}.` : `No bet to face, ${count(entry.pot)} in the pot.`} Its
+          cards won {count(entry.counts.win)}, tied {count(entry.counts.tie)} and lost {count(entry.counts.loss)} {countsNote(entry.street, outcomes)}.
+        </p>
 
-        <label style={{ display: "grid", gap: 4 }}>
+        <label className={styles.explorerSlider}>
           <span>
             At Risk <b>{risk}</b>, the bot would: <b>{atRisk}</b>
             {risk === entry.risk && <span className="muted"> (its real setting)</span>}
           </span>
           <input type="range" min={0} max={100} step={1} value={risk} aria-label="Risk" onChange={(e) => setRisk(Number(e.target.value))} />
         </label>
-        <div style={{ position: "relative", height: 18 }} aria-hidden="true">
-          <span
-            className="muted"
-            style={{ position: "absolute", left: `${entry.risk}%`, transform: "translateX(-50%)", fontSize: 12, whiteSpace: "nowrap" }}
-          >
-            ▲ bot's Risk {entry.risk}
+        <div className={styles.explorerMarker} aria-hidden="true">
+          <span className={styles.markerTip} style={{ left: `${entry.risk}%` }}>
+            ▲
+          </span>
+          <span className={styles.markerText} style={{ left: `${entry.risk}%`, transform: `translateX(-${entry.risk}%)` }}>
+            bot&apos;s Risk {entry.risk}
           </span>
         </div>
-        <div>
+        <p>
           The bot played at Risk {entry.risk}: <b>{entry.action}</b>.{" "}
           {risk !== entry.risk && (
-            <button className="btn-link" onClick={() => setRisk(entry.risk)}>
+            <button type="button" className={styles.textButton} onClick={() => setRisk(entry.risk)}>
               Back to Risk {entry.risk}
             </button>
           )}
-        </div>
-        <div>
-          <b>{entry.summary}</b>
-        </div>
+        </p>
+        <p className={styles.explorerSummary}>{entry.summary}</p>
+        <p className="muted">Only this one move changes. The moves before it stay as they were played.</p>
       </div>
 
       {onShowProof && (
-        <button className="btn-link" style={{ justifySelf: "start", fontSize: 13 }} onClick={() => onShowProof("risk")}>
-          Why can I trust this?
-        </button>
+        <div className={styles.linkRow}>
+          <button type="button" className={styles.proofLink} onClick={() => onShowProof("risk")}>
+            Why can I trust the Risk explorer?
+          </button>
+        </div>
       )}
     </div>
   );
