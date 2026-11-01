@@ -25,6 +25,9 @@ slider, Risk, sets both internal settings; Risk 50 is the textbook setting).
   `Classical.choice`; 5 min 56 s.
 - The same three passed on 34e7886 (55 names), after the review-fixes merge, and on 64b2e3d
   (59 names). `npm test` is red by design until lane 2 lands (see below).
+- 70b0949 merges `origin/main` (19 web and docs commits, no engine files) into this branch;
+  the Lean results above carry over unchanged. Conflicts were in README.md and MVP.txt only
+  (main's restructure plus the one-slider wording). The web on main still sends `bluff_pct`.
 
 ## Baseline (step 1), on main at 70a7b84
 
