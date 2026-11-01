@@ -156,6 +156,13 @@ export function PokerApp() {
           won={game.session.seats[HUMAN_SEAT]!.stack > 0}
           stats={game.stats}
           seed={replaySeed}
+          replay={{
+            risk: game.lean.sliders.risk,
+            bluffPct: game.lean.sliders.bluffPct,
+            turnMode: game.lean.turnMode,
+            engineCommit: game.lean.engineCommit,
+            serverCommit: game.lean.serverCommit ?? "unknown",
+          }}
           onAgain={() => start({ ...game.settings, seed: null })}
           onReplay={() => start({ ...game.settings, seed: replaySeed })}
           onReview={() => void openReview()}

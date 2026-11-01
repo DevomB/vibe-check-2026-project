@@ -8,13 +8,18 @@ interface Props {
   delay: number;
   /** The game's seed, so it can be replayed. */
   seed: bigint;
+  /**
+   * The rest of the replay record (MVP §5, §15). The same seed, sliders, moves and engine
+   * build play the same game again.
+   */
+  replay: { risk: number; bluffPct: number; turnMode: string; engineCommit: string; serverCommit: string };
   onAgain: () => void;
   onReplay: () => void;
   onReview: () => void;
   onLobby: () => void;
 }
 
-export function GameOver({ won, stats, delay, seed, onAgain, onReplay, onReview, onLobby }: Props) {
+export function GameOver({ won, stats, delay, seed, replay, onAgain, onReplay, onReview, onLobby }: Props) {
   return (
     <div className="modal-backdrop" style={{ animationDelay: `${delay}s` }}>
       <div className="modal game-over" role="dialog" aria-label="Game over">
@@ -49,7 +54,26 @@ export function GameOver({ won, stats, delay, seed, onAgain, onReplay, onReview,
             Change sliders
           </button>
         </div>
-        <p className="muted game-over-seed">Seed {seed.toString()}</p>
+        <div className="replay-record" aria-label="Replay record">
+          <span>
+            Seed <b>{seed.toString()}</b>
+          </span>
+          <span>
+            Risk <b>{replay.risk}</b>
+          </span>
+          <span>
+            Bluff <b>{replay.bluffPct}%</b>
+          </span>
+          <span>
+            Turn mode <b>{replay.turnMode}</b>
+          </span>
+          <span title="The commit the Lean game program was built from">
+            Engine build <b>{replay.engineCommit}</b>
+          </span>
+          <span title="The commit of the web server's checkout">
+            Server checkout <b>{replay.serverCommit}</b>
+          </span>
+        </div>
       </div>
     </div>
   );

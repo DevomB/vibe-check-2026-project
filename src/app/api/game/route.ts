@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { EngineStoppedError, LeanProcess } from "@/lean/process";
 import type { ApiReply, LeanCommand, LeanReply } from "@/lean/protocol";
@@ -10,6 +11,20 @@ import type { ApiReply, LeanCommand, LeanReply } from "@/lean/protocol";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+/**
+ * The commit of the server's checkout, read once when the server starts; "unknown" if git
+ * fails. Replies carry it next to the program's own build commit (`engineCommit`), because
+ * the program may have been built from other files.
+ */
+const SERVER_COMMIT = (() => {
+  try {
+    const out = execFileSync("git", ["rev-parse", "--short", "HEAD"], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], timeout: 5000 });
+    return out.trim() || "unknown";
+  } catch {
+    return "unknown";
+  }
+})();
 
 // Kept on globalThis so that hot reloading in development does not start a second program.
 const holder = globalThis as typeof globalThis & { __leanProcess?: LeanProcess };
@@ -84,7 +99,10 @@ export async function POST(request: Request): Promise<Response> {
   }
   // Lean has no game, but this command needs one: the program restarted since the game began.
   if ("error" in reply && reply.state === null && command.cmd !== "new_game") return gameLost(410);
-  // One seed determines future hands too, so a hand ending must not reveal it.
-  if (reply.state && reply.state.status !== "gameOver") reply.state.seed = null;
+  if (reply.state) {
+    // One seed determines future hands too, so a hand ending must not reveal it.
+    if (reply.state.status !== "gameOver") reply.state.seed = null;
+    reply.state.serverCommit = SERVER_COMMIT;
+  }
   return Response.json(reply satisfies ApiReply);
 }

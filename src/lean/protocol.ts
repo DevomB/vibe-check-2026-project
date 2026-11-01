@@ -78,6 +78,21 @@ export interface LeanState {
   sliders: { risk: number; bluffPct: number };
   /** The bot's reason for each of its moves this hand. Null until the hand is over. */
   botReasons: string[] | null;
+  /**
+   * Replay record (MVP §5, §15). How the bot counts its chances on the turn: always "exact"
+   * (the mode note is in engine/Engine/Equity.lean).
+   */
+  turnMode: "exact";
+  /**
+   * The git commit the Lean program was built from. "unknown" when that cannot be told: git
+   * failed, or files under engine/ had changes when it was built.
+   */
+  engineCommit: string;
+  /**
+   * Added by the HTTP bridge, not Lean: the commit of the server's checkout, read when the
+   * server starts, or "unknown". It can differ from `engineCommit`.
+   */
+  serverCommit?: string;
 }
 
 /** The labels of a graded decision, best first. */

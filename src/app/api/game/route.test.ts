@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -136,6 +137,26 @@ describe.skipIf(!existsSync(leanBinaryPath()))("/api/game with the Lean program"
     if (!("ok" in reply)) throw new Error(reply.error);
     expect(reply.review?.hand).toBe(s.hand);
     expect(reply.review?.decisions.length).toBeGreaterThan(0);
+  });
+
+  it("adds the replay record: turn mode, engine build and server checkout", async () => {
+    let serverCommit = "unknown";
+    try {
+      serverCommit = execFileSync("git", ["rev-parse", "--short", "HEAD"], { encoding: "utf8" }).trim();
+    } catch {}
+    const commit = /^([0-9a-f]{4,40}|unknown)$/;
+    const start = await post({ cmd: "new_game", seed: "1", risk: 0, bluff_pct: 0 });
+    if (!("ok" in start.reply)) throw new Error(start.reply.error);
+    expect(start.reply.state.turnMode).toBe("exact");
+    expect(start.reply.state.engineCommit).toMatch(commit);
+    expect(start.reply.state.serverCommit).toBe(serverCommit);
+    const illegal = await post({ cmd: "act", action: "check" });
+    expect(illegal.reply.state).toMatchObject({ turnMode: "exact", serverCommit });
+    const { reply } = await post({ cmd: "act", action: "raise", amount: 500 });
+    if (!("ok" in reply)) throw new Error(reply.error);
+    expect(reply.state.status).toBe("gameOver");
+    expect(reply.state).toMatchObject({ seed: "1", sliders: { risk: 0, bluffPct: 0 }, turnMode: "exact", serverCommit });
+    expect(reply.state.engineCommit).toBe(start.reply.state.engineCommit);
   });
 
   it("passes slider values out of range to Lean, which rejects them", async () => {
