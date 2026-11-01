@@ -6,8 +6,8 @@ import Engine.HandRankTests
 
 Run with `lake exe river-bench` from `engine/`. It times ranking the 1,081 candidate hands
 on a board, building the betting set, deciding one hand, and grading one review, all with
-the compiled code (not the interpreter the `#guard` tests use). MVP section 5 asks for the
-ranking to take well under a second.
+the compiled code (not the interpreter the `#guard` tests use). MVP section 5 sets no time
+limit for the river set; this shows how long each step takes.
 
 The numbers measured are recorded at `rankRiverHands` in `Engine/River.lean`.
 -/

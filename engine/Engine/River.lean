@@ -58,7 +58,7 @@ the order of `riverCandidates`: by the lower card's ID, then the higher card's I
 only chooses the betting set; equal scores still split the pot at showdown.
 
 Speed: `lake exe river-bench` (`RiverBench.lean`) ranks the 1,081 hands of a five-card
-board in about 20 ms with the compiled engine (measured Nov 1, 2026 on WSL), so there is
+board in about 20 ms with the compiled engine (measured Oct 31, 2026 on WSL), so there is
 no need for a precomputed score key. -/
 def rankRiverHands (board : List Card) : List RankedHand :=
   let hands := (riverCandidates board).map fun (a, b) =>
