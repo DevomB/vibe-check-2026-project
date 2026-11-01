@@ -222,7 +222,7 @@ export function gameStatus(game: Game): Status {
 export function useGame() {
   const [game, setGame] = useState<Game | null>(null);
   const [error, setError] = useState<string | null>(null);
-  /** True while the bot's reply is held back so it seems to think. */
+  /** True from sending a human move until Lean's reply is shown: the bot is "thinking". */
   const [thinking, setThinking] = useState(false);
   /** The review of the finished hand, once asked for. */
   const [review, setReview] = useState<LeanReview | null>(null);
@@ -233,19 +233,22 @@ export function useGame() {
   const generation = useRef(0);
 
   /** Send a command and apply Lean's reply. `make` builds the next game from the reply.
-   * With `pause`, a reply in which the bot moved is held back while the bot "thinks". */
+   * With `pause` (the human's moves), the human cannot act from the moment the move is sent,
+   * and a reply in which the bot moved is held back until the bot has "thought" that long,
+   * counting the time Lean took. */
   const request = useCallback(async (command: LeanCommand, make: (s: LeanState) => Game, pause?: (s: LeanState) => number) => {
     if (busy.current) return;
     busy.current = true;
     const gen = generation.current;
+    const sent = Date.now();
+    if (pause) setThinking(true);
     try {
       const reply = await sendToLean(command);
       if (gen !== generation.current) return;
       if ("ok" in reply) {
         setError(null);
-        const wait = pause && botMoved(reply.state.events) ? pause(reply.state) : 0;
+        const wait = pause && botMoved(reply.state.events) ? pause(reply.state) - (Date.now() - sent) : 0;
         if (wait > 0) {
-          setThinking(true);
           await new Promise((resolve) => window.setTimeout(resolve, wait));
           if (gen !== generation.current) return;
         }
