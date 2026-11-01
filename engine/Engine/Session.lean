@@ -164,8 +164,8 @@ def Session.runBot : Nat → Session → Session
     if !s.botToAct then s else
     let h := s.game.hand
     let c := s.botChoice
-    -- The bot only makes legal moves (T3). If one were ever rejected, it checks or calls
-    -- instead (`botMove`, legal by `botMove_legal`), so the game never gets stuck.
+    -- Whenever the bot may act, its move is legal (T3). If one were ever rejected, it
+    -- checks or calls instead (`botMove`, also legal then, by `botMove_legal`).
     let c := if (s.move c.action).toBool then c
       else ⟨botMove h.chips, "Check or call: the planned move was not allowed."⟩
     match s.move c.action with
