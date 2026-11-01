@@ -10,10 +10,11 @@ interface Props {
   seed: bigint;
   onAgain: () => void;
   onReplay: () => void;
+  onReview: () => void;
   onLobby: () => void;
 }
 
-export function GameOver({ won, stats, delay, seed, onAgain, onReplay, onLobby }: Props) {
+export function GameOver({ won, stats, delay, seed, onAgain, onReplay, onReview, onLobby }: Props) {
   return (
     <div className="modal-backdrop" style={{ animationDelay: `${delay}s` }}>
       <div className="modal game-over" role="dialog" aria-label="Game over">
@@ -41,8 +42,11 @@ export function GameOver({ won, stats, delay, seed, onAgain, onReplay, onLobby }
           <button className="btn btn-ghost" onClick={onReplay}>
             Replay these cards
           </button>
+          <button className="btn btn-ghost" onClick={onReview}>
+            Review last hand
+          </button>
           <button className="btn btn-ghost" onClick={onLobby}>
-            Change opponent
+            Change sliders
           </button>
         </div>
         <p className="muted game-over-seed">Seed {seed.toString()}</p>

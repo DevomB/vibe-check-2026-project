@@ -775,6 +775,13 @@ kbd {
   font-size: 14px;
 }
 
+.bot-message {
+  margin-top: 4px;
+  color: var(--gold);
+  font-size: 14px;
+  font-weight: 600;
+}
+
 .action-buttons {
   grid-area: buttons;
   display: flex;
@@ -937,38 +944,6 @@ kbd {
   box-shadow: inset 0 0 0 1px var(--line-strong);
 }
 
-.opponent-list {
-  display: grid;
-  gap: 4px;
-  padding: 6px;
-  border-radius: 12px;
-  background: var(--bg-2);
-  border: 1px solid var(--line);
-}
-
-.opponent {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 8px 10px;
-  border: 1px solid transparent;
-  border-radius: 10px;
-  background: none;
-  text-align: left;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-}
-
-.opponent:hover {
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.opponent.on {
-  border-color: rgba(233, 196, 106, 0.7);
-  background: rgba(233, 196, 106, 0.08);
-}
-
 .seed-input {
   width: 150px;
   padding: 8px 10px;
@@ -991,19 +966,45 @@ kbd {
   border-color: var(--red);
 }
 
+.bot-slider {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bot-slider-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.bot-slider-value {
+  min-width: 48px;
+  padding: 2px 8px;
+  border-radius: 7px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  color: var(--gold);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.bot-slider input[type="range"] {
+  width: 100%;
+  accent-color: var(--gold);
+}
+
+.bot-slider-help {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
 .game-over-seed {
   margin: 14px 0 0;
   font-size: 12px;
-}
-
-.opponent-name {
-  font-weight: 700;
-}
-
-.opponent-style {
-  margin-left: auto;
-  color: var(--muted);
-  font-size: 13px;
 }
 
 /* ---------- Modals ---------- */
@@ -1163,6 +1164,103 @@ kbd {
   display: flex;
   gap: 10px;
   justify-content: center;
+}
+
+/* ---------- Review ---------- */
+.modal.review {
+  max-width: 620px;
+}
+
+.review-intro {
+  margin: -6px 0 4px;
+  font-size: 14px;
+}
+
+.modal ul.review-list {
+  display: grid;
+  gap: 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.modal .review-item {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+}
+
+.review-item.is-ungraded {
+  padding: 8px 14px;
+  opacity: 0.75;
+}
+
+.review-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.review-move {
+  font-weight: 700;
+}
+
+.review-label {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.label-best {
+  background: rgba(47, 191, 113, 0.18);
+  color: var(--green);
+}
+
+.label-good {
+  background: rgba(47, 191, 113, 0.1);
+  color: #8fd9b0;
+}
+
+.label-inaccuracy {
+  background: rgba(233, 196, 106, 0.15);
+  color: var(--gold);
+}
+
+.label-mistake {
+  background: rgba(240, 140, 70, 0.16);
+  color: #f0a060;
+}
+
+.label-blunder {
+  background: rgba(224, 86, 86, 0.18);
+  color: var(--red);
+}
+
+.label-none {
+  background: var(--panel-2);
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.review-numbers {
+  display: grid;
+  gap: 2px;
+  margin-top: 8px;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.modal .review-reasons li {
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+.modal.review .modal-actions {
+  margin-top: 20px;
 }
 
 /* ---------- Animations ---------- */
@@ -1414,3 +1512,48 @@ kbd {
   font-size: 14px;
   text-align: center;
 }
+
+/* Named opponents on the start screen (presets for the Risk and Bluff sliders). */
+.opponent-list {
+  display: grid;
+  gap: 4px;
+  padding: 6px;
+  border-radius: 12px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+}
+
+.opponent {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.opponent:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.opponent.on {
+  border-color: rgba(233, 196, 106, 0.7);
+  background: rgba(233, 196, 106, 0.08);
+}
+
+.opponent-name {
+  font-weight: 700;
+}
+
+.opponent-style {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+div.opponent { cursor: default; }

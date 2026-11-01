@@ -1,19 +1,67 @@
 import { type CSSProperties, useState } from "react";
-import { PERSONALITIES } from "@/ai/bot";
 import { PlayingCard } from "./PlayingCard";
-import { PLAYABLE_OPPONENTS } from "@/lib/roster";
 import { type GameSettings, TABLE } from "@/hooks/useGame";
+import { BLUFF_PCT_MAX, RISK_MAX } from "@/lean/protocol";
+import { CUSTOM_BOT, OPPONENTS, presetFor } from "@/lib/roster";
 
-/** Start screen: pick the opponent, and optionally a seed to replay a game. */
-export function Lobby({ onStart, onRules }: { onStart: (s: GameSettings) => void; onRules: () => void }) {
-  const [opponent, setOpponent] = useState(0);
+interface SliderProps {
+  label: string;
+  value: number;
+  max: number;
+  /** How the value is shown, e.g. "33%". */
+  shown: string;
+  /** One plain sentence on what the slider changes. */
+  help: string;
+  onChange: (v: number) => void;
+}
+
+function BotSlider({ label, value, max, shown, help, onChange }: SliderProps) {
+  return (
+    <div className="bot-slider">
+      <div className="bot-slider-head">
+        <span className="field-label">{label}</span>
+        <span className="bot-slider-value">{shown}</span>
+      </div>
+      <input
+        type="range"
+        min={0}
+        max={max}
+        step={1}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        aria-label={label}
+        aria-valuetext={shown}
+      />
+      <p className="bot-slider-help">{help}</p>
+    </div>
+  );
+}
+
+/** Start screen: pick a named opponent or set the bot's Risk and Bluff sliders yourself, and
+ * optionally a seed to replay a game. */
+export function Lobby({
+  initial,
+  onStart,
+  onRules,
+}: {
+  initial?: GameSettings;
+  onStart: (s: GameSettings) => void;
+  onRules: () => void;
+}) {
+  const [risk, setRisk] = useState(initial?.risk ?? 50);
+  const [bluffPct, setBluffPct] = useState(initial?.bluffPct ?? 33);
   const [seedText, setSeedText] = useState("");
-  const [fast, setFast] = useState(false);
+  const preset = presetFor(risk, bluffPct);
+  const pick = (risk: number, bluffPct: number) => {
+    setRisk(risk);
+    setBluffPct(bluffPct);
+  };
+  const [fast, setFast] = useState(initial?.fast ?? false);
 
   const seedValid = /^\d{0,20}$/.test(seedText.trim());
   const start = () => {
     const trimmed = seedText.trim();
-    onStart({ opponent, seed: trimmed ? BigInt(trimmed) : null, fast });
+    onStart({ risk, bluffPct, seed: trimmed ? BigInt(trimmed) : null, fast });
   };
 
   return (
@@ -32,23 +80,48 @@ export function Lobby({ onStart, onRules }: { onStart: (s: GameSettings) => void
       <div className="lobby-card">
         <div className="field-label">Your opponent</div>
         <div className="opponent-list" role="radiogroup" aria-label="Opponent">
-          {PLAYABLE_OPPONENTS.map((o, i) => (
+          {OPPONENTS.map((o) => (
             <button
               key={o.name}
               type="button"
               role="radio"
-              aria-checked={i === opponent}
-              className={`opponent ${i === opponent ? "on" : ""}`}
-              onClick={() => setOpponent(i)}
+              aria-checked={preset === o}
+              className={`opponent ${preset === o ? "on" : ""}`}
+              onClick={() => pick(o.risk, o.bluffPct)}
             >
               <span className="avatar avatar-sm" style={{ "--avatar": o.color } as CSSProperties}>
                 {o.name[0]}
               </span>
               <span className="opponent-name">{o.name}</span>
-              <span className="opponent-style">{PERSONALITIES[o.personality].label}</span>
+              <span className="opponent-style">{o.style}</span>
             </button>
           ))}
+          <div className={`opponent ${preset ? "" : "on"}`} role="radio" aria-checked={!preset} aria-disabled>
+            <span className="avatar avatar-sm" style={{ "--avatar": CUSTOM_BOT.color } as CSSProperties}>
+              ?
+            </span>
+            <span className="opponent-name">Custom</span>
+            <span className="opponent-style">Move a slider to build your own</span>
+          </div>
         </div>
+
+        <div className="field-label">Set up the bot</div>
+        <BotSlider
+          label="Risk"
+          value={risk}
+          max={RISK_MAX}
+          shown={String(risk)}
+          help="How much the bot hates to lose chips. At 0 it calls any bet that pays off on average; at 100 it needs a much stronger hand to call."
+          onChange={setRisk}
+        />
+        <BotSlider
+          label="Bluff"
+          value={bluffPct}
+          max={BLUFF_PCT_MAX}
+          shown={`${bluffPct}%`}
+          help="How many of the bot's river bets are bluffs with weak hands. At 0% it never bluffs on the river; at 60% it bluffs often."
+          onChange={setBluffPct}
+        />
 
         <div className="field">
           <span className="field-label">Game speed</span>
@@ -78,7 +151,7 @@ export function Lobby({ onStart, onRules }: { onStart: (s: GameSettings) => void
         </label>
 
         <button className="btn btn-primary btn-big" onClick={start} disabled={!seedValid}>
-          Take a seat
+          Start
         </button>
         <button className="btn btn-link" onClick={onRules}>
           New to poker? Read the rules

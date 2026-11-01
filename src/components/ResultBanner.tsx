@@ -12,7 +12,12 @@ function winnersOf(game: Game): Winner[] {
   const result = hand.result;
   if (!result) return [];
   return result.winnings
-    .map((amount, i) => ({ amount, name: game.players[seatOf[i]!]!.name, hand: result.hands[i]?.name ?? null }))
+    .map((amount, i) => ({
+      amount,
+      name: game.players[seatOf[i]!]!.name,
+      // Lean names the hand; after a fold the winner's cards are not part of the result.
+      hand: result.showdown ? game.lean.players[seatOf[i]!]!.handName : null,
+    }))
     .filter((w) => w.amount > 0)
     .sort((a, b) => b.amount - a.amount);
 }
@@ -50,10 +55,11 @@ interface BarProps {
   delay: number;
   gameOver: boolean;
   onNextHand: () => void;
+  onReview: () => void;
 }
 
 /** Replaces the action bar between hands. The result stays until the human clicks Next hand; nothing advances on its own. */
-export function NextHandBar({ game, delay, gameOver, onNextHand }: BarProps) {
+export function NextHandBar({ game, delay, gameOver, onNextHand, onReview }: BarProps) {
   const winners = winnersOf(game);
   const youWon = winners.some((w) => w.name === "You");
 
@@ -64,13 +70,16 @@ export function NextHandBar({ game, delay, gameOver, onNextHand }: BarProps) {
         <span className="strength-label">{youWon ? "Nice hand" : "Hand over"}</span>
         <span className="strength-value">{headline}</span>
       </div>
-      {!gameOver && (
-        <div className="action-buttons">
+      <div className="action-buttons">
+        <button className="btn btn-ghost next-btn" onClick={onReview}>
+          Review <kbd>R</kbd>
+        </button>
+        {!gameOver && (
           <button className="btn btn-primary next-btn" onClick={onNextHand}>
             Next hand <kbd>Space</kbd>
           </button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
