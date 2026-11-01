@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Action, DealtHand, HandState, LegalActions, Session } from "@/lib/table";
-import type { ApiReply, LeanCommand, LeanEvent, LeanReview, LeanState } from "@/lean/protocol";
+import type { ApiCommand, LeanCommand, LeanEvent, LeanReview, MysteryReveal, RouteReply, RouteState } from "@/lean/protocol";
 import { type Challenge, atRiverDecision } from "@/lib/challenges";
 import { cardText, chips } from "@/lib/format";
-import { HUMAN_COLOR, botFor } from "@/lib/roster";
+import { CUSTOM_BOT, HUMAN_COLOR, botFor } from "@/lib/roster";
 
 /**
  * Runs a game against the Lean game program. Every rule decision (dealing, which moves are
@@ -24,14 +24,25 @@ export interface GameSettings {
   /** Game seed to replay; null deals a new random game. */
   seed: bigint | null;
   fast: boolean;
+  /**
+   * A Mystery opponent: the server picks Risk, Bluff and the seed, and hides them until the
+   * player guesses. `risk`, `bluffPct` and `seed` above are then not sent; they only keep the
+   * setup screen's sliders for next time.
+   */
+  mystery: boolean;
 }
 
 /**
  * What kind of game this is. The kinds never mix: starting any game sets exactly one.
  * - normal: the player set the sliders (or picked a named opponent).
  * - practice: a rehearsed hand from `@/lib/challenges`, loaded up to its river decision.
+ * - mystery: the server picked the bot's settings and hides them; `reveal` is null until the
+ *   player's guess is in.
  */
-export type GameMode = { kind: "normal" } | { kind: "practice"; challenge: Challenge };
+export type GameMode =
+  | { kind: "normal" }
+  | { kind: "practice"; challenge: Challenge }
+  | { kind: "mystery"; reveal: MysteryReveal | null };
 
 export interface Player {
   name: string;
@@ -51,8 +62,8 @@ export interface Game {
   seed: bigint | null;
   /** Seat 0 is the human, seat 1 the bot. Same numbering as Lean's players. */
   players: Player[];
-  /** Lean's latest reply. */
-  lean: LeanState;
+  /** Lean's latest reply, as the route passes it on (an unrevealed Mystery game has no `sliders`). */
+  lean: RouteState;
   /** Lean's reply, in the shape the table components draw. */
   session: Session;
   dealt: DealtHand;
@@ -88,16 +99,18 @@ declare global {
 
 export const HUMAN_SEAT = 0;
 const BOT_SEAT = 1;
+/** The bot's name and color in a Mystery game: the same for every hidden setting, so they give nothing away. */
+const MYSTERY_BOT = { name: "Mystery bot", color: CUSTOM_BOT.color } as const;
 /** Oldest lines are dropped beyond this, so a very long session can't grow without bound. */
 const LOG_LIMIT = 5000;
 
-async function sendToLean(command: LeanCommand): Promise<ApiReply> {
+async function sendToLean(command: ApiCommand): Promise<RouteReply> {
   const response = await fetch("/api/game", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(command),
   });
-  return (await response.json()) as ApiReply;
+  return (await response.json()) as RouteReply;
 }
 
 /** How long the bot "thinks" before its moves appear, in milliseconds. Display only: Lean already chose the moves. */
@@ -111,7 +124,7 @@ function botMoved(events: readonly LeanEvent[]): boolean {
 }
 
 /** Lean's reply as a hand the table components can draw. */
-function toHandState(s: LeanState, names: string[]): HandState {
+function toHandState(s: RouteState, names: string[]): HandState {
   const showdown = s.result?.showdown ?? false;
   const players = s.players.map((p, i) => ({
     id: String(i),
@@ -202,7 +215,7 @@ function appendLog(log: string[], entries: string[]): string[] {
 }
 
 /** The game after a reply from Lean. `previous` is null for a new game. */
-function withReply(base: Omit<Game, "lean" | "session" | "dealt" | "legal" | "botLine" | "boardBefore" | "lost" | "peeked">, previous: Game | null, s: LeanState): Game {
+function withReply(base: Omit<Game, "lean" | "session" | "dealt" | "legal" | "botLine" | "boardBefore" | "lost" | "peeked">, previous: Game | null, s: RouteState): Game {
   const names = base.players.map((p) => p.name);
   const newHand = !previous || previous.lean.hand !== s.hand;
   const header = newHand ? [`Hand #${s.hand}`] : [];
@@ -241,7 +254,7 @@ function withReply(base: Omit<Game, "lean" | "session" | "dealt" | "legal" | "bo
 /** The game with the bot's cards hidden again, after "Peek at bot's cards" was turned off. */
 function withoutBotCards(g: Game): Game {
   const [human, bot] = g.lean.players;
-  const lean: LeanState = { ...g.lean, players: [human, { ...bot, cards: null }] };
+  const lean: RouteState = { ...g.lean, players: [human, { ...bot, cards: null }] };
   const players = g.dealt.hand.players.map((p, i) => (i === BOT_SEAT ? { ...p, hole: [] } : p));
   return { ...g, lean, dealt: { ...g.dealt, hand: { ...g.dealt.hand, players } }, peeked: false };
 }
@@ -283,7 +296,7 @@ export function useGame() {
   const refreshPending = useRef(false);
   const refreshRef = useRef<() => void>(() => {});
 
-  const markPeeked = useCallback((s: LeanState) => {
+  const markPeeked = useCallback((s: RouteState) => {
     if (s.status === "playing") setPeekedHands((hands) => (hands.includes(s.hand) ? hands : [...hands, s.hand]));
   }, []);
 
@@ -311,7 +324,7 @@ export function useGame() {
    * With `pause` (the human's moves), the human cannot act from the moment the move is sent,
    * and a reply in which the bot moved is held back until the bot has "thought" that long,
    * counting the time Lean took. */
-  const request = useCallback(async (command: LeanCommand, make: (s: LeanState) => Game, pause?: (s: LeanState) => number) => {
+  const request = useCallback(async (command: ApiCommand, make: (s: RouteState) => Game, pause?: (s: RouteState) => number) => {
     if (busy.current) return;
     busy.current = true;
     const gen = generation.current;
@@ -393,14 +406,17 @@ export function useGame() {
       resetPeek();
       const players: Player[] = [
         { name: "You", color: HUMAN_COLOR },
-        botFor(settings.risk, settings.bluffPct),
+        // A preset's name would tell the hidden sliders, so a Mystery bot gets a plain one.
+        settings.mystery ? MYSTERY_BOT : botFor(settings.risk, settings.bluffPct),
       ];
-      const seed = settings.seed;
-      const mode: GameMode = { kind: "normal" };
+      // A Mystery game's seed is private (the server picks it), so none is kept here.
+      const seed = settings.mystery ? null : settings.seed;
+      const mode: GameMode = settings.mystery ? { kind: "mystery", reveal: null } : { kind: "normal" };
       const base = { settings, mode, seed, players, log: [], stats: { handsPlayed: 0, handsWon: 0, biggestPot: 0 } };
-      void request({ cmd: "new_game", seed: seed?.toString() ?? "", risk: settings.risk, bluff_pct: settings.bluffPct }, (s) =>
-        withReply(base, null, s),
-      );
+      const command: ApiCommand = settings.mystery
+        ? { cmd: "new_game", mystery: true }
+        : { cmd: "new_game", seed: seed?.toString() ?? "", risk: settings.risk, bluff_pct: settings.bluffPct };
+      void request(command, (s) => withReply(base, null, s));
     },
     [request, resetPeek],
   );
@@ -422,7 +438,7 @@ export function useGame() {
       resetPeek();
       setGame(null);
       setLoading(challenge);
-      const settings: GameSettings = { risk: challenge.risk, bluffPct: challenge.bluff_pct, seed: BigInt(challenge.seed), fast };
+      const settings: GameSettings = { risk: challenge.risk, bluffPct: challenge.bluff_pct, seed: BigInt(challenge.seed), fast, mystery: false };
       const mode: GameMode = { kind: "practice", challenge };
       const players: Player[] = [{ name: "You", color: HUMAN_COLOR }, botFor(challenge.risk, challenge.bluff_pct)];
       const base = { settings, mode, seed: settings.seed, players, log: [], stats: { handsPlayed: 0, handsWon: 0, biggestPot: 0 } };
@@ -493,11 +509,13 @@ export function useGame() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ cmd: "review", hand } satisfies LeanCommand),
       });
-      const reply = (await response.json()) as ApiReply;
+      const reply = (await response.json()) as RouteReply;
       if (gen !== generation.current || gameRef.current?.lean.hand !== hand) return;
       if ("ok" in reply && reply.review) {
         setError(null);
         setReview(reply.review);
+      } else if ("ok" in reply && reply.reviewDeferred) {
+        setError("The review opens after you guess the Mystery bot's settings.");
       } else if ("ok" in reply) {
         setError("The game engine sent no review.");
       } else {
@@ -511,6 +529,43 @@ export function useGame() {
   }, [failed, release]);
 
   const closeReview = useCallback(() => setReview(null), []);
+
+  /**
+   * Send the player's guess at the Mystery bot. On success the game shows everything again:
+   * the reply has the real settings and the full state. Returns the server's refusal, or null.
+   */
+  const reveal = useCallback(
+    async (risk: number, bluffPct: number): Promise<string | null> => {
+      const g = gameRef.current;
+      if (!g || g.lost !== null || g.mode.kind !== "mystery" || g.mode.reveal !== null) return "There is no Mystery bot to reveal.";
+      if (busy.current) return "Wait for the table to finish, then try again.";
+      busy.current = true;
+      const gen = generation.current;
+      const asked = peekRef.current;
+      try {
+        const command: ApiCommand = { cmd: "reveal", risk, bluff_pct: bluffPct };
+        const reply = await sendToLean(asked ? { ...command, peek: true } : command);
+        if (gen !== generation.current) return null;
+        if (!("ok" in reply)) {
+          // A refused guess is shown in the guess panel; only a lost game changes the table.
+          if (reply.lost) failed(reply);
+          return reply.error;
+        }
+        if (!reply.reveal) return "The server sent no reveal.";
+        const now = gameRef.current ?? g;
+        const mode: GameMode = { kind: "mystery", reveal: reply.reveal };
+        const shown = withReply({ ...now, mode }, now, reply.state);
+        setError(null);
+        setGame(withPeek(shown, asked, peekRef.current));
+        return null;
+      } catch (e) {
+        return `Could not reach the game engine: ${e instanceof Error ? e.message : String(e)}`;
+      } finally {
+        if (gen === generation.current) release();
+      }
+    },
+    [failed, release],
+  );
 
   const quit = useCallback(() => {
     generation.current++;
@@ -529,5 +584,5 @@ export function useGame() {
     window.__holdemLog = log ?? [];
   }, [log]);
 
-  return { game, error, thinking, review, loading, peek, peekedHands, setPeek, start, startChallenge, humanAct, nextHand, openReview, closeReview, quit };
+  return { game, error, thinking, review, loading, peek, peekedHands, setPeek, start, startChallenge, humanAct, nextHand, openReview, closeReview, reveal, quit };
 }

@@ -6,20 +6,23 @@ interface Props {
   stats: Stats;
   /** Seconds to wait so the last hand's result can be seen first. */
   delay: number;
-  /** The game's seed, so it can be replayed. */
-  seed: bigint;
+  /** The game's seed, so it can be replayed. Null while a Mystery bot is not yet revealed. */
+  seed: bigint | null;
   /**
    * The rest of the replay record (MVP §5, §15). The same seed, sliders, moves and engine
-   * build play the same game again.
+   * build play the same game again. `sliders` is null while a Mystery bot is not yet revealed.
    */
-  replay: { risk: number; bluffPct: number; turnMode: string; engineCommit: string; serverCommit: string };
+  replay: { sliders: { risk: number; bluffPct: number } | null; turnMode: string; engineCommit: string; serverCommit: string };
   onAgain: () => void;
   onReplay: () => void;
   onReview: () => void;
   onLobby: () => void;
+  /** Set while a Mystery bot is not yet revealed: open the guess panel. The review and the replay wait for the guess. */
+  onGuess?: () => void;
 }
 
-export function GameOver({ won, stats, delay, seed, replay, onAgain, onReplay, onReview, onLobby }: Props) {
+export function GameOver({ won, stats, delay, seed, replay, onAgain, onReplay, onReview, onLobby, onGuess }: Props) {
+  const hidden = "hidden until you guess";
   return (
     <div className="modal-backdrop" style={{ animationDelay: `${delay}s` }}>
       <div className="modal game-over" role="dialog" aria-label="Game over">
@@ -41,28 +44,37 @@ export function GameOver({ won, stats, delay, seed, replay, onAgain, onReplay, o
           </div>
         </div>
         <div className="modal-actions">
-          <button className="btn btn-primary" onClick={onAgain}>
+          {onGuess && (
+            <button className="btn btn-primary" onClick={onGuess}>
+              Guess the bot
+            </button>
+          )}
+          <button className={`btn ${onGuess ? "btn-ghost" : "btn-primary"}`} onClick={onAgain}>
             New game
           </button>
-          <button className="btn btn-ghost" onClick={onReplay}>
-            Replay these cards
-          </button>
-          <button className="btn btn-ghost" onClick={onReview}>
-            Review last hand
-          </button>
+          {seed !== null && (
+            <button className="btn btn-ghost" onClick={onReplay}>
+              Replay these cards
+            </button>
+          )}
+          {!onGuess && (
+            <button className="btn btn-ghost" onClick={onReview}>
+              Review last hand
+            </button>
+          )}
           <button className="btn btn-ghost" onClick={onLobby}>
             Change sliders
           </button>
         </div>
         <div className="replay-record" aria-label="Replay record">
           <span>
-            Seed <b>{seed.toString()}</b>
+            Seed <b>{seed === null ? hidden : seed.toString()}</b>
           </span>
           <span>
-            Risk <b>{replay.risk}</b>
+            Risk <b>{replay.sliders === null ? hidden : replay.sliders.risk}</b>
           </span>
           <span>
-            Bluff <b>{replay.bluffPct}%</b>
+            Bluff <b>{replay.sliders === null ? hidden : `${replay.sliders.bluffPct}%`}</b>
           </span>
           <span>
             Turn mode <b>{replay.turnMode}</b>

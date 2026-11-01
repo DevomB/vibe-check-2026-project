@@ -91,7 +91,7 @@ export const RIGHT_BUT_UNLUCKY = "Right decision, unlucky result. The grade look
  * True when Lean's state is the challenge's decision point: hand 1 is on the river, it is the
  * human's turn, and there is a bet to call (the bot opened the river). Only Lean's reply is read.
  */
-export function atRiverDecision(s: LeanState): boolean {
+export function atRiverDecision(s: Pick<LeanState, "hand" | "status" | "street" | "toAct" | "legal">): boolean {
   return s.hand === 1 && s.status === "playing" && s.street === "river" && s.toAct === 0 && s.legal !== null && s.legal.call > 0;
 }
 

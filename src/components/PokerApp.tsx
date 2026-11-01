@@ -5,6 +5,7 @@ import { ActionBar } from "./ActionBar";
 import { PracticeBar } from "./ChallengePicker";
 import { GameOver } from "./GameOver";
 import { Lobby } from "./Lobby";
+import { MysteryGuess } from "./MysteryGuess";
 import { ReviewModal } from "./ReviewModal";
 import { RulesModal } from "./RulesModal";
 import { ProofsDrawer } from "./ProofsDrawer";
@@ -12,7 +13,7 @@ import { NextHandBar } from "./ResultBanner";
 import { Table, resultDelay } from "./Table";
 import { type PracticeVerdict, practiceVerdict } from "@/lib/challenges";
 import { chips, describeStartingHand } from "@/lib/format";
-import { type GameMode, type GameSettings, HUMAN_SEAT, TABLE, gameStatus, useGame } from "@/hooks/useGame";
+import { type Game, type GameMode, type GameSettings, HUMAN_SEAT, TABLE, gameStatus, useGame } from "@/hooks/useGame";
 import styles from "./modes.module.css";
 
 /**
@@ -27,8 +28,16 @@ interface ReviewModalExtras {
   onShowProof?: (id: string) => void;
 }
 
+/** A Mystery bot may be guessed after this many finished hands, or at game over. The route enforces it. */
+const REVEAL_AFTER_HANDS = 3;
+
+/** Hands already finished: those before the current one, and the current one once it is over. */
+function finishedHands(game: Game): number {
+  return game.lean.status === "playing" ? game.lean.hand - 1 : game.lean.hand;
+}
+
 export function PokerApp() {
-  const { game, error, thinking, review, loading, peek, peekedHands, setPeek, start, startChallenge, humanAct, nextHand, openReview, closeReview, quit } =
+  const { game, error, thinking, review, loading, peek, peekedHands, setPeek, start, startChallenge, humanAct, nextHand, openReview, closeReview, reveal, quit } =
     useGame();
   const [showRules, setShowRules] = useState(false);
   /** The "What is guaranteed?" drawer: closed (null), or open at a guarantee id (or the top). */
@@ -54,6 +63,55 @@ export function PokerApp() {
     return () => window.clearTimeout(timer);
   }, [practiceOver, mode, practiceDelayMs, openReview]);
 
+  // Mystery: the guess panel, and a note when a review must wait for the guess.
+  const mysteryHidden = mode?.kind === "mystery" && mode.reveal === null;
+  const finished = game ? finishedHands(game) : 0;
+  const mayGuess = finished >= REVEAL_AFTER_HANDS || status === "gameOver";
+  const [guessOpen, setGuessOpen] = useState(false);
+  const [guessSending, setGuessSending] = useState(false);
+  const [guessError, setGuessError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<{ hand: number; text: string } | null>(null);
+  const openGuess = useCallback(() => {
+    setGuessError(null);
+    setGuessOpen(true);
+  }, []);
+  // A new game (a new settings object) starts with the panel closed; a reveal keeps the same game.
+  const gameSettings = game?.settings;
+  useEffect(() => {
+    setGuessOpen(false);
+    setNotice(null);
+  }, [gameSettings]);
+  const submitGuess = async (risk: number, bluffPct: number) => {
+    setGuessSending(true);
+    setGuessError(await reveal(risk, bluffPct));
+    setGuessSending(false);
+  };
+  /** Review, unless the review must wait for the Mystery guess: then guess, or say when you may. */
+  const askReview = useCallback(() => {
+    if (!mysteryHidden) return void openReview();
+    if (mayGuess) return openGuess();
+    setNotice({
+      hand: game?.lean.hand ?? 0,
+      text: `Reviews open after you guess the bot. You can guess after ${REVEAL_AFTER_HANDS} finished hands (${finished} so far).`,
+    });
+  }, [mysteryHidden, mayGuess, finished, game?.lean.hand, openReview, openGuess]);
+
+  // Mystery: open the guess panel on its own once, when the third hand is over, and again at
+  // game over, if the bot is still hidden.
+  const guessDue = mysteryHidden && lost === null ? (status === "gameOver" ? "over" : status === "handOver" && finished >= REVEAL_AFTER_HANDS ? "third" : null) : null;
+  const guessDelayMs = game && guessDue ? (resultDelay(game) + 1.6) * 1000 : 0;
+  const guessPrompted = useRef<{ mode: GameMode | null; third: boolean; over: boolean }>({ mode: null, third: false, over: false });
+  useEffect(() => {
+    if (!guessDue || !mode) return;
+    if (guessPrompted.current.mode !== mode) guessPrompted.current = { mode, third: false, over: false };
+    if (guessPrompted.current[guessDue]) return;
+    const timer = window.setTimeout(() => {
+      guessPrompted.current = { mode, third: true, over: guessPrompted.current.over || guessDue === "over" };
+      openGuess();
+    }, guessDelayMs);
+    return () => window.clearTimeout(timer);
+  }, [guessDue, mode, guessDelayMs, openGuess]);
+
   // Practice: Lean's grade of the rehearsed hand, kept after the review is closed.
   const [practice, setPractice] = useState<{ mode: GameMode; verdict: PracticeVerdict } | null>(null);
   useEffect(() => {
@@ -62,7 +120,7 @@ export function PokerApp() {
   }, [game, review]);
 
   useEffect(() => {
-    if (status !== "handOver" || showRules || proofs || review || lost !== null) return;
+    if (status !== "handOver" || showRules || proofs || guessOpen || review || lost !== null) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.repeat || (e.target instanceof HTMLElement && e.target.closest("button, input, textarea, select, [contenteditable]"))) return;
       if (e.key === " " || e.key === "Enter") {
@@ -70,12 +128,12 @@ export function PokerApp() {
         nextHand();
       } else if (e.key === "r" || e.key === "R") {
         e.preventDefault();
-        void openReview();
+        askReview();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [status, showRules, proofs, review, lost, nextHand, openReview]);
+  }, [status, showRules, proofs, guessOpen, review, lost, nextHand, askReview]);
 
   const begin = (settings: GameSettings) => {
     setLastSettings(settings);
@@ -116,7 +174,11 @@ export function PokerApp() {
   const actor = thinking ? game.players[1 - HUMAN_SEAT]! : hand.toAct !== null ? game.players[seatOf[hand.toAct]!]! : null;
 
   const challenge = game.mode.kind === "practice" ? game.mode.challenge : null;
-  const reviewExtras: ReviewModalExtras = { hideSliderInfo: false, onShowProof: (id) => setProofs({ focus: id }) };
+  const mystery = game.mode.kind === "mystery" ? game.mode : null;
+  // The bot's sliders as the screen may show them: a Mystery bot's only from Lean's state,
+  // which has them once the guess is in.
+  const shownSliders = mystery ? (game.lean.sliders ?? null) : { risk: game.settings.risk, bluffPct: game.settings.bluffPct };
+  const reviewExtras: ReviewModalExtras = { hideSliderInfo: mysteryHidden, onShowProof: (id) => setProofs({ focus: id }) };
 
   let strength = "";
   if (you) {
@@ -146,7 +208,11 @@ export function PokerApp() {
             </span>
           )}
           <span title="The bot's sliders for this game">
-            Bot <b>Risk {game.settings.risk} · Bluff {game.settings.bluffPct}%</b>
+            Bot{" "}
+            <b>
+              {mystery && "Mystery · "}
+              {shownSliders ? `Risk ${shownSliders.risk} · Bluff ${shownSliders.bluffPct}%` : "hidden until you guess"}
+            </b>
           </span>
           {replaySeed !== null && (
             <span title="Enter this seed in the lobby to replay the same cards">
@@ -162,6 +228,21 @@ export function PokerApp() {
             <input type="checkbox" checked={peek} disabled={lost !== null} onChange={(e) => setPeek(e.target.checked)} />
             Peek at bot's cards
           </label>
+          {mysteryHidden && (
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={openGuess}
+              disabled={!mayGuess || lost !== null}
+              title={mayGuess ? "Guess the bot's Risk and Bluff" : `You can guess after ${REVEAL_AFTER_HANDS} finished hands`}
+            >
+              Guess the bot{mayGuess ? "" : ` (${finished}/${REVEAL_AFTER_HANDS})`}
+            </button>
+          )}
+          {mystery?.reveal && (
+            <button className="btn btn-ghost btn-sm" onClick={openGuess}>
+              Your guess
+            </button>
+          )}
           <button className="btn btn-ghost btn-sm" onClick={() => setProofs({ focus: null })}>
             What is guaranteed?
           </button>
@@ -185,12 +266,12 @@ export function PokerApp() {
               delay={resultDelay(game)}
               gameOver={status === "gameOver"}
               onNextHand={nextHand}
-              onReview={() => void openReview()}
+              onReview={askReview}
             />
           ) : (
             <ActionBar
               hand={hand}
-              legal={yourTurn && !showRules && !proofs ? game.legal : null}
+              legal={yourTurn && !showRules && !proofs && !guessOpen ? game.legal : null}
               waiting={you?.folded ? "You folded — watching the rest" : actor ? `${actor.name} is thinking…` : ""}
               botMessage={thinking ? null : game.botLine}
               handStrength={strength}
@@ -205,6 +286,11 @@ export function PokerApp() {
               overReview={review !== null}
               onRetry={() => void startChallenge(challenge, game.settings.fast)}
             />
+          )}
+          {notice && notice.hand === game.lean.hand && mysteryHidden && (
+            <p className={styles.loading} role="status">
+              {notice.text}
+            </p>
           )}
           {errorBanner}
         </div>
@@ -224,23 +310,42 @@ export function PokerApp() {
           </div>
         </div>
       )}
-      {lost === null && status === "gameOver" && replaySeed !== null && (
+      {lost === null && status === "gameOver" && (replaySeed !== null || mysteryHidden) && (
         <GameOver
           delay={resultDelay(game) + 1.2}
           won={game.session.seats[HUMAN_SEAT]!.stack > 0}
           stats={game.stats}
-          seed={replaySeed}
+          seed={mysteryHidden ? null : replaySeed}
           replay={{
-            risk: game.lean.sliders.risk,
-            bluffPct: game.lean.sliders.bluffPct,
+            sliders: game.lean.sliders ?? null,
             turnMode: game.lean.turnMode,
             engineCommit: game.lean.engineCommit,
             serverCommit: game.lean.serverCommit ?? "unknown",
           }}
+          // A Mystery game's "New game" deals a new Mystery bot.
           onAgain={() => start({ ...game.settings, seed: null })}
-          onReplay={() => start({ ...game.settings, seed: replaySeed })}
-          onReview={() => void openReview()}
+          // A replay is a normal game with the same seed and sliders (a revealed Mystery bot's real ones).
+          onReplay={() => start({ ...game.settings, ...(game.lean.sliders ?? {}), mystery: false, seed: replaySeed })}
+          onReview={askReview}
           onLobby={quit}
+          onGuess={mysteryHidden ? openGuess : undefined}
+        />
+      )}
+      {guessOpen && mystery && (
+        <MysteryGuess
+          reveal={mystery.reveal}
+          sending={guessSending}
+          error={guessError}
+          onGuess={(risk, bluffPct) => void submitGuess(risk, bluffPct)}
+          onClose={() => setGuessOpen(false)}
+          onReview={
+            status !== "playing"
+              ? () => {
+                  setGuessOpen(false);
+                  void openReview();
+                }
+              : undefined
+          }
         />
       )}
       {review && (
