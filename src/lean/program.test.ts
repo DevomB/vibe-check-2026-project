@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { type Action, type HandState, applyAction, handSeed, seededDeck, startHand } from "@/engine";
 import { LeanProcess, leanBinaryPath } from "./process";
 import type { LeanCommand, LeanEvent, LeanReply, LeanState } from "./protocol";
@@ -57,9 +57,20 @@ function replayEvents(h: HandState, events: LeanEvent[]): HandState {
 
 const botMoveCount = (events: LeanEvent[]) => events.filter((e) => e.type === "action" && e.player === 1).length;
 
-describe.skipIf(!existsSync(leanBinaryPath()))("Lean game program", () => {
-  const lean = new LeanProcess();
-  afterAll(() => lean.close());
+/** SKIP_LEAN=1 skips these tests. Without it, a missing Lean program fails them. */
+const skipLean = process.env.SKIP_LEAN === "1";
+
+describe.skipIf(skipLean)("Lean game program", () => {
+  let lean: LeanProcess;
+  beforeAll(() => {
+    lean = new LeanProcess();
+  });
+  afterAll(() => lean?.close());
+
+  it("finds the built Lean program", () => {
+    const bin = leanBinaryPath();
+    expect(existsSync(bin), `No Lean game program at ${bin}. Build it with "cd engine && lake build", or set SKIP_LEAN=1.`).toBe(true);
+  });
 
   async function call(c: LeanCommand): Promise<Extract<LeanReply, { ok: true }>> {
     const reply = await lean.send(c);

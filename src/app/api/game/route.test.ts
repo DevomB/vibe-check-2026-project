@@ -28,6 +28,9 @@ function stopProgram(): void {
 
 const ENGINE_STOPPED = { error: "The game engine stopped. Start a new game.", state: null, lost: true };
 
+/** SKIP_LEAN=1 skips the tests that need the built Lean program. Without it, a missing program fails them. */
+const skipLean = process.env.SKIP_LEAN === "1";
+
 describe("/api/game input checks", () => {
   it.each([
     ["no command", {}],
@@ -83,7 +86,12 @@ describe("/api/game when the game program fails", () => {
   });
 });
 
-describe.skipIf(!existsSync(leanBinaryPath()))("/api/game with the Lean program", () => {
+describe.skipIf(skipLean)("/api/game with the Lean program", () => {
+  it("finds the built Lean program", () => {
+    const bin = leanBinaryPath();
+    expect(existsSync(bin), `No Lean game program at ${bin}. Build it with "cd engine && lake build", or set SKIP_LEAN=1.`).toBe(true);
+  });
+
   it.each([undefined, ""])("keeps a server-generated seed private through hand end (%s)", async (seed) => {
     const start = await post({ cmd: "new_game", seed, risk: 0, bluff_pct: 0 });
     if (!("ok" in start.reply)) throw new Error(start.reply.error);
