@@ -1,6 +1,6 @@
 import Engine.Bot
 import Engine.Slider
-import Engine.ReviewPlaceholder
+import Engine.Review
 
 /-!
 # Engine: one game session, as the game program runs it
