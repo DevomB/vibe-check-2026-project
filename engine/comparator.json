@@ -33,7 +33,8 @@
     "review_label_monotone",
     "review_call_best_iff_equity",
     "no_hindsight",
-    "bot_hand_in_review"
+    "bot_hand_in_review",
+    "bot_move_accepted"
   ],
   "permitted_axioms": [
     "propext",

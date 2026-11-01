@@ -211,3 +211,11 @@ theorem bot_hand_in_review (spot : RiverSpot) (botCards : List Card)
     (hbets : riverBets spot.bluffPct spot.board botCards = true)
     (hapart : ∀ c ∈ botCards, c ∉ spot.hole) :
     ∃ h ∈ spot.botHands, h.isHole botCards = true := sorry
+
+/-! ## The game session the app runs (see `Engine/Proofs/Session.lean`) -/
+
+/-- In a reachable game where the hand is not over, the engine accepts the move the slider
+bot picks, for any sliders, seed and cards. -/
+theorem bot_move_accepted (g : Game) (hg : g.Reachable) (hnot : g.hand.ended = none)
+    (sl : Sliders) (seed : Nat) (hole board : List Card) :
+    ∃ h', step g.hand (botDecide sl seed hole board g.hand.chips).action = .ok h' := sorry
