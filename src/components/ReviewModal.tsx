@@ -1,10 +1,22 @@
 import { useEffect } from "react";
 import type { LeanReview, ReviewDecision } from "@/lean/protocol";
+import { RangeViewer } from "./RangeViewer";
+import { RiskExplorer } from "./RiskExplorer";
 
 interface Props {
   review: LeanReview;
   /** "Peek at bot's cards" was on while this hand was played. Display only. */
   peeked?: boolean;
+  /**
+   * Hide what would give away the bot's settings: the range viewer, the Risk explorer and the
+   * bot's detailed reasons. Mystery mode sets it until the reveal.
+   */
+  hideSliderInfo?: boolean;
+  /**
+   * When given, "Why can I trust this?" links call it with a guarantee id: "review" for the
+   * grades, "bluff" for the range viewer, "risk" for the Risk explorer.
+   */
+  onShowProof?: (id: string) => void;
   onClose: () => void;
 }
 
@@ -38,7 +50,7 @@ function titleCase(s: string): string {
   return s ? s[0]!.toUpperCase() + s.slice(1) : s;
 }
 
-function Decision({ d }: { d: ReviewDecision }) {
+function Decision({ d, showRange, onShowProof }: { d: ReviewDecision; showRange: boolean; onShowProof?: (id: string) => void }) {
   const graded = d.label !== null;
   return (
     <li className={`review-item ${graded ? "" : "is-ungraded"}`}>
@@ -70,12 +82,16 @@ function Decision({ d }: { d: ReviewDecision }) {
           )}
         </div>
       )}
+      {graded && showRange && d.range && <RangeViewer range={d.range} onShowProof={onShowProof} />}
     </li>
   );
 }
 
-/** After a hand: Lean's grades for the human's river call/fold decisions, and the bot's reasons. */
-export function ReviewModal({ review, peeked = false, onClose }: Props) {
+/**
+ * After a hand: Lean's grades for the human's river call/fold decisions, the river range
+ * viewer, the Risk explorer and the bot's reasons.
+ */
+export function ReviewModal({ review, peeked = false, hideSliderInfo = false, onShowProof, onClose }: Props) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
@@ -86,6 +102,7 @@ export function ReviewModal({ review, peeked = false, onClose }: Props) {
   const botReasons = review.bot_reasons;
   const graded = review.decisions.filter((d) => d.label !== null);
   const ungraded = review.decisions.filter((d) => d.label === null);
+  const explorer = hideSliderInfo ? null : review.risk_explorer;
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -108,11 +125,16 @@ export function ReviewModal({ review, peeked = false, onClose }: Props) {
         {graded.length > 0 ? (
           <ul className="review-list">
             {graded.map((d, i) => (
-              <Decision key={`g-${i}`} d={d} />
+              <Decision key={`g-${i}`} d={d} showRange={!hideSliderInfo} onShowProof={onShowProof} />
             ))}
           </ul>
         ) : (
           <p className="muted">No river call or fold to grade in this hand.</p>
+        )}
+        {graded.length > 0 && onShowProof && (
+          <button className="btn-link" style={{ fontSize: 13 }} onClick={() => onShowProof("review")}>
+            Why can I trust this?
+          </button>
         )}
 
         {ungraded.length > 0 && (
@@ -120,21 +142,34 @@ export function ReviewModal({ review, peeked = false, onClose }: Props) {
             <h3>Other decisions</h3>
             <ul className="review-list">
               {ungraded.map((d, i) => (
-                <Decision key={`u-${i}`} d={d} />
+                <Decision key={`u-${i}`} d={d} showRange={false} />
               ))}
             </ul>
           </>
         )}
 
-        <h3>Why the bot played this way</h3>
-        {botReasons && botReasons.length > 0 ? (
-          <ol className="review-reasons">
-            {botReasons.map((r, i) => (
-              <li key={i}>{r}</li>
-            ))}
-          </ol>
+        {explorer && explorer.length > 0 && (
+          <>
+            <h3>What if the bot's Risk were different?</h3>
+            <RiskExplorer key={review.hand} entries={explorer} onShowProof={onShowProof} />
+          </>
+        )}
+
+        {hideSliderInfo ? (
+          <p className="muted">The bot's reasons, its betting range and the Risk explorer stay hidden until its settings are revealed.</p>
         ) : (
-          <p className="muted">The bot made no moves this hand.</p>
+          <>
+            <h3>Why the bot played this way</h3>
+            {botReasons && botReasons.length > 0 ? (
+              <ol className="review-reasons">
+                {botReasons.map((r, i) => (
+                  <li key={i}>{r}</li>
+                ))}
+              </ol>
+            ) : (
+              <p className="muted">The bot made no moves this hand.</p>
+            )}
+          </>
         )}
 
         <div className="modal-actions">

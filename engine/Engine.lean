@@ -36,3 +36,6 @@ import Engine.Proofs.EndsSpec
 import Engine.Proofs.Ends
 import Engine.Proofs.Session
 import Engine.Proofs.Examples
+import Engine.Explain
+import Engine.ExplainTests
+import Engine.Proofs.Explain

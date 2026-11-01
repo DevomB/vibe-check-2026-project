@@ -140,3 +140,71 @@ export type LeanReply =
  * (HTTP 400) without `lost`, and the game goes on.
  */
 export type ApiReply = LeanReply & { lost?: true };
+
+/* ---------- Review insights: the river range viewer and the Risk explorer ---------- */
+
+/**
+ * The river range viewer's numbers for a graded river decision (`rangeOf` in
+ * `engine/Engine/Explain.lean`). They always add up: value + bluffs = blocked + beat + tie + lose.
+ */
+export interface LeanRange {
+  /** Value hands in the bot's river betting set on this board. */
+  value: number;
+  /** Bluff hands in that set. */
+  bluffs: number;
+  /** Hands in the set that use one of your cards, so the bot cannot hold them. */
+  blocked: number;
+  /** Of the hands left, how many your hand beats, ties and loses to. */
+  beat: number;
+  tie: number;
+  lose: number;
+}
+
+// This merges into `ReviewDecision` above. The field is optional: only graded decisions have it,
+// and Mystery mode removes it until the reveal.
+export interface ReviewDecision {
+  /** Only on graded decisions: the river range viewer's numbers. */
+  range?: LeanRange;
+}
+
+/**
+ * How Risk affects one bot move. `noBet`: no bet to face, so the bot does not look at Risk.
+ * `raises`: facing a bet with a win chance of 75% or more, it raises at every Risk.
+ * `callsAlways` / `foldsAlways`: facing a bet, the same at every Risk. `callsUpTo`: calls up
+ * to `continuesUpTo`, folds above it.
+ */
+export type LeanRiskEffect = "noBet" | "raises" | "callsAlways" | "foldsAlways" | "callsUpTo";
+
+/**
+ * One bot move in the Risk explorer (`exploreHand` in `engine/Engine/Explain.lean`): the move
+ * at every Risk from 0 to 100, with everything else about the decision kept the same.
+ */
+export interface LeanRiskExplorerEntry {
+  street: "preflop" | "flop" | "turn" | "river";
+  /** The pot the bot could win, as it saw it. */
+  pot: number;
+  /** Chips the bot had to add to call; 0 with no bet to face. */
+  toCall: number;
+  /** The bot's win, tie and loss counts for this move. */
+  counts: { win: number; tie: number; loss: number };
+  /** The bot's Risk in this game. */
+  risk: number;
+  /** The move the bot made, as the table names it ("Call", "Bet 60", "Raise to 120"). */
+  action: string;
+  /** The move at each Risk: 101 entries, entry r for Risk r. */
+  actions: string[];
+  /** The highest Risk at which the bot calls or raises; null if it does neither. */
+  continuesUpTo: number | null;
+  /** Whether Risk changes this move at all. */
+  riskMatters: boolean;
+  effect: LeanRiskEffect;
+  /** One sentence, such as "Calls at Risk 0-37, folds at 38-100." */
+  summary: string;
+}
+
+// This merges into `LeanReview` above. The field is optional: Mystery mode removes it until the
+// reveal.
+export interface LeanReview {
+  /** Every bot move in the hand, in order. Null while the hand is still being played. */
+  risk_explorer?: LeanRiskExplorerEntry[] | null;
+}
