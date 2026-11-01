@@ -21,6 +21,7 @@
     "bluff_frequency",
     "value_and_bluffs_apart",
     "bot_bets_its_set",
+    "botDecide_river_follows_set",
     "step_keeps_chips",
     "startHand_keeps_chips",
     "chips_always_1000",
@@ -33,7 +34,8 @@
     "review_label_monotone",
     "review_call_best_iff_equity",
     "no_hindsight",
-    "bot_hand_in_review"
+    "bot_hand_in_review",
+    "review_hands_ne_nil"
   ],
   "permitted_axioms": [
     "propext",

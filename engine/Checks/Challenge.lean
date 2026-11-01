@@ -165,6 +165,20 @@ theorem bot_bets_its_set (bluffPct : Nat) (board : List Card) (a b : Card) :
       ∃ h ∈ (riverBettingSet bluffPct board).value ++ (riverBettingSet bluffPct board).bluffs,
         h.cards = (a, b) ∨ h.cards = (b, a) := sorry
 
+/-- T7, the link to the bot: on the river (five board cards), with nothing to call and some
+bet legal, the slider bot `botDecide` bets (its move is a `raiseTo`) exactly when its two
+cards `a`, `b` are a value hand or a designated bluff of `riverBettingSet` at its Bluff
+setting, in either order; and it checks exactly when they are not. -/
+theorem botDecide_river_follows_set (sl : Sliders) (seed : Nat) (a b : Card)
+    (board : List Card) (s : State) (h5 : board.length = 5) (h0 : s.toCall = 0)
+    (hbet : ∃ n, Legal s (.raiseTo n)) :
+    ((∃ n, (botDecide sl seed [a, b] board s).action = .raiseTo n) ↔
+      ∃ h ∈ (riverBettingSet sl.bluffPct board).value ++ (riverBettingSet sl.bluffPct board).bluffs,
+        h.cards = (a, b) ∨ h.cards = (b, a)) ∧
+    ((botDecide sl seed [a, b] board s).action = .check ↔
+      ¬ ∃ h ∈ (riverBettingSet sl.bluffPct board).value ++ (riverBettingSet sl.bluffPct board).bluffs,
+        h.cards = (a, b) ∨ h.cards = (b, a)) := sorry
+
 /-! ## T5 and T8: the river review (see `Engine/Proofs/ReviewSpec.lean`) -/
 
 /-- When the bot can hold at least one hand, the review's worth of calling is the spec's
@@ -211,3 +225,12 @@ theorem bot_hand_in_review (spot : RiverSpot) (botCards : List Card)
     (hbets : riverBets spot.bluffPct spot.board botCards = true)
     (hapart : ∀ c ∈ botCards, c ∉ spot.hole) :
     ∃ h ∈ spot.botHands, h.isHole botCards = true := sorry
+
+/-- When the human, to act in `h`, faces the bot's opening river bet (the bot's move, with
+its own cards on this board and nothing to call, was a bet) and no card was dealt twice, the
+review's list of hands the bot can hold is not empty: the bot's real hand is in it. -/
+theorem review_hands_ne_nil (h : Hand) (sl : Sliders) (seed n : Nat) (s : State)
+    (h5 : h.board.length = 5) (h0 : s.toCall = 0)
+    (hbet : (botDecide sl seed (h.hole (other h.chips.toAct)) h.board s).action = .raiseTo n)
+    (hnd : h.dealtCards.Nodup) :
+    (riverSpotOf h sl.bluffPct).botHands ≠ [] := sorry
