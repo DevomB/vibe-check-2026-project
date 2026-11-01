@@ -36,7 +36,8 @@
     "review_call_best_iff_equity",
     "no_hindsight",
     "bot_hand_in_review",
-    "review_hands_ne_nil"
+    "review_hands_ne_nil",
+    "every_hand_ends"
   ],
   "permitted_axioms": [
     "propext",

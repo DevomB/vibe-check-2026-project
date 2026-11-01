@@ -4,6 +4,7 @@ import Engine.Proofs.BotSpec
 import Engine.Proofs.EquitySpec
 import Engine.Proofs.BluffSpec
 import Engine.Proofs.ReviewSpec
+import Engine.Proofs.EndsSpec
 
 /-!
 # The main theorems, as agreed by the team (the Comparator "challenge")
@@ -240,3 +241,10 @@ theorem review_hands_ne_nil (h : Hand) (sl : Sliders) (seed n : Nat) (s : State)
     (hbet : (botDecide sl seed (h.hole (other h.chips.toAct)) h.board s).action = .raiseTo n)
     (hnd : h.dealtCards.Nodup) :
     (riverSpotOf h sl.bluffPct).botHands ≠ [] := sorry
+
+/-! ## T9: every hand ends (see `Engine/Proofs/EndsSpec.lean`) -/
+
+/-- T9: from any game the engine can reach, every run of accepted moves (`RunsTo`) has at
+most 200 moves, the bot loop's `botFuel`. So no hand goes on forever. -/
+theorem every_hand_ends (g : Game) (hg : g.Reachable) (as : List Action) (h' : Hand)
+    (hrun : RunsTo g.hand as h') : as.length ≤ 200 := sorry
