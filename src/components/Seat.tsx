@@ -75,11 +75,6 @@ export function Seat({ player, state, stack, isHuman, isTurn, reveal, peeked = f
         </div>
         {status && <div className={`seat-status status-${status.split(" ")[0]!.toLowerCase()}`}>{status}</div>}
       </div>
-      {winAmount > 0 && (
-        <div className="win-float" style={{ animationDelay: `${revealDelay}s` }}>
-          +{chips(winAmount)}
-        </div>
-      )}
     </div>
   );
 }

@@ -64,18 +64,12 @@ interface BarProps {
   onReview: () => void;
 }
 
-/** Replaces the action bar between hands. The result stays until the human clicks Next hand; nothing advances on its own. */
-export function NextHandBar({ game, delay, gameOver, reviewOpening = false, onNextHand, onReview }: BarProps) {
-  const winners = winnersOf(game);
-  const youWon = winners.some((w) => w.name === "You");
-
-  const headline = winners.map((w) => `${winText(w)} ${chips(w.amount)}`).join(" · ");
+/** Replaces the action bar between hands. The result is on the felt (`ResultBadge`), so this bar
+ * holds only Review and Next hand. The result stays until the human clicks Next hand; nothing
+ * advances on its own. */
+export function NextHandBar({ delay, gameOver, reviewOpening = false, onNextHand, onReview }: BarProps) {
   return (
-    <div className={`action-bar next-bar ${youWon ? "is-you" : ""}`} style={{ animationDelay: `${delay}s` }}>
-      <div className="action-info">
-        <span className="strength-label">{youWon ? "Nice hand" : "Hand over"}</span>
-        <span className="strength-value">{headline}</span>
-      </div>
+    <div className="action-bar next-bar" style={{ animationDelay: `${delay}s` }}>
       <div className="action-buttons">
         <button className="btn btn-ghost next-btn" onClick={onReview} disabled={reviewOpening}>
           {reviewOpening ? (

@@ -26,7 +26,6 @@ export function GameOver({ won, stats, delay, seed, replay, onAgain, onReplay, o
   return (
     <div className="modal-backdrop" style={{ animationDelay: `${delay}s` }}>
       <div className="modal game-over" role="dialog" aria-label="Game over">
-        <div className="game-over-icon">{won ? "🏆" : "♠"}</div>
         <h2>{won ? "You took every chip!" : "You're out of chips"}</h2>
         <p className="muted">{won ? "The whole table is yours." : "It happens to the best of us. Deal again?"}</p>
         <div className="stats">

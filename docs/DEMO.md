@@ -245,8 +245,8 @@ Also check the integrated features:
 | Item | Value |
 | --- | --- |
 | OS and machine | WSL2 Ubuntu 26.04.1 on Windows, kernel 6.18 microsoft-standard, 20 cores, 15 GB RAM (the demo machine) |
-| Commit | 45d13b3 (web); the engine code is 0c5c5b3's, which the server reports as `engineCommit`, turn mode exact |
-| Date and time | 2026-11-01, 14:43 to 14:47 PST |
+| Commit | 2c1ccac (rerun of the web half; the server reports `engineCommit` 2c1ccac, turn mode exact). The from-empty Lean build time below was measured on 45d13b3, whose engine code is the same; the incremental rebuild on 2c1ccac took 8.7 s. |
+| Date and time | 2026-11-01, 14:43 to 14:47 PST, rerun about 15:05 PST |
 | `make install && make run` on a fresh clone | [ ] pass [x] fail: GNU make is not installed in this WSL (`make: command not found`; apt has 4.4.1) and there is none on the Windows side. Every recipe step run by hand passed: `cd engine && lake build` from an empty `.lake` in 47.7 s wall (3 min 52 s CPU, 135 jobs, 119 MB binary); incremental rebuild 0.15 s; `npm ci` 8.8 s; `npm run build` 6.6 s; `npm start --port 3001` ready in about 2 s. Re-run the literal command after `sudo apt-get install -y make`. |
 | Scene (a) script above | [x] PASS: six requests all ok; last decision Mistake, worth call −2.67 BB, fold 0, equity had 0.185, needed 0.333 |
 | Full `npm test` against the fresh build | [x] PASS: 23 files, 466 tests, 29 s |
