@@ -63,7 +63,8 @@ is is allowed to act: they have chips and have not bet more than the other playe
 theorem player_to_act_may_act (g : Game) (hg : g.Reachable) (hnot : g.hand.ended = none) :
     g.hand.chips.MayAct := sorry
 
-/-! ## Risk: the bot follows its Risk setting (see `Engine/Proofs/RiskSpec.lean`) -/
+/-! ## Caution: the bot follows its internal caution setting, the `risk` field (see
+`Engine/Proofs/RiskSpec.lean`). The player's Risk runs the other way; see the one-slider section. -/
 
 /-- The bot's call rule calls exactly when the call, weighted by Risk, is worth at least as
 much as folding. -/
@@ -96,7 +97,7 @@ theorem botDecide_legal (sl : Sliders) (seed : Nat) (hole board : List Card) :
     AlwaysLegal fun s => (botDecide sl seed hole board s).action := sorry
 
 /-- For one spot (same state, counts, cards and Bluff): if the bot calls or raises at some
-Risk, it also calls or raises at every lower Risk. -/
+internal caution (the `risk` field), it also calls or raises at every lower caution. -/
 theorem risk_monotone (bluff : Nat) (c : Counts) (hole board : List Card) (s : State) :
     RiskMonotone fun r => (decideWithCounts ⟨r, bluff⟩ c hole board s).action := sorry
 
@@ -187,6 +188,19 @@ score, or the same score and lower card IDs, as MVP §5 asks). -/
 theorem rankRiverHands_sorted (board : List Card) :
     (rankRiverHands board).Pairwise RanksAbove := sorry
 
+/-- T7: value hands are the strongest. Every value hand in the river betting set scores at
+least as well as every candidate hand that is not a value hand. -/
+theorem value_strongest (bluffPct : Nat) (board : List Card) :
+    ∀ v ∈ (riverBettingSet bluffPct board).value, ∀ h ∈ rankRiverHands board,
+      h ∉ (riverBettingSet bluffPct board).value → h.score ≤ v.score := sorry
+
+/-- T7: bluffs are the weakest. Every bluff in the river betting set scores no better than
+every candidate hand that is not a bluff. So, when the value hands and the bluffs are apart
+(`value_and_bluffs_apart`), no bluff scores better than any value hand. -/
+theorem bluffs_weakest (bluffPct : Nat) (board : List Card) :
+    ∀ b ∈ (riverBettingSet bluffPct board).bluffs, ∀ h ∈ rankRiverHands board,
+      h ∉ (riverBettingSet bluffPct board).bluffs → b.score ≤ h.score := sorry
+
 /-! ## T5 and T8: the river review (see `Engine/Proofs/ReviewSpec.lean`) -/
 
 /-- When the bot can hold at least one hand, the review's worth of calling is the spec's
@@ -243,6 +257,12 @@ theorem review_hands_ne_nil (h : Hand) (sl : Sliders) (seed n : Nat) (s : State)
     (hnd : h.dealtCards.Nodup) :
     (riverSpotOf h sl.bluffPct).botHands ≠ [] := sorry
 
+/-- The review always has a hand to consider, on any river board: five different board
+cards and at most two cards in the human's hand leave the bot at least one hand of its
+betting set, at every Bluff setting. Unlike `review_hands_ne_nil`, this needs no bot bet. -/
+theorem botHands_ne_nil_of_board (spot : RiverSpot) (h5 : spot.board.length = 5)
+    (hd : spot.board.Nodup) (hhole : spot.hole.length ≤ 2) : spot.botHands ≠ [] := sorry
+
 /-! ## T9: every hand ends (see `Engine/Proofs/EndsSpec.lean`) -/
 
 /-- T9: from any game the engine can reach, every run of accepted moves (`RunsTo`) has at
@@ -289,28 +309,130 @@ theorem viewOf_toCall_le_pot (sl : Sliders) (hole board : List Card) (s : State)
 
 open Lean (Json toJson)
 
+/-- The game the engine's session plays is reachable. Start with no session and answer any
+request lines in order: whenever a session exists, its game is one the engine can reach. So
+the reachable-game theorems (`chips_always_1000`, `no_card_dealt_twice`,
+`player_to_act_may_act`, `every_hand_ends`) hold for the engine's session. -/
 theorem app_game_reachable (lines : List String) (s : Session) (commit : String)
     (hs : lines.foldl (fun cur line => (respond cur line commit).1) none = some s) :
     s.game.Reachable := sorry
 
+/-- `respond` changes the session only when `Session.handle` accepts a game command. Every
+other line (bad JSON, an unknown command, a review request, a rejected command) keeps the
+session exactly as it was. -/
 theorem respond_keeps_session_unless_accepted (cur : Option Session) (line : String) (commit : String) :
     (respond cur line commit).1 = cur ∨
     ∃ j c s, Json.parse line = .ok j ∧ parseRequest j = .ok (.game c) ∧
       Session.handle cur c = .ok s ∧ (respond cur line commit).1 = some s := sorry
 
+/-- The caution sweep shows the real bot. `exploreHand` is the explorer the app showed before
+the one-slider change: entry `r` is the move at internal caution `r` with the game's Bluff.
+For move number `i` of a hand's recorded bot moves and every `r` from 0 to 100, that entry is
+exactly the action `botDecide` returns at caution `r`, with the game's Bluff and the move's
+recorded seed, cards, board and betting state. (The app's explorer is `exploreHandAt`, below.) -/
 theorem exploreHand_moves (sl : Sliders) (ms : List BotMoveRecord) (i r : Nat)
     (hi : i < ms.length) (hr : r ≤ 100) :
     ((exploreHand sl ms)[i]?.bind fun e => e.moves[r]?) =
       some (botDecide ⟨r, sl.bluffPct⟩ ms[i].seed ms[i].hole ms[i].board ms[i].state).action := sorry
 
+/-- The caution sweep never goes from fold back to call. For each recorded move, if it shows
+a call or raise at some caution, it shows a call or raise at every lower caution too. (Past
+100 there is no entry; that counts as a fold.) -/
 theorem exploreHand_risk_monotone (sl : Sliders) (ms : List BotMoveRecord) (i : Nat)
     (hi : i < ms.length) :
     RiskMonotone fun r => ((exploreHand sl ms)[i]?.bind fun e => e.moves[r]?).getD .fold := sorry
 
+/-- The range viewer's numbers add up. The number of value hands plus bluffs in the bot's
+river betting set equals the number your cards block plus the numbers of hands you beat, tie
+with and lose to. -/
 theorem rangeOf_adds_up (spot : RiverSpot) :
     (rangeOf spot).value + (rangeOf spot).bluffs =
       (rangeOf spot).blocked + ((rangeOf spot).beat + (rangeOf spot).tie + (rangeOf spot).lose) := sorry
 
+/-- The range viewer's beat, tie and lose numbers are the very win, tie and loss counts the
+review grades the decision with, whether you called or folded. -/
 theorem rangeOf_counts (spot : RiverSpot) (choice : RiverChoice) :
     (reviewRiver spot choice).counts =
       ⟨(rangeOf spot).beat, (rangeOf spot).tie, (rangeOf spot).lose⟩ := sorry
+
+/-! ## The one Risk slider (see `Engine/Proofs/OneSlider.lean`)
+
+The player sets one number, Risk (0 to 100). `Sliders.ofRisk` turns it into the bot's two
+internal settings: caution (the `risk` field: how heavily a lost chip counts) and Bluff. -/
+
+/-- The Risk number the bot quotes in its reason never changes its move. (This is the link
+between the theorems about `botDecide` and the app's `Session.botChoice`, which passes the
+player's Risk; that link itself is in `Engine/Proofs/Session.lean`.) -/
+theorem botDecide_action_shown (sl : Sliders) (seed : Nat) (hole board : List Card) (s : State)
+    (shown : Option Nat) :
+    (botDecide sl seed hole board s shown).action = (botDecide sl seed hole board s).action := sorry
+
+/-- At every Risk the bluff share is at most 60, the most T7 `bluff_frequency` allows. -/
+theorem ofRisk_bluff_le_60 (r : Nat) : (Sliders.ofRisk r).bluffPct ≤ 60 := sorry
+
+/-- More Risk never bluffs less. -/
+theorem ofRisk_bluff_monotone {r r' : Nat} (h : r ≤ r') :
+    (Sliders.ofRisk r).bluffPct ≤ (Sliders.ofRisk r').bluffPct := sorry
+
+/-- More Risk never weighs a lost chip more: the internal caution falls or stays. -/
+theorem ofRisk_caution_antitone {r r' : Nat} (h : r ≤ r') :
+    (Sliders.ofRisk r').risk ≤ (Sliders.ofRisk r).risk := sorry
+
+/-- Facing a bet in one spot (the same seed, cards, board and chips), if the bot calls or
+raises at Risk `r`, it also calls or raises at every higher Risk `r'`. -/
+theorem more_risk_never_folds_a_call (seed : Nat) (hole board : List Card) (s : State)
+    {r r' : Nat} (hr : r ≤ r') (hbet : 0 < s.toCall)
+    (hc : (botDecide (Sliders.ofRisk r) seed hole board s).action.continues) :
+    (botDecide (Sliders.ofRisk r') seed hole board s).action.continues := sorry
+
+/-- Risk 50 is plain chip profit (caution 0) with a 33% bluff share. -/
+theorem ideal_is_textbook : Sliders.ofRisk 50 = ⟨0, 33⟩ := sorry
+
+/-- At Risk 50, on every river board with no card twice, the bot's betting set has 324 value
+hands and 160 bluffs: 160 of 484 bets, the whole number of hands nearest to a 33% share. -/
+theorem ideal_river_set (board : List Card) (h5 : board.length = 5) (hd : board.Nodup) :
+    (riverBettingSet (Sliders.ofRisk 50).bluffPct board).value.length = 324 ∧
+    (riverBettingSet (Sliders.ofRisk 50).bluffPct board).bluffs.length = 160 := sorry
+
+/-- With no bet to face before the river, the bot reads neither setting: any two settings give
+the same move. (This is why the explorer's `noBet` entries say Risk plays no part.) -/
+theorem botDecide_no_bet_off_river (sl sl' : Sliders) (seed : Nat) (hole board : List Card)
+    (s : State) (hc : s.toCall = 0) (h5 : board.length ≠ 5) :
+    (botDecide sl seed hole board s).action = (botDecide sl' seed hole board s).action := sorry
+
+/-- On a river board, with nothing to call and a bet allowed: if the bot bets its two cards at
+one setting, it bets them at every setting with a Bluff share at least as big (and below 100).
+The value hands are the same, and the bluffs only grow (see `Engine/Proofs/OneSliderRiver.lean`). -/
+theorem more_bluff_never_checks_a_bet (sl sl' : Sliders) (seed : Nat) (a b : Card)
+    (board : List Card) (s : State) (h5 : board.length = 5) (h0 : s.toCall = 0)
+    (hbet : ∃ n, Legal s (.raiseTo n)) (hb : sl.bluffPct ≤ sl'.bluffPct)
+    (hb' : sl'.bluffPct < 100)
+    (hc : ∃ n, (botDecide sl seed [a, b] board s).action = .raiseTo n) :
+    ∃ n, (botDecide sl' seed [a, b] board s).action = .raiseTo n := sorry
+
+/-- The same along the slider: on a river board, with nothing to call and a bet allowed, if
+the bot bets its two cards at Risk `r`, it bets them at every higher Risk `r'`. -/
+theorem more_risk_never_checks_a_bet (seed : Nat) (a b : Card) (board : List Card) (s : State)
+    (h5 : board.length = 5) (h0 : s.toCall = 0) (hbet : ∃ n, Legal s (.raiseTo n))
+    {r r' : Nat} (hr : r ≤ r')
+    (hc : ∃ n, (botDecide (Sliders.ofRisk r) seed [a, b] board s).action = .raiseTo n) :
+    ∃ n, (botDecide (Sliders.ofRisk r') seed [a, b] board s).action = .raiseTo n := sorry
+
+/-! ## The Risk explorer over the player's Risk (see `Engine/Proofs/Explain.lean`) -/
+
+/-- The Risk explorer shows the real bot. For move number `i` of a hand's recorded bot moves
+and every Risk `r` from 0 to 100, the explorer's move at Risk `r` is what `botDecide` returns
+with the settings `Sliders.ofRisk r` (which `Session.start` uses for a new game at Risk `r`)
+and the move's recorded seed, cards, board and betting state. -/
+theorem exploreHandAt_moves (risk : Nat) (ms : List BotMoveRecord) (i r : Nat)
+    (hi : i < ms.length) (hr : r ≤ 100) :
+    ((exploreHandAt risk ms)[i]?.bind fun e => e.moves[r]?) =
+      some (botDecide (Sliders.ofRisk r) ms[i].seed ms[i].hole ms[i].board ms[i].state).action := sorry
+
+/-- Facing a bet, the explorer never goes from call back to fold as Risk rises: if it shows a
+call or raise at Risk `r`, it shows one at every higher Risk `r'` up to 100. -/
+theorem exploreHandAt_more_risk_continues (risk : Nat) (ms : List BotMoveRecord) (i : Nat)
+    (hi : i < ms.length) (hbet : 0 < ms[i].state.toCall) (r r' : Nat) (hr : r ≤ r')
+    (hr' : r' ≤ 100)
+    (h : (((exploreHandAt risk ms)[i]?.bind fun e => e.moves[r]?).getD Action.fold).continues) :
+    (((exploreHandAt risk ms)[i]?.bind fun e => e.moves[r']?).getD Action.fold).continues := sorry

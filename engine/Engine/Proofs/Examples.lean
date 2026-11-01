@@ -87,13 +87,14 @@ theorem exGame2_reachable : exGame2.Reachable :=
 theorem exGame2_bot_to_act : exGame2.hand.ended = none ∧ exGame2.hand.chips.toAct = bot :=
   ⟨rfl, rfl⟩
 
-/-- The session right after `new_game` with seed 7, Risk 50 and Bluff 33. The human is on
-the button and acts first, so the bot has not moved yet. -/
+/-- The session right after `new_game` with seed 7 at Risk 50 (the internal pair (0, 33)).
+The human is on the button and acts first, so the bot has not moved yet. -/
 def exSession : Session :=
-  Session.dealt { game := newGame 7, sliders := ⟨50, 33⟩ } (newGame 7) (fun _ => startingStack)
+  Session.dealt { game := newGame 7, sliders := Sliders.ofRisk 50, risk := 50 } (newGame 7)
+    (fun _ => startingStack)
 
 /-- `Session.handle` accepts that `new_game` and gives `exSession`. -/
-theorem exSession_start : Session.handle none (.newGame 7 50 33) = .ok exSession := rfl
+theorem exSession_start : Session.handle none (.newGame 7 50) = .ok exSession := rfl
 
 /-! ### (c) `bot_move_accepted` -/
 
@@ -101,7 +102,7 @@ theorem exSession_start : Session.handle none (.newGame 7 50 33) = .ok exSession
 is the bot's turn). So the engine accepts the move the bot picks there, with the sliders and
 the hand seed the app uses. -/
 example : ∃ h', step exGame2.hand
-    (botDecide ⟨50, 33⟩ (handSeed 7 2) (exGame2.hand.hole bot) exGame2.hand.board
+    (botDecide (Sliders.ofRisk 50) (handSeed 7 2) (exGame2.hand.hole bot) exGame2.hand.board
       exGame2.hand.chips).action = .ok h' :=
   bot_move_accepted exGame2 exGame2_reachable exGame2_bot_to_act.1 _ _ _ _
 
@@ -129,7 +130,7 @@ example : ∃ s', Session.handle (some exSession) (.act .fold) = .ok s' ∧ s'.g
 /-- A known-bad output: a session whose table holds 1,001 chips. Its game is not reachable
 (T1), so `handle_keeps_reachable` says `new_game` never gives it. -/
 example (s' : Session) (hbad : s'.game.hand.chips.total = 1001) :
-    Session.handle none (.newGame 7 50 33) ≠ .ok s' := by
+    Session.handle none (.newGame 7 50) ≠ .ok s' := by
   intro hs
   have := chips_always_1000 _ (handle_keeps_reachable none _ _ (fun _ h => nomatch h) hs)
   omega

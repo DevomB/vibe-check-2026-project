@@ -83,27 +83,29 @@ def bigBetState : State :=
   { stack := fun p => if p = 0 then 300 else 400, pot := 100,
     bet := fun p => if p = 0 then 200 else 0, lastRaise := 200, toAct := 1 }
 
-/-- The explorer's entry for one recorded move, at Risk 50 and Bluff 33. -/
-def entryOf (m : BotMoveRecord) : Option RiskExplorerEntry := (exploreHand ⟨50, 33⟩ [m]).head?
+/-- The explorer's entry for one recorded move, in a game at Risk 50. -/
+def entryOf (m : BotMoveRecord) : Option RiskExplorerEntry := (exploreHandAt 50 [m]).head?
 
-/-- The 101 moves never go from a fold back to a call or raise as Risk goes up (T4). -/
-def neverFoldThenCall (moves : List Action) : Bool :=
-  moves.zipIdx.all fun (a, j) => !a.continues || (moves.take j).all Action.continues
+/-- The 101 moves never go from a call, raise or bet back to a fold or check as Risk goes
+up: once the bot goes on, it goes on at every higher Risk. -/
+def oneSwitchUp (moves : List Action) : Bool :=
+  moves.zipIdx.all fun (a, j) => a.continues || (moves.take j).all (!·.continues)
 
 /-- The explorer's moves are what `decideWithCounts` gives at each Risk, worked out one by
-one. This checks the shortcut `movesByRisk` takes with no bet to face. -/
-def movesAreEachRisk (sl : Sliders) (m : BotMoveRecord) : Bool :=
+one. This checks the shortcuts `movesBySetting` takes with no bet to face. -/
+def movesAreEachRisk (sliderAt : Nat → Sliders) (m : BotMoveRecord) : Bool :=
   let c := countsFor m.seed m.hole m.board
   let each := (List.range 101).map fun r =>
-    (decideWithCounts ⟨r, sl.bluffPct⟩ c m.hole m.board m.state).action
-  (movesByRisk sl c m).length == 101 && ((movesByRisk sl c m).zip each).all fun (a, b) => a.same b
+    (decideWithCounts (sliderAt r) c m.hole m.board m.state).action
+  let moves := movesBySetting sliderAt c m
+  moves.length == 101 && (moves.zip each).all fun (a, b) => a.same b
 
-/-- What the explorer must get right for one entry: 101 moves that never go from fold back
-to call, Risk mattering exactly when the move changes, and the move at the game's own Risk
+/-- What the explorer must get right for one entry: 101 moves that never go from call back to
+fold, Risk mattering exactly when the move changes, and the move at the game's own Risk
 being the move the bot made. -/
 def entryOk (e : RiskExplorerEntry) : Bool :=
-  e.moves.length == 101 && neverFoldThenCall e.moves
-    && e.riskMatters == (e.effect matches .callsUpTo _)
+  e.moves.length == 101 && oneSwitchUp e.moves
+    && e.riskMatters == (e.effect matches .callsFrom _ | .bluffsFrom _ | .varies)
     && (e.moves[e.risk]?.map (·.same e.action)) == some true
 
 -- Two aces raise before Risk comes in (a win chance of 85%).
@@ -112,32 +114,76 @@ def entryOk (e : RiskExplorerEntry) : Bool :=
 #guard (entryOf (startRecord [card 14 .spades, card 13 .spades])).map (·.effect) == some .callsAlways
 #guard (entryOf { startRecord [card 14 .spades, card 13 .spades] with state := bigBetState }).map
   (·.effect) == some .callsAlways
--- Nine-two calls the 5 chips up to Risk 49 (`exRecord`).
-#guard (entryOf (startRecord [card 9 .spades, card 2 .hearts])).map (·.effect) == some (.callsUpTo 49)
-#guard (entryOf (startRecord [card 9 .spades, card 2 .hearts])).map (·.continuesUpTo) == some (some 49)
--- Three-two folds to a bet of 200 at every Risk, even Risk 0.
+-- Nine-two folds the 5 chips below Risk 26 and calls from Risk 26 up (`exRecord`).
+#guard (entryOf (startRecord [card 9 .spades, card 2 .hearts])).map (·.effect) == some (.callsFrom 26)
+#guard (entryOf (startRecord [card 9 .spades, card 2 .hearts])).map (·.continuesFrom) == some (some 26)
+-- Three-two folds to a bet of 200 at every Risk, even Risk 100.
 #guard (entryOf { startRecord [card 3 .spades, card 2 .hearts] with state := bigBetState }).map
   (·.effect) == some .foldsAlways
 #guard (entryOf { startRecord [card 3 .spades, card 2 .hearts] with state := bigBetState }).map
-  (·.continuesUpTo) == some none
+  (·.continuesFrom) == some none
 -- The pot and the call are as the bot saw them: 200 to call, 300 to win.
 #guard
   (entryOf { startRecord [card 3 .spades, card 2 .hearts] with state := bigBetState }).map
     (fun e => (e.pot, e.toCall)) == some (300, 200)
 
 -- The summaries.
+#guard RiskEffect.summary (.callsFrom 38) == "Folds at Risk 0-37, calls at 38-100."
+#guard RiskEffect.summary (.callsFrom 1) == "Folds at Risk 0, calls at 1-100."
+#guard RiskEffect.summary (.callsFrom 100) == "Folds at Risk 0-99, calls at 100."
+#guard RiskEffect.summary (.bluffsFrom 41) ==
+  "Checks at Risk 0-40, bluffs at 41-100: more Risk, more bluffs."
 #guard RiskEffect.summary (.callsUpTo 37) == "Calls at Risk 0-37, folds at 38-100."
 #guard RiskEffect.summary (.callsUpTo 0) == "Calls at Risk 0, folds at 1-100."
 #guard RiskEffect.summary (.callsUpTo 99) == "Calls at Risk 0-99, folds at 100."
 #guard RiskEffect.summary .callsAlways == "Calls at every Risk, 0-100."
 #guard RiskEffect.summary .foldsAlways == "Folds at every Risk, 0-100."
 
--- None of these goes from fold back to call, and each one's moves are the bot's decision at
--- each Risk.
+-- None of these goes from call back to fold, and each one's moves are the bot's decision at
+-- each Risk, through `Sliders.ofRisk` and, for the caution sweep, at a fixed Bluff.
 #guard [startRecord [card 14 .spades, card 14 .hearts], startRecord [card 14 .spades, card 13 .spades],
     startRecord [card 9 .spades, card 2 .hearts],
     { startRecord [card 3 .spades, card 2 .hearts] with state := bigBetState }].all fun m =>
-  ((entryOf m).map (neverFoldThenCall ·.moves)) == some true && movesAreEachRisk ⟨50, 33⟩ m
+  ((entryOf m).map (oneSwitchUp ·.moves)) == some true && movesAreEachRisk Sliders.ofRisk m
+    && movesAreEachRisk (fun r => ⟨r, 33⟩) m
+
+/-! ## Risk explorer: the river with no bet to face
+
+Here the Bluff that `Sliders.ofRisk` sets changes the move, and the board is ranked once. -/
+
+/-- The river in `exRiverView`'s spot: board A K 2 5 7, 100 in the pot, 450 behind each, and
+the bot to act with nothing to call. -/
+def riverState : State :=
+  { stack := fun _ => 450, pot := 100, bet := fun _ => 0, lastRaise := 10, toAct := 1 }
+
+/-- A recorded river move with no bet to face, holding `hole`. -/
+def riverRecord (hole : List Card) : BotMoveRecord :=
+  { seed := 1, hole,
+    board := [card 14 .spades, card 13 .diamonds, card 2 .clubs, card 5 .hearts, card 7 .hearts],
+    state := riverState, action := .check }
+
+/-- The shortcut's moves agree with deciding at each of these Risks one by one. (Deciding
+ranks the board again each time, so only a few Risks are checked here.) -/
+def riverMovesMatch (m : BotMoveRecord) (risks : List Nat) : Bool :=
+  let c := countsFor m.seed m.hole m.board
+  let fast := movesBySetting Sliders.ofRisk c m
+  fast.length == 101 && risks.all fun r =>
+    (fast[r]?.map (·.same (decideWithCounts (Sliders.ofRisk r) c m.hole m.board m.state).action))
+      == some true
+
+-- Two aces are a value hand: the pot bet at every Risk.
+#guard (entryOf (riverRecord [card 14 .clubs, card 14 .hearts])).map (·.effect) == some .betsAlways
+#guard (entryOf (riverRecord [card 14 .clubs, card 14 .hearts])).map (·.continuesFrom) == some (some 0)
+-- A pair of sevens is in neither set at any Bluff up to 60%: checked at every Risk.
+#guard (entryOf (riverRecord [card 7 .clubs, card 3 .diamonds])).map (·.effect) == some .checksAlways
+-- Eight-six is a bluff once the Bluff share is big enough: checked at low Risk, bet above.
+#guard (entryOf (riverRecord [card 8 .clubs, card 6 .diamonds])).map
+  (fun e => e.effect matches .bluffsFrom _) == some true
+#guard (entryOf (riverRecord [card 8 .clubs, card 6 .diamonds])).map (fun e => e.riskMatters) == some true
+-- The shortcut agrees with deciding at each Risk, and no river entry goes from bet back to check.
+#guard [riverRecord [card 14 .clubs, card 14 .hearts], riverRecord [card 7 .clubs, card 3 .diamonds],
+    riverRecord [card 8 .clubs, card 6 .diamonds]].all fun m =>
+  riverMovesMatch m [0, 25, 50, 75, 100] && ((entryOf m).map (oneSwitchUp ·.moves)) == some true
 
 /-! ## Risk explorer: moves recorded in real games -/
 
@@ -147,11 +193,11 @@ def act (a : String) : String := "{\"cmd\":\"act\",\"action\":\"" ++ a ++ "\"}"
 /-- Hand 1 of `start42`: the human limps, the bot checks its option and bets 20 on the flop,
 and the human folds. Two bot moves, neither facing a bet. -/
 def limpThenFold := [start42, act "call", act "fold"]
-/-- Hand 1 again: the human raises to 40, the bot calls 30 (it would up to Risk 84) and bets
-80 on the flop, and the human folds. -/
+/-- Hand 1 again: the human raises to 40, the bot calls 30 (it would from Risk 8 up: caution
+84 and under) and bets 80 on the flop, and the human folds. -/
 def raiseThenFold := [start42, "{\"cmd\":\"act\",\"action\":\"raise\",\"amount\":40}", act "fold"]
-/-- Hand 2 of `foldThenNext`: the bot, on the button, calls the 5 chips (it would up to Risk
-54), and the human folds. -/
+/-- Hand 2 of `foldThenNext`: the bot, on the button, calls the 5 chips (it would from Risk 23
+up: caution 54 and under), and the human folds. -/
 def limpByBot := foldThenNext ++ [act "fold"]
 
 /-- For hand `n` of a game: the explorer has one entry per recorded bot move (and per
@@ -173,18 +219,19 @@ def handOk (lines : List String) (n : Nat) : Bool :=
 #guard handOk raiseThenFold 1
 #guard handOk limpByBot 2
 
--- What Risk does in those hands: two moves with no bet to face; a call that would turn into a
--- fold above Risk 84, then a bet; a call that would turn into a fold above Risk 54.
+-- What Risk does in those hands: two moves with no bet to face; a call that would be a fold
+-- below Risk 8, then a bet; a call that would be a fold below Risk 23.
 #guard ((sessionAfter limpThenFold).bind (·.riskExplorer 1)).map (·.map (·.effect))
   == some [.noBet, .noBet]
 #guard ((sessionAfter raiseThenFold).bind (·.riskExplorer 1)).map (·.map (·.effect))
-  == some [.callsUpTo 84, .noBet]
+  == some [.callsFrom 8, .noBet]
 #guard ((sessionAfter limpByBot).bind (·.riskExplorer 2)).map (·.map (·.effect))
-  == some [.callsUpTo 54]
--- With no bet to face, the one decision stands for every Risk, as deciding at each Risk gives.
+  == some [.callsFrom 23]
+-- With no bet to face before the river, the one decision stands for every Risk, as deciding
+-- at each Risk gives.
 #guard match sessionAfter limpThenFold with
   | some s => (s.logs[0]?.map fun l =>
-      l.botMoves.toList.all fun r => movesAreEachRisk s.sliders (BotMoveRecord.ofLog r)) == some true
+      l.botMoves.toList.all fun r => movesAreEachRisk Sliders.ofRisk (BotMoveRecord.ofLog r)) == some true
   | none => false
 
 -- While a hand is played there is no explorer for it. Hand 0 has none either.
@@ -209,12 +256,12 @@ def explorerJson (lines : List String) (n : Nat) : Json :=
     | some e =>
       field e "street" == "preflop" && field e "pot" == (50 : Nat) && field e "toCall" == (30 : Nat)
         && field e "risk" == (50 : Nat) && field e "action" == "Call"
-        && field e "continuesUpTo" == (84 : Nat) && field e "riskMatters" == true
-        && field e "effect" == "callsUpTo"
-        && field e "summary" == "Calls at Risk 0-84, folds at 85-100."
+        && field e "continuesFrom" == (8 : Nat) && field e "riskMatters" == true
+        && field e "effect" == "callsFrom"
+        && field e "summary" == "Folds at Risk 0-7, calls at 8-100."
         && (match field e "actions" with
           | .arr as => as.size == 101 && as[50]? == some (Json.str "Call")
-              && as[84]? == some (Json.str "Call") && as[85]? == some (Json.str "Fold")
+              && as[7]? == some (Json.str "Fold") && as[8]? == some (Json.str "Call")
           | _ => false)
     | none => false
   | _ => false
@@ -222,7 +269,7 @@ def explorerJson (lines : List String) (n : Nat) : Json :=
 -- The flop bet in the same hand: "Bet 80" at every Risk, and Risk doesn't matter.
 #guard match explorerJson raiseThenFold 1 with
   | .arr es => match es[1]? with
-    | some e => field e "action" == "Bet 80" && field e "continuesUpTo" == (100 : Nat)
+    | some e => field e "action" == "Bet 80" && field e "continuesFrom" == (0 : Nat)
         && field e "riskMatters" == false && field e "effect" == "noBet"
     | none => false
   | _ => false
