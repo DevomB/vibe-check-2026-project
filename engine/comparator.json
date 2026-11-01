@@ -23,7 +23,10 @@
     "bot_bets_its_set",
     "step_keeps_chips",
     "startHand_keeps_chips",
-    "chips_always_1000"
+    "chips_always_1000",
+    "shuffle_same_cards",
+    "shuffle_fair",
+    "no_card_dealt_twice"
   ],
   "permitted_axioms": [
     "propext",

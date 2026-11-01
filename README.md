@@ -115,6 +115,12 @@ plain-English docstring and examples.
 The engine code itself (`step`, `startHand`, `shuffle`, the bot) is not trusted: the
 theorems are about that code directly, not about a copy of it.
 
+One proof helper is built by a small Lean command instead of written by hand:
+`#make_dealFrom` in `Engine/Proofs/Chips.lean` makes `dealFrom` (the body of `dealHand`,
+with the shuffled deck as an input) and the fact `dealHand_eq_dealFrom`. Lean's kernel
+checks both, and no main theorem's statement mentions them. It exists because Lean would
+otherwise try to run the 52-card shuffle on an unknown seed inside a proof.
+
 **We trust this data, without proof:**
 
 - **The preflop table**, [`data/preflop.json`](data/preflop.json): win, tie and loss
