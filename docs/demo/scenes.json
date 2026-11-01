@@ -1,0 +1,262 @@
+[
+  {
+    "id": "a",
+    "title": "Review scene: a bad river call",
+    "seed": "6",
+    "risk": 0,
+    "bluff_pct": 60,
+    "moves": [
+      {
+        "action": "raise",
+        "amount": 30
+      },
+      {
+        "action": "check"
+      },
+      {
+        "action": "check"
+      }
+    ],
+    "labels": {
+      "call": "Mistake",
+      "fold": "Best"
+    },
+    "worth_bb": {
+      "call": -2.67,
+      "fold": 0
+    },
+    "equity_had": 0.185,
+    "equity_needed": 0.333,
+    "river": {
+      "board": [
+        "9s",
+        "5d",
+        "2c",
+        "Ks",
+        "3d"
+      ],
+      "human_cards": [
+        "4h",
+        "Jh"
+      ],
+      "human_hand": "High Card",
+      "pot_before_bet": 60,
+      "bot_bet": 60,
+      "to_call": 60
+    },
+    "bot_river_reason": "Bet 60: a value hand, among the strongest 30% on this board.",
+    "results": {
+      "call": {
+        "action": "call",
+        "outcome": "player1",
+        "showdown": true,
+        "human_net_chips": -90,
+        "human_cards": [
+          "4h",
+          "Jh"
+        ],
+        "bot_cards": [
+          "6s",
+          "4c"
+        ],
+        "board": [
+          "9s",
+          "5d",
+          "2c",
+          "Ks",
+          "3d"
+        ]
+      },
+      "fold": {
+        "action": "fold",
+        "outcome": "fold",
+        "showdown": false,
+        "human_net_chips": -30,
+        "human_cards": [
+          "4h",
+          "Jh"
+        ],
+        "bot_cards": null,
+        "board": [
+          "9s",
+          "5d",
+          "2c",
+          "Ks",
+          "3d"
+        ]
+      }
+    }
+  },
+  {
+    "id": "b",
+    "title": "Risk 100, Bluff 0: the bot folds to a big bet",
+    "seed": "1",
+    "risk": 100,
+    "bluff_pct": 0,
+    "moves": [
+      {
+        "action": "raise",
+        "amount": 150
+      }
+    ],
+    "human_cards": [
+      "3c",
+      "8c"
+    ],
+    "bot_reason": "Fold: not worth calling 140 to win 160 at Risk 100, with win chance 58%.",
+    "bot_win_chance_percent": 58,
+    "human_net_chips": 10,
+    "same_seed_at_risk_0": {
+      "bot_called": true,
+      "events": [
+        {
+          "action": "raise",
+          "allIn": false,
+          "amount": 145,
+          "player": 0,
+          "to": 150,
+          "type": "action"
+        },
+        {
+          "action": "call",
+          "allIn": false,
+          "amount": 140,
+          "player": 1,
+          "type": "action"
+        },
+        {
+          "action": "check",
+          "allIn": false,
+          "amount": 0,
+          "player": 1,
+          "type": "action"
+        }
+      ]
+    }
+  },
+  {
+    "id": "c",
+    "title": "Risk 0, Bluff 60: the bot bets a designated bluff on the river",
+    "seed": "1",
+    "risk": 0,
+    "bluff_pct": 60,
+    "moves": [
+      {
+        "action": "call"
+      },
+      {
+        "action": "check"
+      },
+      {
+        "action": "check"
+      }
+    ],
+    "labels": {
+      "call": "Best",
+      "fold": "Inaccuracy"
+    },
+    "worth_bb": {
+      "call": 1.57,
+      "fold": 0
+    },
+    "equity_had": 0.596,
+    "equity_needed": 0.333,
+    "river": {
+      "board": [
+        "4h",
+        "Qh",
+        "7c",
+        "Tc",
+        "8d"
+      ],
+      "human_cards": [
+        "3c",
+        "8c"
+      ],
+      "human_hand": "Pair",
+      "pot_before_bet": 20,
+      "bot_bet": 20,
+      "to_call": 20
+    },
+    "bot_river_reason": "Bet 20: a bluff, picked at Bluff 60%.",
+    "bot_role": "bluff",
+    "results": {
+      "call": {
+        "action": "call",
+        "outcome": "player0",
+        "showdown": true,
+        "human_net_chips": 30,
+        "human_cards": [
+          "3c",
+          "8c"
+        ],
+        "bot_cards": [
+          "9d",
+          "Ks"
+        ],
+        "board": [
+          "4h",
+          "Qh",
+          "7c",
+          "Tc",
+          "8d"
+        ]
+      },
+      "fold": {
+        "action": "fold",
+        "outcome": "fold",
+        "showdown": false,
+        "human_net_chips": -10,
+        "human_cards": [
+          "3c",
+          "8c"
+        ],
+        "bot_cards": null,
+        "board": [
+          "4h",
+          "Qh",
+          "7c",
+          "Tc",
+          "8d"
+        ]
+      }
+    },
+    "review_if_call": [
+      {
+        "equity_had": null,
+        "equity_needed": null,
+        "label": null,
+        "street": "preflop",
+        "worth_bb": null,
+        "your_action": "call"
+      },
+      {
+        "equity_had": null,
+        "equity_needed": null,
+        "label": null,
+        "street": "flop",
+        "worth_bb": null,
+        "your_action": "check"
+      },
+      {
+        "equity_had": null,
+        "equity_needed": null,
+        "label": null,
+        "street": "turn",
+        "worth_bb": null,
+        "your_action": "check"
+      },
+      {
+        "equity_had": 0.596,
+        "equity_needed": 0.333,
+        "label": "Best",
+        "street": "river",
+        "worth_bb": {
+          "call": 1.57,
+          "fold": 0
+        },
+        "your_action": "call"
+      }
+    ]
+  }
+]

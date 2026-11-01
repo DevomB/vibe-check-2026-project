@@ -1,0 +1,291 @@
+[
+  {
+    "id": "catch-bluff",
+    "title": "Catch a bluff",
+    "seed": "1",
+    "risk": 0,
+    "bluff_pct": 60,
+    "moves": [
+      {
+        "action": "call"
+      },
+      {
+        "action": "check"
+      },
+      {
+        "action": "check"
+      }
+    ],
+    "best": "call",
+    "labels": {
+      "call": "Best",
+      "fold": "Inaccuracy"
+    },
+    "worth_bb": {
+      "call": 1.57,
+      "fold": 0
+    },
+    "result_if_best": {
+      "action": "call",
+      "outcome": "player0",
+      "showdown": true,
+      "human_net_chips": 30,
+      "human_cards": [
+        "3c",
+        "8c"
+      ],
+      "bot_cards": [
+        "9d",
+        "Ks"
+      ],
+      "board": [
+        "4h",
+        "Qh",
+        "7c",
+        "Tc",
+        "8d"
+      ]
+    },
+    "equity_had": 0.596,
+    "equity_needed": 0.333,
+    "river": {
+      "board": [
+        "4h",
+        "Qh",
+        "7c",
+        "Tc",
+        "8d"
+      ],
+      "human_cards": [
+        "3c",
+        "8c"
+      ],
+      "human_hand": "Pair",
+      "pot_before_bet": 20,
+      "bot_bet": 20,
+      "to_call": 20
+    },
+    "bot_river_reason": "Bet 20: a bluff, picked at Bluff 60%.",
+    "result_if_other": {
+      "action": "fold",
+      "outcome": "fold",
+      "showdown": false,
+      "human_net_chips": -10,
+      "human_cards": [
+        "3c",
+        "8c"
+      ],
+      "bot_cards": null,
+      "board": [
+        "4h",
+        "Qh",
+        "7c",
+        "Tc",
+        "8d"
+      ]
+    },
+    "verified": {
+      "engine": {
+        "sha256": "19a7b9be2c2528587d86eb8bba22e1d0ab9e48de028a44eaa3802d3ed609dbf4",
+        "built": "2026-11-01T01:42:04.956Z",
+        "checkout_commit": "3356666be8dd69ed5b8752b7f5a7ac9eb664cce0",
+        "engine_files_changed_in_checkout": false
+      },
+      "checked_at": "2026-11-01T07:02:11.122Z",
+      "replayed": "call and fold, each from new_game with the same seed and moves"
+    }
+  },
+  {
+    "id": "avoid-bad-call",
+    "title": "Avoid a bad call",
+    "seed": "6",
+    "risk": 0,
+    "bluff_pct": 60,
+    "moves": [
+      {
+        "action": "raise",
+        "amount": 30
+      },
+      {
+        "action": "check"
+      },
+      {
+        "action": "check"
+      }
+    ],
+    "best": "fold",
+    "labels": {
+      "call": "Mistake",
+      "fold": "Best"
+    },
+    "worth_bb": {
+      "call": -2.67,
+      "fold": 0
+    },
+    "result_if_best": {
+      "action": "fold",
+      "outcome": "fold",
+      "showdown": false,
+      "human_net_chips": -30,
+      "human_cards": [
+        "4h",
+        "Jh"
+      ],
+      "bot_cards": null,
+      "board": [
+        "9s",
+        "5d",
+        "2c",
+        "Ks",
+        "3d"
+      ]
+    },
+    "equity_had": 0.185,
+    "equity_needed": 0.333,
+    "river": {
+      "board": [
+        "9s",
+        "5d",
+        "2c",
+        "Ks",
+        "3d"
+      ],
+      "human_cards": [
+        "4h",
+        "Jh"
+      ],
+      "human_hand": "High Card",
+      "pot_before_bet": 60,
+      "bot_bet": 60,
+      "to_call": 60
+    },
+    "bot_river_reason": "Bet 60: a value hand, among the strongest 30% on this board.",
+    "result_if_other": {
+      "action": "call",
+      "outcome": "player1",
+      "showdown": true,
+      "human_net_chips": -90,
+      "human_cards": [
+        "4h",
+        "Jh"
+      ],
+      "bot_cards": [
+        "6s",
+        "4c"
+      ],
+      "board": [
+        "9s",
+        "5d",
+        "2c",
+        "Ks",
+        "3d"
+      ]
+    },
+    "verified": {
+      "engine": {
+        "sha256": "19a7b9be2c2528587d86eb8bba22e1d0ab9e48de028a44eaa3802d3ed609dbf4",
+        "built": "2026-11-01T01:42:04.956Z",
+        "checkout_commit": "3356666be8dd69ed5b8752b7f5a7ac9eb664cce0",
+        "engine_files_changed_in_checkout": false
+      },
+      "checked_at": "2026-11-01T07:02:28.963Z",
+      "replayed": "call and fold, each from new_game with the same seed and moves"
+    }
+  },
+  {
+    "id": "right-and-lose",
+    "title": "Make the right decision and still lose",
+    "seed": "4",
+    "risk": 0,
+    "bluff_pct": 60,
+    "moves": [
+      {
+        "action": "call"
+      },
+      {
+        "action": "check"
+      },
+      {
+        "action": "call"
+      }
+    ],
+    "best": "call",
+    "labels": {
+      "call": "Best",
+      "fold": "Blunder"
+    },
+    "worth_bb": {
+      "call": 10.32,
+      "fold": 0
+    },
+    "result_if_best": {
+      "action": "call",
+      "outcome": "player1",
+      "showdown": true,
+      "human_net_chips": -90,
+      "human_cards": [
+        "6h",
+        "7d"
+      ],
+      "bot_cards": [
+        "6s",
+        "4c"
+      ],
+      "board": [
+        "8c",
+        "2d",
+        "5s",
+        "7h",
+        "7s"
+      ]
+    },
+    "equity_had": 0.907,
+    "equity_needed": 0.333,
+    "river": {
+      "board": [
+        "8c",
+        "2d",
+        "5s",
+        "7h",
+        "7s"
+      ],
+      "human_cards": [
+        "6h",
+        "7d"
+      ],
+      "human_hand": "Three of a Kind",
+      "pot_before_bet": 60,
+      "bot_bet": 60,
+      "to_call": 60
+    },
+    "bot_river_reason": "Bet 60: a value hand, among the strongest 30% on this board.",
+    "result_if_other": {
+      "action": "fold",
+      "outcome": "fold",
+      "showdown": false,
+      "human_net_chips": -30,
+      "human_cards": [
+        "6h",
+        "7d"
+      ],
+      "bot_cards": null,
+      "board": [
+        "8c",
+        "2d",
+        "5s",
+        "7h",
+        "7s"
+      ]
+    },
+    "verified": {
+      "engine": {
+        "sha256": "19a7b9be2c2528587d86eb8bba22e1d0ab9e48de028a44eaa3802d3ed609dbf4",
+        "built": "2026-11-01T01:42:04.956Z",
+        "checkout_commit": "3356666be8dd69ed5b8752b7f5a7ac9eb664cce0",
+        "engine_files_changed_in_checkout": false
+      },
+      "checked_at": "2026-11-01T07:02:21.472Z",
+      "replayed": "call and fold, each from new_game with the same seed and moves"
+    }
+  }
+]
