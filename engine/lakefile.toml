@@ -1,5 +1,5 @@
 name = "poker"
-defaultTargets = ["Engine", "poker"]
+defaultTargets = ["Engine", "poker", "kuhn-serve"]
 
 # The Lean engine. Human-owned specs live in Poker/Spec/; keep them short and reviewable.
 [[lean_lib]]
@@ -37,3 +37,8 @@ root = "DiffTest"
 [[lean_exe]]
 name = "kuhn"
 root = "KuhnMain"
+
+# Kuhn poker for the web page (/kuhn): JSON lines in and out, like the Hold'em program.
+[[lean_exe]]
+name = "kuhn-serve"
+root = "KuhnServe"
