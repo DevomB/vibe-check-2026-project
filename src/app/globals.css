@@ -35,7 +35,7 @@ body {
   margin: 0;
   background: radial-gradient(1200px 700px at 50% -10%, #17212d 0%, var(--bg) 60%) fixed, var(--bg);
   color: var(--text);
-  font-family: var(--font-sans), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-size: 15px;
   -webkit-font-smoothing: antialiased;
 }

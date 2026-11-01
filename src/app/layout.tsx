@@ -1,13 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
 import type { ReactNode } from "react";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
-
+// Fonts come from the system (see globals.css), so building the app needs no network.
 export const metadata: Metadata = {
   title: "Hold'em",
-  description: "No-limit Texas Hold'em against AI players, each with their own style.",
+  description: "Heads-up no-limit Texas Hold'em against one bot you build with two sliders, Risk and Bluff.",
 };
 
 export const viewport: Viewport = {
@@ -17,7 +15,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en">
       <body>{children}</body>
     </html>
   );
