@@ -1,7 +1,7 @@
 # Hold'em with a proved game review
 
-Build a poker bot with a slider, play heads-up Texas Hold'em against it in the browser, then
-get a chess.com-style review of your river calls and folds. The whole game runs in Lean, and
+Design a poker bot's personality, play heads-up Texas Hold'em against it in the browser,
+then get a chess.com-style review of your river calls and folds. The whole game runs in Lean, and
 Lean proofs check the rules, the bot and the review. The grades are proved to follow the
 review's stated rules, and they never look at the bot's cards.
 
@@ -46,7 +46,8 @@ docs, so the final commit gets a run started by hand.
 ## What is proved
 
 The theorems name the engine's own functions (`step`, `shuffle`, `botDecide`,
-`reviewRiver`), not copies of them. Each statement is in [`engine/Checks/Challenge.lean`](engine/Checks/Challenge.lean), the file the team agreed
+`reviewRiver`), not copies of them. Each statement is in
+[`engine/Checks/Challenge.lean`](engine/Checks/Challenge.lean), the file the team agreed
 on, and [`engine/comparator.json`](engine/comparator.json) lists all 46. CI checks that each
 proof proves exactly that statement, with only the three standard axioms.
 
@@ -59,7 +60,7 @@ proof proves exactly that statement, with only the three standard axioms.
 | T5 | For a graded river call or fold: the worths are exact averages over the hands the bot can hold, in big blinds. Best means the choice was worth at least as much as the other one. Losing fewer big blinds never gets a worse label. Calling is Best exactly when your equity is at least the equity needed. When the bot bets first on the river, the review's list of hands it can hold is never empty. | `review_worth`, `review_lost`, `review_best_iff`, `review_label_monotone`, `review_call_best_iff_equity`, `review_hands_ne_nil` |
 | T6 | On the turn and the river, the bot's win counts look at every possible outcome exactly once: 990 opponent hands on the river, 45,540 (river card, opponent hand) pairs on the turn. | `enumeration_exact`, `riverOpponentHands_length`, `turnOutcomes_length`, `countsFor_river`, `countsFor_turn` |
 | T7 | On any river board, at Bluff 0% to 60%, the bot's betting set has 324 value hands and the whole number of bluffs that comes nearest to making bluffs Bluff% of the set. No hand is both. With no bet to face and a legal bet available, the bot bets on the river exactly the hands in the set. The candidate hands are ranked strongest first. | `bluff_frequency`, `value_and_bluffs_apart`, `bot_bets_its_set`, `botDecide_river_follows_set`, `rankRiverHands_sorted` |
-| T8 | Two hands that look the same to you get the same review, whatever the bot really holds. The bot's real hand is always one of the hands the review counts. | `no_hindsight`, `bot_hand_in_review` |
+| T8 | Two hands that look the same to you get the same review, whatever the bot really holds. When the bot bets, its real hand is always one of the hands the review counts. | `no_hindsight`, `bot_hand_in_review` |
 | T9 | Every hand ends: from any reachable game, a hand has at most 200 accepted moves. | `every_hand_ends` |
 | App | The game the app plays is always a reachable game, so T1, T2, T3 and T9 hold for it. A command the engine rejects leaves the game unchanged. While a hand is going, the engine always accepts the bot's move. | `app_game_reachable`, `handle_keeps_reachable`, `handle_error_unchanged`, `respond_keeps_session_unless_accepted`, `bot_move_accepted` |
 | Panels | The Risk explorer shows the real bot's move at each Risk, and never goes from fold back to call. The range viewer's counts add up and are the counts the grade uses. | `exploreHand_moves`, `exploreHand_risk_monotone`, `rangeOf_adds_up`, `rangeOf_counts` |
