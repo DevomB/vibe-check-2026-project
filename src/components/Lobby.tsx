@@ -1,7 +1,9 @@
 import { type CSSProperties, useState } from "react";
+import { ChallengePicker } from "./ChallengePicker";
 import { PlayingCard } from "./PlayingCard";
 import { type GameSettings, TABLE } from "@/hooks/useGame";
 import { BLUFF_PCT_MAX, RISK_MAX } from "@/lean/protocol";
+import type { Challenge } from "@/lib/challenges";
 import { CUSTOM_BOT, OPPONENTS, presetFor } from "@/lib/roster";
 
 interface SliderProps {
@@ -15,7 +17,7 @@ interface SliderProps {
   onChange: (v: number) => void;
 }
 
-function BotSlider({ label, value, max, shown, help, onChange }: SliderProps) {
+export function BotSlider({ label, value, max, shown, help, onChange }: SliderProps) {
   return (
     <div className="bot-slider">
       <div className="bot-slider-head">
@@ -38,14 +40,17 @@ function BotSlider({ label, value, max, shown, help, onChange }: SliderProps) {
 }
 
 /** Start screen: pick a named opponent or set the bot's Risk and Bluff sliders yourself, and
- * optionally a seed to replay a game. */
+ * optionally a seed to replay a game. Or load a practice challenge. */
 export function Lobby({
   initial,
   onStart,
+  onPractice,
   onRules,
 }: {
   initial?: GameSettings;
   onStart: (s: GameSettings) => void;
+  /** Load a rehearsed hand at its river decision, at the chosen game speed. */
+  onPractice: (c: Challenge, fast: boolean) => void;
   onRules: () => void;
 }) {
   const [risk, setRisk] = useState(initial?.risk ?? 50);
@@ -153,6 +158,9 @@ export function Lobby({
         <button className="btn btn-primary btn-big" onClick={start} disabled={!seedValid}>
           Start
         </button>
+        <div className="field-label">Practice</div>
+        <ChallengePicker onPick={(c) => onPractice(c, fast)} />
+
         <button className="btn btn-link" onClick={onRules}>
           New to poker? Read the rules
         </button>

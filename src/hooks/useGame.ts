@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Action, DealtHand, HandState, LegalActions, Session } from "@/lib/table";
 import type { ApiReply, LeanCommand, LeanEvent, LeanReview, LeanState } from "@/lean/protocol";
+import { type Challenge, atRiverDecision } from "@/lib/challenges";
 import { cardText, chips } from "@/lib/format";
 import { HUMAN_COLOR, botFor } from "@/lib/roster";
 
@@ -25,6 +26,13 @@ export interface GameSettings {
   fast: boolean;
 }
 
+/**
+ * What kind of game this is. The kinds never mix: starting any game sets exactly one.
+ * - normal: the player set the sliders (or picked a named opponent).
+ * - practice: a rehearsed hand from `@/lib/challenges`, loaded up to its river decision.
+ */
+export type GameMode = { kind: "normal" } | { kind: "practice"; challenge: Challenge };
+
 export interface Player {
   name: string;
   color: string;
@@ -38,6 +46,7 @@ export interface Stats {
 
 export interface Game {
   settings: GameSettings;
+  mode: GameMode;
   /** Known for an entered replay, or revealed by the server once the game ends. */
   seed: bigint | null;
   /** Seat 0 is the human, seat 1 the bot. Same numbering as Lean's players. */
@@ -258,6 +267,8 @@ export function useGame() {
   const [thinking, setThinking] = useState(false);
   /** The review of the finished hand, once asked for. */
   const [review, setReview] = useState<LeanReview | null>(null);
+  /** The practice challenge being loaded, until its river decision is on the table. */
+  const [loading, setLoading] = useState<Challenge | null>(null);
   /** "Peek at bot's cards": off by default, and off again at the start of every game. */
   const [peek, setPeekState] = useState(false);
   const peekRef = useRef(false);
@@ -378,18 +389,73 @@ export function useGame() {
       busy.current = false;
       setThinking(false);
       setReview(null);
+      setLoading(null);
       resetPeek();
       const players: Player[] = [
         { name: "You", color: HUMAN_COLOR },
         botFor(settings.risk, settings.bluffPct),
       ];
       const seed = settings.seed;
-      const base = { settings, seed, players, log: [], stats: { handsPlayed: 0, handsWon: 0, biggestPot: 0 } };
+      const mode: GameMode = { kind: "normal" };
+      const base = { settings, mode, seed, players, log: [], stats: { handsPlayed: 0, handsWon: 0, biggestPot: 0 } };
       void request({ cmd: "new_game", seed: seed?.toString() ?? "", risk: settings.risk, bluff_pct: settings.bluffPct }, (s) =>
         withReply(base, null, s),
       );
     },
     [request, resetPeek],
+  );
+
+  /**
+   * Start a practice challenge: a new game with the spot's seed and sliders, then its moves
+   * through the normal `act` command, without the bot's "thinking" pauses. The table appears
+   * only once Lean's reply is the spot's river decision; if it is not, the challenge stops
+   * with an error instead of going on from a different spot.
+   */
+  const startChallenge = useCallback(
+    async (challenge: Challenge, fast: boolean) => {
+      generation.current++;
+      const gen = generation.current;
+      busy.current = true;
+      setThinking(false);
+      setReview(null);
+      setError(null);
+      resetPeek();
+      setGame(null);
+      setLoading(challenge);
+      const settings: GameSettings = { risk: challenge.risk, bluffPct: challenge.bluff_pct, seed: BigInt(challenge.seed), fast };
+      const mode: GameMode = { kind: "practice", challenge };
+      const players: Player[] = [{ name: "You", color: HUMAN_COLOR }, botFor(challenge.risk, challenge.bluff_pct)];
+      const base = { settings, mode, seed: settings.seed, players, log: [], stats: { handsPlayed: 0, handsWon: 0, biggestPot: 0 } };
+      let g: Game | null = null;
+      try {
+        const commands: LeanCommand[] = [
+          { cmd: "new_game", seed: challenge.seed, risk: challenge.risk, bluff_pct: challenge.bluff_pct },
+          ...challenge.moves.map((m): LeanCommand => ({ cmd: "act", ...m })),
+        ];
+        for (const command of commands) {
+          const reply = await sendToLean(command);
+          if (gen !== generation.current) return;
+          if (!("ok" in reply)) {
+            setError(`The practice hand could not be loaded: ${reply.error}`);
+            return;
+          }
+          g = withReply(g ?? base, g, reply.state);
+        }
+        if (!g || !atRiverDecision(g.lean)) {
+          setError(`"${challenge.title}" did not reach its river decision, so it was stopped. The engine may have changed since the spot was recorded.`);
+          return;
+        }
+        setGame(g);
+      } catch (e) {
+        if (gen === generation.current) setError(`Could not reach the game engine: ${e instanceof Error ? e.message : String(e)}`);
+      } finally {
+        if (gen === generation.current) {
+          setLoading(null);
+          release();
+        }
+      }
+    },
+    [release, resetPeek],
   );
 
   const humanAct = useCallback(
@@ -452,6 +518,7 @@ export function useGame() {
     setThinking(false);
     setReview(null);
     setError(null);
+    setLoading(null);
     resetPeek();
     setGame(null);
   }, [resetPeek]);
@@ -462,5 +529,5 @@ export function useGame() {
     window.__holdemLog = log ?? [];
   }, [log]);
 
-  return { game, error, thinking, review, peek, peekedHands, setPeek, start, humanAct, nextHand, openReview, closeReview, quit };
+  return { game, error, thinking, review, loading, peek, peekedHands, setPeek, start, startChallenge, humanAct, nextHand, openReview, closeReview, quit };
 }

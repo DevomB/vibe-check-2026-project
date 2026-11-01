@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ActionBar } from "./ActionBar";
+import { PracticeBar } from "./ChallengePicker";
 import { GameOver } from "./GameOver";
 import { Lobby } from "./Lobby";
 import { ReviewModal } from "./ReviewModal";
@@ -9,8 +10,10 @@ import { RulesModal } from "./RulesModal";
 import { ProofsDrawer } from "./ProofsDrawer";
 import { NextHandBar } from "./ResultBanner";
 import { Table, resultDelay } from "./Table";
+import { type PracticeVerdict, practiceVerdict } from "@/lib/challenges";
 import { chips, describeStartingHand } from "@/lib/format";
-import { type GameSettings, HUMAN_SEAT, TABLE, gameStatus, useGame } from "@/hooks/useGame";
+import { type GameMode, type GameSettings, HUMAN_SEAT, TABLE, gameStatus, useGame } from "@/hooks/useGame";
+import styles from "./modes.module.css";
 
 /**
  * Job 4's two optional ReviewModal props (the contract in its task file). They travel in a
@@ -25,7 +28,8 @@ interface ReviewModalExtras {
 }
 
 export function PokerApp() {
-  const { game, error, thinking, review, peek, peekedHands, setPeek, start, humanAct, nextHand, openReview, closeReview, quit } = useGame();
+  const { game, error, thinking, review, loading, peek, peekedHands, setPeek, start, startChallenge, humanAct, nextHand, openReview, closeReview, quit } =
+    useGame();
   const [showRules, setShowRules] = useState(false);
   /** The "What is guaranteed?" drawer: closed (null), or open at a guarantee id (or the top). */
   const [proofs, setProofs] = useState<{ focus: string | null } | null>(null);
@@ -34,6 +38,28 @@ export function PokerApp() {
   const [lastSettings, setLastSettings] = useState<GameSettings | undefined>(undefined);
   const status = game ? gameStatus(game) : null;
   const lost = game?.lost ?? null;
+  const mode = game?.mode;
+
+  // Practice: once the rehearsed hand is over, open Lean's review on its own, after the result
+  // has had time to show. Only once per loaded challenge.
+  const practiceOver = mode?.kind === "practice" && game?.lean.hand === 1 && game.lean.result !== null && lost === null;
+  const practiceDelayMs = game && practiceOver ? (resultDelay(game) + 1.2) * 1000 : 0;
+  const autoReviewed = useRef<GameMode | null>(null);
+  useEffect(() => {
+    if (!practiceOver || !mode || autoReviewed.current === mode) return;
+    const timer = window.setTimeout(() => {
+      autoReviewed.current = mode;
+      void openReview();
+    }, practiceDelayMs);
+    return () => window.clearTimeout(timer);
+  }, [practiceOver, mode, practiceDelayMs, openReview]);
+
+  // Practice: Lean's grade of the rehearsed hand, kept after the review is closed.
+  const [practice, setPractice] = useState<{ mode: GameMode; verdict: PracticeVerdict } | null>(null);
+  useEffect(() => {
+    if (!game || game.mode.kind !== "practice" || !review || review.hand !== 1 || game.lean.hand !== 1) return;
+    setPractice({ mode: game.mode, verdict: practiceVerdict(review, game.lean.result) });
+  }, [game, review]);
 
   useEffect(() => {
     if (status !== "handOver" || showRules || proofs || review || lost !== null) return;
@@ -69,7 +95,12 @@ export function PokerApp() {
   if (!game) {
     return (
       <div className="app app-lobby">
-        <Lobby initial={lastSettings} onStart={begin} onRules={() => setShowRules(true)} />
+        <Lobby initial={lastSettings} onStart={begin} onPractice={(c, fast) => void startChallenge(c, fast)} onRules={() => setShowRules(true)} />
+        {loading && (
+          <p className={styles.loading} role="status">
+            Loading "{loading.title}"…
+          </p>
+        )}
         {errorBanner}
         {rulesModal}
       </div>
@@ -84,6 +115,7 @@ export function PokerApp() {
   const yourTurn = !thinking && hand.toAct !== null && hand.toAct === youIndex;
   const actor = thinking ? game.players[1 - HUMAN_SEAT]! : hand.toAct !== null ? game.players[seatOf[hand.toAct]!]! : null;
 
+  const challenge = game.mode.kind === "practice" ? game.mode.challenge : null;
   const reviewExtras: ReviewModalExtras = { hideSliderInfo: false, onShowProof: (id) => setProofs({ focus: id }) };
 
   let strength = "";
@@ -108,6 +140,11 @@ export function PokerApp() {
           <span>
             Your chips <b>{chips(you?.stack ?? game.session.seats[HUMAN_SEAT]!.stack)}</b>
           </span>
+          {challenge && (
+            <span>
+              Practice <b>{challenge.title}</b>
+            </span>
+          )}
           <span title="The bot's sliders for this game">
             Bot <b>Risk {game.settings.risk} · Bluff {game.settings.bluffPct}%</b>
           </span>
@@ -158,6 +195,15 @@ export function PokerApp() {
               botMessage={thinking ? null : game.botLine}
               handStrength={strength}
               onAct={humanAct}
+            />
+          )}
+          {challenge && lost === null && (
+            <PracticeBar
+              game={game}
+              challenge={challenge}
+              verdict={practice?.mode === game.mode ? practice.verdict : null}
+              overReview={review !== null}
+              onRetry={() => void startChallenge(challenge, game.settings.fast)}
             />
           )}
           {errorBanner}
