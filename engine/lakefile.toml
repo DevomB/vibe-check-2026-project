@@ -1,5 +1,8 @@
 name = "poker"
-defaultTargets = ["Engine", "poker", "kuhn-serve"]
+# Only one executable can be a default target: `lake check` imports every default target into
+# one environment, and two program roots clash (each has `main`, and KuhnServe's stateJson
+# collided with Engine.Protocol's). The Makefile builds `kuhn-serve` as a separate step.
+defaultTargets = ["Engine", "poker"]
 
 # The Lean engine. Human-owned specs live in Poker/Spec/; keep them short and reviewable.
 [[lean_lib]]

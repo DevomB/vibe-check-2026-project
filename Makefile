@@ -28,7 +28,7 @@ install: lean
 lean:
 	@command -v lake >/dev/null 2>&1 || \
 	  { curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none; }
-	cd engine && lake build
+	cd engine && lake build && lake build kuhn-serve
 
 # Builds the web app and serves it, and opens the browser once the server answers. Stops
 # first if another server already answers on the port, so the browser never opens the wrong app.
