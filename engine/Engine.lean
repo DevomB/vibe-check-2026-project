@@ -30,6 +30,9 @@ import Engine.Proofs.RiskUtility
 import Engine.Proofs.EquityExact
 import Engine.Proofs.BluffFrequency
 import Engine.Proofs.Chips
+import Engine.Proofs.Payout
+import Engine.Proofs.Board
+import Engine.Proofs.Accepted
 import Engine.Proofs.Deck
 import Engine.Proofs.ReviewSpec
 import Engine.Proofs.Review

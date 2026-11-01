@@ -35,9 +35,22 @@ export const GUARANTEES: readonly Guarantee[] = [
       "A new hand holds exactly the chips the two players brought to it.",
       "So every game always has exactly 1,000 chips.",
       "The game the app plays is always such a game: answering the page's requests in order only builds games the engine can reach.",
+      "At a showdown, the result is worked out from the players' real cards and the board. The better hand ends the hand with more chips than it started with, and the other with fewer. On a tie, both keep what they started with.",
+      "A fold ends the hand and gives it to the player who did not fold. That player ends the hand with more chips than they started with, and the player who folded with fewer.",
     ],
-    theorems: ["step_keeps_chips", "startHand_keeps_chips", "chips_always_1000", "app_game_reachable"],
-    assumes: ["The game started as a new game and then changed only by moves and new hands that the engine accepted. For the app's game this is proved."],
+    theorems: [
+      "step_keeps_chips",
+      "startHand_keeps_chips",
+      "chips_always_1000",
+      "app_game_reachable",
+      "showdown_pays_better_hand",
+      "fold_pays_other_player",
+      "fold_records_other_player",
+    ],
+    assumes: [
+      "The game started as a new game and then changed only by moves and new hands that the engine accepted. For the app's game this is proved.",
+      "For who wins the pot: both players had chips when the hand was dealt.",
+    ],
     limits: ["It is about the engine's own game state. It does not check the numbers the web page shows."],
   },
   {
@@ -48,8 +61,10 @@ export const GUARANTEES: readonly Guarantee[] = [
       "The shuffle only changes the order of the cards. Nothing is added, lost or copied.",
       "Every shuffled deck has the 52 cards of a new deck.",
       "In every game, the cards on the table (both players' cards and the board) are all different, and all come from that deck.",
+      "While a hand is played, the board has as many cards as the betting round says: none before the flop, 3 on the flop, 4 on the turn and 5 on the river.",
+      "A hand only goes to a showdown with all 5 board cards.",
     ],
-    theorems: ["shuffle_same_cards", "shuffle_fair", "no_card_dealt_twice"],
+    theorems: ["shuffle_same_cards", "shuffle_fair", "no_card_dealt_twice", "board_matches_street", "showdown_has_five_cards"],
     assumes: ["The game started as a new game and then changed only by moves and new hands that the engine accepted."],
     limits: [
       "It does not say every order of the deck is equally likely.",
@@ -63,6 +78,7 @@ export const GUARANTEES: readonly Guarantee[] = [
     says: [
       "If the engine accepts a move, the rules allow it.",
       'If a move breaks the rules while the hand is still going, the engine rejects it with "illegal move" and makes no new hand.',
+      "If a move follows the rules while the hand is still going, the engine accepts it.",
       "In every game, the player whose turn it is has chips and has not bet more than the other player.",
       "Whenever the player to act may act, the bot's move is legal, at every slider setting.",
       "Only a game command the engine accepts changes the game. Bad JSON, an unknown command, a review request or a rejected move leaves it exactly as it was.",
@@ -70,6 +86,7 @@ export const GUARANTEES: readonly Guarantee[] = [
     theorems: [
       "accepted_move_is_legal",
       "illegal_move_rejected",
+      "legal_move_accepted",
       "player_to_act_may_act",
       "botDecide_legal",
       "handle_error_unchanged",

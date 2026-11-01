@@ -5,6 +5,7 @@ import Engine.Proofs.EquitySpec
 import Engine.Proofs.BluffSpec
 import Engine.Proofs.ReviewSpec
 import Engine.Proofs.EndsSpec
+import Engine.Proofs.BoardSpec
 import Engine.Protocol
 
 /-!
@@ -33,6 +34,39 @@ theorem startHand_keeps_chips (stacks : Player → Nat) (button : Player) (seed 
 /-- In every game the engine can reach, there are always exactly 1,000 chips. -/
 theorem chips_always_1000 (g : Game) (hg : g.Reachable) : g.hand.chips.total = 1000 := sorry
 
+/-! ## T1b: the right player wins the pot (see `Engine/Proofs/Payout.lean`)
+
+T1 says no chip is created or destroyed; paying the pot to the loser would also keep the
+total. These say who gets the chips. -/
+
+/-- At a showdown, the better hand wins the pot. Deal a hand from stacks `S` (both above 0)
+and play any accepted moves. If the hand ends at a showdown with result `r`, then `r` is the
+spec's `showdown` on the players' real cards and the board; the winner ends the hand with
+more chips than they started it with and the loser with fewer; and on a tie both end with
+exactly what they started with. -/
+theorem showdown_pays_better_hand (S : Player → Nat) (button : Player) (seed : Nat)
+    (h0 : 0 < S 0) (h1 : 0 < S 1) (as : List Action) (h' : Hand)
+    (hrun : RunsTo (startHand S button seed) as h') (r : Outcome)
+    (hend : h'.ended = some (.showdown r)) :
+    r = showdown (h'.hole 0) (h'.hole 1) h'.board ∧
+    (r = .player0 → S 0 < h'.chips.stack 0 ∧ h'.chips.stack 1 < S 1) ∧
+    (r = .player1 → S 1 < h'.chips.stack 1 ∧ h'.chips.stack 0 < S 0) ∧
+    (r = .tie → h'.chips.stack 0 = S 0 ∧ h'.chips.stack 1 = S 1) := sorry
+
+/-- A fold pays the other player. Deal a hand from stacks `S` (both above 0) and play any
+accepted moves. If the hand ends with `w` recorded as the winner of a fold, then `w` ends
+the hand with more chips than they started it with, and the other player with fewer. -/
+theorem fold_pays_other_player (S : Player → Nat) (button : Player) (seed : Nat)
+    (h0 : 0 < S 0) (h1 : 0 < S 1) (as : List Action) (h' : Hand)
+    (hrun : RunsTo (startHand S button seed) as h') (w : Player)
+    (hend : h'.ended = some (.folded w)) :
+    S w < h'.chips.stack w ∧ h'.chips.stack (other w) < S (other w) := sorry
+
+/-- Folding gives the hand to the other player: when the engine accepts a fold, the hand
+ends and the recorded winner is the player who did not fold. -/
+theorem fold_records_other_player (h h' : Hand) (hs : step h .fold = .ok h') :
+    h'.ended = some (.folded (other h.chips.toAct)) := sorry
+
 /-! ## T2: no card is dealt twice -/
 
 /-- The shuffle only changes the order of the cards: nothing is added, lost or copied. -/
@@ -47,6 +81,19 @@ and the shared cards) are all different, and all come from the 52-card deck. -/
 theorem no_card_dealt_twice (g : Game) (hg : g.Reachable) :
     g.hand.dealtCards.Nodup ∧ ∀ c ∈ g.hand.dealtCards, c ∈ fullDeck := sorry
 
+/-- The board matches the street: while a hand dealt with `startHand` and played with any
+accepted moves is not over, the board has exactly as many cards as the street says (0 before
+the flop, 3 on the flop, 4 on the turn, 5 on the river). -/
+theorem board_matches_street (stacks : Player → Nat) (button : Player) (seed : Nat)
+    (as : List Action) (h' : Hand) (hrun : RunsTo (startHand stacks button seed) as h')
+    (hnot : h'.ended = none) : h'.board.length = h'.street.boardCards := sorry
+
+/-- A showdown has all five board cards: if a hand dealt with `startHand` and played with any
+accepted moves ends at a showdown, the board has 5 cards. -/
+theorem showdown_has_five_cards (stacks : Player → Nat) (button : Player) (seed : Nat)
+    (as : List Action) (h' : Hand) (hrun : RunsTo (startHand stacks button seed) as h')
+    (r : Outcome) (hend : h'.ended = some (.showdown r)) : h'.board.length = 5 := sorry
+
 /-! ## T3: only legal moves are accepted -/
 
 /-- If the engine accepts a move, the move is legal under the rules. -/
@@ -57,6 +104,11 @@ theorem accepted_move_is_legal (h h' : Hand) (a : Action) (hs : step h a = .ok h
 message "illegal move" and gives back no new hand. -/
 theorem illegal_move_rejected (h : Hand) (a : Action) (hnot : h.ended = none)
     (hbad : ¬ Legal h.chips a) : step h a = .error "illegal move" := sorry
+
+/-- The other half of T3: a legal move in a hand that is not over is always accepted. (Without
+it, an engine that rejects every move would satisfy the two theorems above.) -/
+theorem legal_move_accepted (h : Hand) (a : Action) (hnot : h.ended = none)
+    (hl : Legal h.chips a) : ∃ h', step h a = .ok h' := sorry
 
 /-- In every game the engine can reach, if the hand is not over, the player whose turn it
 is is allowed to act: they have chips and have not bet more than the other player. -/

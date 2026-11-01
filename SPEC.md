@@ -21,12 +21,25 @@ T1 to T9 are proved on `main`. Each is listed with its Lean theorems. The statem
   left an odd chip, it would go to the big blind (this cannot happen with the refund rule,
   but it is the agreed rule from `MVP.txt`). In Lean: an accepted move and a new deal keep
   the total, and every game the engine can reach (`Game.Reachable`) holds 1,000 chips.
+- **T1b the right player wins the pot** (Lean `showdown_pays_better_hand`,
+  `fold_pays_other_player`, `fold_records_other_player`). T1 alone allows paying the pot to
+  the wrong player. For a hand dealt from two stacks above 0 and played with any accepted
+  moves: at a showdown, the result is the spec's `showdown` on the real cards and board, the
+  better hand ends with more chips than it started with and the other with fewer, and a tie
+  leaves both where they started. A fold ends the hand with the player who did not fold as
+  the winner; that player ends with more chips and the folder with fewer.
 - **T2 no card is dealt twice** (MVP `no_duplicate_cards`; Lean `shuffle_same_cards`,
   `shuffle_fair`, `no_card_dealt_twice`). A shuffled deck holds the same 52 cards as a new
   deck: no card missing, no card twice. In every reachable game, the dealt cards are all
   different.
+- **T2b the board matches the street** (Lean `board_matches_street`, `showdown_has_five_cards`).
+  While a hand is played, the board has 0 cards before the flop, 3 on the flop, 4 on the
+  turn and 5 on the river (`Street.boardCards`), and a hand only reaches a showdown with all
+  5 board cards.
 - **T3 only legal moves** (MVP `legal_only`; Lean `accepted_move_is_legal`,
-  `illegal_move_rejected`, `player_to_act_may_act`, `botDecide_legal`). The game rejects
+  `illegal_move_rejected`, `legal_move_accepted`, `player_to_act_may_act`, `botDecide_legal`).
+  `legal_move_accepted` is the other half: every legal move in a hand that is not over is
+  accepted, so an engine that rejects everything does not pass T3. The game rejects
   any illegal move and leaves the game unchanged. The
   bot only ever picks a legal move. Only a player with chips remaining who has not bet
   more than the other player can act (`State.MayAct`). The rules:
