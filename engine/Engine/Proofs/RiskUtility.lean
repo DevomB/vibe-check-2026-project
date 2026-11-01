@@ -95,7 +95,7 @@ theorem viewOf_toCall_le_pot (sl : Sliders) (hole board : List Card) (s : State)
 
 /-! ## 3. More Risk takes fewer gambles (Pratt's order of cautiousness) -/
 
-/-- A higher Risk never makes any outcome count for more. -/
+/-- A higher caution never makes any outcome count for more. -/
 theorem riskWeight_antitone (g : Int) {r₁ r₂ : Nat} (hr : r₁ ≤ r₂) :
     riskWeight r₂ g ≤ riskWeight r₁ g := by
   unfold riskWeight
@@ -104,7 +104,7 @@ theorem riskWeight_antitone (g : Int) {r₁ r₂ : Nat} (hr : r₁ ≤ r₂) :
   · have : (50 + (r₁ : Int)) ≤ 50 + r₂ := by omega
     exact Int.mul_le_mul_of_nonpos_right this (by omega)
 
-/-- A higher Risk never makes a gamble's weighted total bigger. -/
+/-- A higher caution never makes a gamble's weighted total bigger. -/
 theorem value_antitone (g : Gamble) {r₁ r₂ : Nat} (hr : r₁ ≤ r₂) :
     g.value r₂ ≤ g.value r₁ := by
   induction g with
@@ -115,7 +115,7 @@ theorem value_antitone (g : Gamble) {r₁ r₂ : Nat} (hr : r₁ ≤ r₂) :
       (Int.mul_le_mul_of_nonneg_left (riskWeight_antitone _ hr) (by omega)) ih
 
 /-- **More Risk takes fewer gambles.** For any gamble, if a bot at Risk `r₂` takes it
-rather than walk away, a bot at any lower Risk `r₁` takes it too. -/
+rather than walk away, a bot at any lower caution `r₁` takes it too. -/
 theorem more_risk_takes_fewer_gambles (g : Gamble) {r₁ r₂ : Nat} (hr : r₁ ≤ r₂)
     (h : g.Takes r₂) : g.Takes r₁ :=
   Int.le_trans h (value_antitone g hr)
@@ -143,7 +143,7 @@ theorem no_loss_always_taken (g : Gamble) (risk : Nat) (h : ∀ o ∈ g, 0 ≤ o
 /-! ## Examples: real numbers, and bad behaviour rejected
 
 Against a pot-sized bet (call 100 to win 200), MVP section 3 promises the bot needs 1/3
-wins at Risk 0, 1/2 at Risk 50 and 3/5 at Risk 100. -/
+wins at caution 0, 1/2 at caution 50 and 3/5 at caution 100. -/
 
 -- Risk 0: 1 win in 3 is enough, a bit less is not.
 example : (callGamble ⟨1, 0, 2⟩ 200 100).Takes 0 := by decide
@@ -162,13 +162,13 @@ example : (callGamble ⟨0, 1, 0⟩ 200 100).Takes 100 := by decide
 against a pot-sized bet, calling is not worth it even at Risk 0. -/
 example : ¬ (callGamble ⟨1, 0, 9⟩ 200 100).Takes 0 := by decide
 
-/-- A rule that punished risk the wrong way round (taking a gamble at Risk 100 that it
+/-- A rule that punished risk the wrong way round (taking a gamble at caution 100 that it
 refuses at Risk 0) is ruled out: here Risk 100 refuses what Risk 0 takes. -/
 example : (callGamble ⟨1, 0, 2⟩ 200 100).Takes 0 ∧ ¬ (callGamble ⟨1, 0, 2⟩ 200 100).Takes 100 := by
   decide
 
 /-! The real bot, on the flop spot from `decide.test.ts` (call 50 to win 150, 40% wins):
-it calls at Risk 0 and 50 and folds at Risk 100. Each hypothesis of the two bot theorems
+it calls at caution 0 and 50 and folds at caution 100. Each hypothesis of the two bot theorems
 holds here (the call is at most the pot, and the bot really calls or folds), and the
 conclusions agree. -/
 

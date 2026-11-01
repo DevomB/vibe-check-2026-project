@@ -87,18 +87,19 @@ def Counts.percent (c : Counts) : Nat :=
 example : Counts.percent ⟨1, 0, 2⟩ = 33 := by decide
 example : Counts.percent ⟨1, 1, 2⟩ = 38 := by decide
 
-/-- Is calling `toCall` chips to win a pot of `pot` worth it at this Risk? A call wins
+/-- Is calling `toCall` chips to win a pot of `pot` worth it at this caution (the internal
+`risk`)? A call wins
 `pot`, loses `toCall`, or on a split gains half of `pot - toCall`. Each lost chip counts
 `1 + risk / 50` times as much as a won chip. Times 200, in whole numbers:
 
   100 × (2 × win × pot + tie × (pot − toCall)) ≥ 2 × (100 + 2 × risk) × loss × toCall
 
-At Risk 0 this is plain chip profit. A higher Risk only makes the right side bigger. -/
+At caution 0 this is plain chip profit. A higher caution only makes the right side bigger. -/
 def callPays (c : Counts) (pot toCall risk : Nat) : Bool :=
   2 * (100 + 2 * risk) * c.loss * toCall ≤ 100 * (2 * c.win * pot + c.tie * (pot - toCall))
 
--- Against a pot-sized bet (pot 200, call 100) the bot needs 1/3 wins at Risk 0 and 1/2 at
--- Risk 50 (these match `decide.test.ts`).
+-- Against a pot-sized bet (pot 200, call 100) the bot needs 1/3 wins at caution 0 and 1/2 at
+-- caution 50 (these match `decide.test.ts`).
 example : callPays ⟨1, 0, 2⟩ 200 100 0 = true := by decide
 example : callPays ⟨1, 0, 2⟩ 200 100 1 = false := by decide
 example : callPays ⟨1, 0, 1⟩ 200 100 50 = true := by decide
@@ -235,7 +236,8 @@ def botDecide (sl : Sliders) (seed : Nat) (hole board : List Card) (s : State)
 Spots from `decide.test.ts`: a flop with 100 in the pot from earlier, the other player bets
 50, so the pot to win is 150 and the call is 50. A raise may go from 100 to 450. -/
 
-/-- The flop spot above, at Risk 50 and Bluff 33%. -/
+/-- The flop spot above, at internal caution 50 and Bluff 33% (a hand-built pair; no player
+Risk maps to it). -/
 def exFlopView : View :=
   { hole := [], board := [⟨12, .spades⟩, ⟨11, .diamonds⟩, ⟨0, .clubs⟩],
     pot := 150, toCall := 50, streetBet := 0, raise := some (100, 450), sliders := ⟨50, 33⟩ }
@@ -246,7 +248,7 @@ def exFlopView : View :=
   "Raise to 250: win chance 80% (estimated from 1000 deals) is at least 75%."
 -- The same raise when at most 200 is legal is cut down to 200.
 #guard (decideView { exFlopView with raise := some (100, 200) } ⟨80, 0, 20⟩).action.text == "raise 200"
--- 40% wins: calling 50 to win 150 pays at Risk 0 and 50, but not at Risk 100.
+-- 40% wins: calling 50 to win 150 pays at caution 0 and 50, but not at caution 100.
 #guard (decideView { exFlopView with sliders := ⟨0, 33⟩ } ⟨40, 0, 60⟩).action.text == "call"
 #guard (decideView exFlopView ⟨40, 0, 60⟩).action.text == "call"
 #guard (decideView { exFlopView with sliders := ⟨100, 33⟩ } ⟨40, 0, 60⟩).action.text == "fold"

@@ -7,8 +7,8 @@ Two properties, stated here so they can be read on their own. The proofs are in
 `BotLegal.lean` (T3) and `BotRisk.lean` (T4).
 
 - **T3, always legal.** Whenever the player to act may act at all, the bot's move is legal.
-- **T4, more Risk never means more calls.** In one spot, if the bot calls or raises at some
-  Risk, it also calls or raises at every lower Risk.
+- **T4, more caution never means more calls.** In one spot, if the bot calls or raises at some
+  internal caution, it also calls or raises at every lower caution.
 
 What to review (the definitions these statements depend on):
 - From the spec: `Legal`, `State.MayAct`, `State.toCall`, `State.minRaise`.
@@ -26,9 +26,10 @@ What to review (the definitions these statements depend on):
 def AlwaysLegal (bot : State → Action) : Prop :=
   ∀ s, s.MayAct → Legal s (bot s)
 
-/-- A bot's moves at each Risk setting, for one fixed spot, are **Risk-monotone** when:
-if the bot calls or raises at Risk `r₂`, it also calls or raises at every lower Risk `r₁`.
-So turning Risk up can turn a call into a fold, but never a fold into a call. -/
+/-- A bot's moves at each internal caution setting (the `risk` field), for one fixed spot,
+are **Risk-monotone** when: if the bot calls or raises at caution `r₂`, it also calls or raises
+at every lower caution `r₁`. So turning caution up can turn a call into a fold, but never a
+fold into a call. (The player's Risk runs the other way: `more_risk_never_folds_a_call`.) -/
 def RiskMonotone (bot : Nat → Action) : Prop :=
   ∀ r₁ r₂, r₁ ≤ r₂ → (bot r₂).continues → (bot r₁).continues
 
@@ -46,7 +47,7 @@ example : ¬ AlwaysLegal fun s => .raiseTo (s.allIn + 1) := by
   intro h
   exact absurd (h exStart (by decide)) (by decide)
 
-/-- A decision table that calls at Risk 100 but folds at Risk 0 is not Risk-monotone. -/
+/-- A decision table that calls at caution 100 but folds at caution 0 is not Risk-monotone. -/
 example : ¬ RiskMonotone fun r => if r = 100 then .call else .fold := by
   intro h
   exact absurd (h 0 100 (by decide) (by decide)) (by decide)

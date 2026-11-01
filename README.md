@@ -109,8 +109,12 @@ plain-English docstring.
 - What "a hand ends" means, in
   [`Engine/Proofs/EndsSpec.lean`](engine/Engine/Proofs/EndsSpec.lean): `RunsTo` and
   `RunsWith` (a run of moves the engine accepts).
-- What Risk means, in [`Engine/Proofs/RiskSpec.lean`](engine/Engine/Proofs/RiskSpec.lean):
-  `riskWeight` (a lost chip counts 1 + Risk/50 times), `Gamble.Takes`, `callGamble`.
+- What the bot's internal caution means, in
+  [`Engine/Proofs/RiskSpec.lean`](engine/Engine/Proofs/RiskSpec.lean): `riskWeight` (a lost
+  chip counts 1 + caution/50 times), `Gamble.Takes`, `callGamble`. The spec files call this
+  internal number `risk`. The Risk the player sets (0 to 100, higher means more risk-seeking)
+  is mapped to it by `Sliders.ofRisk`: caution falls from 100 at Risk 0 to 0 at Risk 50 and
+  stays 0 above, while the bluff share rises. See [docs/THEORY.md](docs/THEORY.md).
 - What the bot and equity counts must do, in `Engine/Proofs/BotSpec.lean`
   (`AlwaysLegal`, `RiskMonotone`) and `Engine/Proofs/EquitySpec.lean`
   (`OpponentCanHold`, `TurnOutcomePossible`, `timesListed`, `timesListedTurn`,

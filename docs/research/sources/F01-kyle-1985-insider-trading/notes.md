@@ -8,7 +8,7 @@ TL;DR: A market with one insider who knows the asset's true value, noise traders
 
 What matters for us:
 - The reading of a river call as market making. The bettor is the insider (it knows its own hand). Its bluffs are the noise: bets that carry no strength and let the strong bets hide among them. The caller is the market maker: it sees only "a bet of this size" and must price it (call or fold at the pot odds on offer).
-- Kyle's market makers are risk neutral and price at the conditional expectation. In our engine that is internal caution 0 (user Risk 50): the bot calls exactly when the call wins chips on average (`callPays` in `engine/Engine/Slider.lean`). Caution above 0 is a departure from Kyle; his market makers have no risk aversion.
+- Kyle's market makers are risk neutral and price at the conditional expectation. In our engine that is internal caution 0 (user Risk 50): the bot calls exactly when the call does not lose chips on average (`callPays` in `engine/Engine/Slider.lean`). Caution above 0 is a departure from Kyle; his market makers have no risk aversion.
 - Nothing from this paper is computed by the engine. It supports the framing in `docs/THEORY.md`, nothing more.
 
 Verdict: use (framing only).

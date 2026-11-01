@@ -38,12 +38,16 @@ T1 to T9 are proved on `main`. Each is listed with its Lean theorems. The statem
     you must have the chips,
     and the raise must be at least as big as the last raise and the big blind. The one exception is going
     all-in, which may be smaller.
-- **T4 more Risk never turns a fold into a call** (MVP `risk_monotone`; Lean `risk_monotone`,
-  `botDecide_risk_monotone`, `more_risk_takes_fewer_gambles`). For one decision (the same
-  state, cards, counts and Bluff), if the bot calls or raises at some Risk, it also calls or
-  raises at every lower Risk. With it: `callPays_iff_takes`, `bot_calls_only_when_worth_it`,
+- **T4 more caution never turns a fold into a call** (MVP `risk_monotone`; Lean `risk_monotone`,
+  `botDecide_risk_monotone`, `more_risk_takes_fewer_gambles`). These are stated over the bot's
+  internal caution number, which the spec files call `risk`. For one decision (the same
+  state, cards, counts and Bluff), if the bot calls or raises at some caution, it also calls or
+  raises at every lower caution. With it: `callPays_iff_takes`, `bot_calls_only_when_worth_it`,
   `bot_folds_only_when_not_worth_it` and `no_loss_always_taken` say the bot calls exactly
-  when the call, with a lost chip counted (1 + Risk/50) times, is worth it.
+  when the call, with a lost chip counted (1 + caution/50) times, is worth it. The Risk the
+  player sets runs the other way (higher means more risk-seeking) and is mapped to caution by
+  `Sliders.ofRisk`. For the player's number the statement is `more_risk_never_folds_a_call`:
+  facing a bet, if the bot calls or raises at some Risk, it does so at every higher Risk.
 - **T5 the review's labels are sound** (MVP `review_sound`; Lean `review_worth`,
   `review_lost`, `review_best_iff`, `review_label_monotone`, `review_call_best_iff_equity`).
   For a graded river call or fold, Best means the choice was worth at least as much as the
@@ -55,8 +59,9 @@ T1 to T9 are proved on `main`. Each is listed with its Lean theorems. The statem
   turn, each of the 45,540 (river card, opponent hand) pairs.
 - **T7 the Bluff count** (MVP `bluff_frequency`; Lean `bluff_frequency`,
   `value_and_bluffs_apart`, `bot_bets_its_set`). On any river board, the bot's betting set
-  has 324 value hands, and the number of bluffs nearest to 324 x b / (100 - b). This is a
-  count in a set of hands, not how often the bot bluffs in play.
+  has 324 value hands, and the number of bluffs nearest to 324 x b / (100 - b), where b is the
+  bluff share the player's Risk maps to (`Sliders.ofRisk`; `ofRisk_bluff_le_60` keeps it at most
+  60). This is a count in a set of hands, not how often the bot bluffs in play.
 - **T8 no hindsight** (MVP `no_hindsight`; Lean `no_hindsight`, `bot_hand_in_review`). Two
   hands that look the same to the human get the same review, whatever cards the bot really
   holds. The bot's real hand is always one of the hands the review counts.
@@ -129,8 +134,9 @@ These follow `MVP.txt`, which is the team's agreed rule set.
 - The session now has `bot_move_accepted`, `handle_keeps_reachable`, `handle_error_unchanged`,
   `viewOf_toCall_le_pot`, `app_game_reachable` and `respond_keeps_session_unless_accepted`.
   Rejection covers valid Peek flags and build identities. The unused fallback is removed.
-- `exploreHand_moves`, `exploreHand_risk_monotone`, `rangeOf_adds_up` and `rangeOf_counts`
-  are registered. Faithful recording of the bot's original inputs remains tested, not proved.
+- `exploreHand_moves` and `exploreHand_risk_monotone` (the internal caution sweep),
+  `exploreHandAt_moves` and `exploreHandAt_more_risk_continues` (the player's Risk sweep the
+  app shows), `rangeOf_adds_up` and `rangeOf_counts` are registered. Faithful recording of the bot's original inputs remains tested, not proved.
 - That `legalOptions` (the moves and raise bounds the human is offered) matches `Legal`.
 - T9 is proved and registered. T10 remains optional if a separate fast evaluator is added.
 - The JSON layer (`Engine/Protocol.lean`) is tested, not proved.

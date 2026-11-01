@@ -167,7 +167,7 @@ def preflopCounts : List Card → Counts
 
 /-- The counts for the bot's two hole cards and the board (0, 3, 4 or 5 cards): the preflop
 table, 1,000 random deals from `seed` on the flop, exact on the turn and river. The same
-inputs always give the same counts. Risk and Bluff are not inputs, so the sliders cannot
+inputs always give the same counts. caution and Bluff are not inputs, so the Risk slider cannot
 change the counts.
 
 The game never gives other board sizes; for them the counts are a single loss (a 0% win

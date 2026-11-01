@@ -1,19 +1,22 @@
 import Engine.Slider
 
 /-!
-# What the Risk slider means (the spec)
+# What the bot's caution means (the spec)
 
-MVP section 3: Risk is how heavily the bot weighs a lost chip when it decides whether to
-call. A gain of g chips counts as g. A loss of g chips counts as (1 + Risk/50) times g: at
-Risk 0 a lost chip counts once, at Risk 50 twice, at Risk 100 three times.
+MVP section 3: the number this file calls `risk` is the bot's internal caution: how heavily
+the bot weighs a lost chip when it decides whether to call. A gain of g chips counts as g. A
+loss of g chips counts as (1 + caution/50) times g: at caution 0 a lost chip counts once, at
+50 twice, at 100 three times. The Risk the player sets runs the other way (higher means more
+risk-seeking) and is mapped to this caution by `Sliders.ofRisk` in `Engine/Slider.lean`.
 
-These definitions are what the Risk theorems in `Engine/Proofs/RiskUtility.lean` mean, so
+These definitions are what the caution theorems in `Engine/Proofs/RiskUtility.lean` mean, so
 they are part of what a reader must trust. They are kept short.
 -/
 
-/-- How much a gain of `g` chips counts at a Risk setting, times 50 so that every number
-is whole. A gain counts as it is; a loss counts (50 + Risk) / 50 times as much.
-Example: at Risk 50, a loss of 10 counts as `100 * -10`, twice a gain of 10 (`50 * 10`). -/
+/-- How much a gain of `g` chips counts at a caution setting (the internal `risk`), times 50 so
+that every number is whole. A gain counts as it is; a loss counts (50 + caution) / 50 times as
+much. Example: at caution 50, a loss of 10 counts as `100 * -10`, twice a gain of 10
+(`50 * 10`). -/
 def riskWeight (risk : Nat) (g : Int) : Int :=
   if 0 ≤ g then 50 * g else (50 + risk) * g
 

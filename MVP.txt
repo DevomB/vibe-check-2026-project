@@ -11,13 +11,17 @@ CHANGED FROM v2 (decisions confirmed during the MVP review)
 - Value hands use floor(30%); bluff hands round their target count half upward. Pot sizing has explicit legal bounds and fallback. Tier 1 remains mandatory; pitch optional proofs only when completed.
 - Lean 4.35.0 with standard axioms only; Lean drives bot actions and street transitions. The required demo is one local active game, not a hosted multi-user service.
 
+CHANGED SUNDAY NOV 1 (the one-slider decision)
+- Bluff is no longer its own slider. The player sets one Risk, 0 to 100, meaning appetite for risk: higher Risk is more risk-seeking (calls more, bluffs more), lower Risk is more risk-averse. Risk 0 is the rock, 50 the textbook setting (plain chip profit, 33% bluffs), 100 the maniac (60% bluffs). The engine maps it to its two internal numbers with Sliders.ofRisk (engine/Engine/Slider.lean); see docs/THEORY.md.
+- The "Risk" described in section 3 below is now the bot's INTERNAL caution number (0 = plain chip profit, 100 = a lost chip counts three times), which falls as the player's Risk rises. The section 8 theorems about Risk are stated over that internal number; more_risk_never_folds_a_call states the player's direction.
+
 READ THIS FIRST: this is the original plan and its rule decisions, written Saturday Oct 31. Sections 3 to 6 still define how the game, the sliders, the bot and the review behave. Current status and the CI evidence are in README.md. The proved theorems, with their Lean names, are in SPEC.md and README.md. Plans, timelines and checklists below are kept as they were written. Research notes provide background; older research recommendations do not override this file. Findings and decisions are recorded in docs/MVP_REVIEW.md.
 
 ONE LINE
 Build your opponent. Play it. Get a game review whose grades are proved to follow its stated rules, and never peek at the bot's cards.
 
 WHY THIS WINS (the two judging axes)
-- Coolness: a poker table in the browser, a bot you design with two sliders, and a chess.com-style review of your play. Anyone gets it.
+- Coolness: a poker table in the browser, a bot you design with one Risk slider, and a chess.com-style review of your play. Anyone gets it.
 - Verification: the theorems cover the actual Lean betting steps, shuffle, bot, review and session reachability/rejection. JSON parser/serializer accuracy and browser/Node transport correctness remain tested rather than proved.
 - NON-GOAL: a strong bot. The bot does not need to play well. It needs to do exactly what its sliders say, provably.
 
@@ -31,25 +35,25 @@ WHY THIS WINS (the two judging axes)
 
 
 2. WHAT THE USER SEES
-- Setup screen: two sliders, Risk (0 to 100) and Bluff (0% to 60%), and a Start button.
+- Setup screen: one slider, Risk (0 to 100, higher means more risk-seeking), and a Start button. (Nov 1; was two sliders, Risk and Bluff.)
 - Table screen: your two cards, the board, the pot, both stacks, and your legal actions (fold, check, call, bet or raise with an amount). Live bot messages stay generic; show detailed reasons only after the hand.
 - Optional Peek toggle (off by default) reveals the bot's cards from Lean without changing play. Mark peeked hands in the review: grades still assume the bot's cards were unknown.
 - Review screen: each graded decision with its label (Best, Good, Inaccuracy, Mistake, Blunder), what each option was worth, and the equity you had vs the equity you needed.
 
 
 3. THE SLIDERS, IN PLAIN WORDS
-RISK, 0 to 100: how heavily the bot weighs a lost chip when deciding whether to call.
+RISK (the internal caution number; see the Nov 1 note above), 0 to 100: how heavily the bot weighs a lost chip when deciding whether to call. The player's Risk runs the other way: higher means more risk-seeking.
 - Risk 0: calls whenever calling has non-negative average chip gain.
 - With no possible ties, a pot-sized bet requires 1/3 win probability at Risk 0, 1/2 at Risk 50, and 3/5 at Risk 100.
 - Ties use the chips actually won or lost on a split; a guaranteed profitable split is worth calling at every Risk setting.
 - Theorem: for the same decision state and win/tie/loss counts, if the bot calls or raises at a higher Risk, it also continues at every lower Risk. This is a comparison at one decision, not a claim about entire games following different actions.
 
-BLUFF, 0% to 60%: the target share of designated bluff hands in the bot's board-only river betting set.
+BLUFF, 0% to 60% (since Nov 1 set by the player's Risk through Sliders.ofRisk, not by its own slider: 0% at Risk 0, 33% at Risk 50, 60% at Risk 100): the target share of designated bluff hands in the bot's board-only river betting set.
 - 0% selects no bluff hands. About 33% is a reference from an idealized pot-sized, polarized call/fold game; it does not make this bot a balanced Hold'em strategy. 60% selects more bluff hands.
 - It stops at 60% because the bot always bets its strong hands too; past about 70% it would run out of weak hands to bluff with.
 - Theorem: the number of bluff hands in that defined betting set matches the X% target, rounded to a whole hand. Actual dealt and played bets can have a different share because of blockers, earlier actions and sampling variation.
 
-Why not raw 0-to-100 for Bluff too: a real percentage is the thing we prove, so the number on the slider and the number in the theorem are the same number.
+Why Bluff is a real percentage: it is the thing we prove, so the number the engine reports (state.sliders.bluffPct) and the number in the theorem are the same number.
 
 
 4. GAME RULES (exact)
@@ -160,7 +164,7 @@ A Proofs screen. Blind increases. 3+ players and side pots. Kuhn/Leduc mode. Rea
 - S6 Kuhn poker mode with a proven unexploitable strategy.
 - S7 3-player table with side pots, and T1 extended to side pots.
 - S8 T10, the evaluator equivalence proof.
-- S9 Mystery bot (you read the bot): the sliders are hidden, you play, then you guess its Risk and Bluff, and the review tells you how close you were. Cheap on top of the MVP. (Done: Mystery mode.)
+- S9 Mystery bot (you read the bot): the sliders are hidden, you play, then you guess its Risk, and the review tells you how close you were. Cheap on top of the MVP. (Done: Mystery mode.)
 - S10 The bot reads you: it tracks how often you fold and bluffs more only when its own numbers say it pays. Provable: it never bluffs unless its estimate says the bluff is profitable. Not provable: that its read on you is accurate.
 
 
@@ -168,7 +172,7 @@ A Proofs screen. Blind increases. 3+ players and side pots. Kuhn/Leduc mode. Rea
 DONE / PRESENT:
 - MVP scope, organizer rules, Lean agent guidance, and published research notes, index and synthesis.
 - Next.js UI and Node-to-Lean JSON bridge. Lean runs the bot and automatic street transitions until the next human decision or hand end; the browser renders Lean's replies.
-- Heads-up 500-chip games, fixed 5/10 blinds, Risk/Bluff sliders, explicit Next Hand, game-over handling and replays. Random-game seeds are generated on the server and hidden until game over; entered seeds are intentional replays.
+- Heads-up 500-chip games, fixed 5/10 blinds, one Risk slider (Nov 1; was Risk/Bluff sliders), explicit Next Hand, game-over handling and replays. Random-game seeds are generated on the server and hidden until game over; entered seeds are intentional replays.
 - The Lean slider bot, preflop count data, sampled flop counts, exact turn/river counts, river betting sets and opening-river-bet call/fold review are implemented.
 - Lean project under engine/, pinned to 4.35.0. Poker/Spec/ contains card/deck, legality and hand-ranking definitions; Engine/ contains seeded shuffling, hand/game transitions and payouts.
 - Tier 1 T1-T5 and Tier 2 T6-T8 proofs are present, with standard-axiom audits, Comparator and kernel re-checks in Linux CI (the green run is the evidence line in README.md). These prove their stated Lean properties; they do not prove the browser or Node transport correct.
@@ -179,7 +183,7 @@ DONE / PRESENT:
 STILL NEEDED:
 - Fresh-clone "make install && make run" rehearsal on the intended demo setup.
 - Final UI playthroughs: fold, showdown, short stack, graded and ungraded reviews, replay, rejected input and engine restart errors. The checklist, with seeds and moves, is in docs/DEMO.md.
-- Record demo seed, Risk/Bluff, human moves, fixed turn mode and commit; rehearse the five-minute pitch and review every claim. The record is in docs/DEMO.md; recheck it on the final build. The pitch script and claim table are in docs/PITCH.md; rehearse it with a timer.
+- Record demo seed, Risk, human moves, fixed turn mode and commit; rehearse the five-minute pitch and review every claim. The record is in docs/DEMO.md; recheck it on the final build. The pitch script and claim table are in docs/PITCH.md; rehearse it with a timer.
 - T9's 200-move hand bound is proved and registered. T10 remains optional: no separate fast evaluator exists, because the engine uses the spec's bestScore directly.
 
 Working together: use separate clones and coordinate before editing the same files. Commit small, "git pull --rebase" before every push, never force-push. Never commit the API key. Use this status list to avoid duplicating completed work.
@@ -206,7 +210,7 @@ set seed to null until gameOver, including between hands, in reviews and in erro
 An entered seed is an intentional replay and may be displayed because the player already
 knows it. A finished game's seed is revealed for replay; card and action rules stay in Lean.
 Requests, one per line (the HTTP bridge requires entered seeds as strings):
-  {"cmd":"new_game","seed":"42","risk":50,"bluff_pct":33}
+  {"cmd":"new_game","seed":"42","risk":50}                   (Nov 1: bluff_pct was removed; sending it is an error)
   {"cmd":"act","action":"call"}                              (action: fold, check, call, bet, raise)
   {"cmd":"act","action":"raise","amount":120}
   {"cmd":"next_hand"}
@@ -230,7 +234,7 @@ Review response (example: pot 200, call 100, equity 0.24):
    "bot_reasons":[ ...post-hand reasons... ]}}
 Error response:
   {"error":"illegal move","state":{ ...the unchanged state... }}
-Cards: rank (2-9, T, J, Q, K, A) + suit (c, d, h, s). Sliders travel as whole numbers (risk 0-100, bluff_pct 0-60). Decimals in responses are for display only; the engine computes exact fractions.
+Cards: rank (2-9, T, J, Q, K, A) + suit (c, d, h, s). Risk travels as a whole number 0-100; the state's sliders field reports it with the two internal numbers it maps to, {"risk":50,"caution":0,"bluffPct":33}. Decimals in responses are for display only; the engine computes exact fractions.
 Status: "playing", "handOver", or "gameOver". Only "handOver" accepts next_hand. A finished hand retains its result and review until that command; gameOver ends the match. State pot contains earlier streets only; add both players' current bet values for the displayed pot. Bet/raise amount and min/max are street totals, while call amount is additional chips to pay.
 
 
@@ -238,15 +242,15 @@ Status: "playing", "handOver", or "gameOver". Only "handOver" accepts next_hand.
 The plan as written Saturday. The current script is docs/PITCH.md; its claim table ties each spoken claim to its theorems and lists the claims below that were cut or softened.
 Only present a claim below as proven once its actual Lean theorem and final checks pass.
 0:00 The hook (30 seconds): "Build your opponent, play it, and review your river calls and folds. Our Lean proofs check properties of the game and the review's stated model."
-0:30 Build your opponent (1 minute): set Risk to 100 and Bluff to 0%. Bet big at it: it folds everything but strong hands.
-1:30 Change its personality (1 minute): Risk 0, Bluff 60%. Now it fires bluffs on the river.
+0:30 Build your opponent (1 minute): set Risk to 0 (the rock). Bet big at it: it folds unless the call clearly pays, and it never bluffs.
+1:30 Change its personality (1 minute): Risk 100 (the maniac). Now 60% of its river bets are bluffs.
 2:30 The game review (1 minute): use a rehearsed hand with a bad river call and open the review. Quote the actual equity and threshold from the declared board-only range model.
 3:30 What is proven (1 minute), in plain words:
   - Chips can never be created or destroyed.
   - No card is ever dealt twice.
   - Every move is legal.
-  - At the same decision, raising Risk cannot turn a fold into a call or raise.
-  - The Bluff slider controls the designated bluff share of the defined hand set, rounded to whole hands.
+  - At the same decision, facing a bet, raising Risk cannot turn a call or raise into a fold.
+  - Risk sets the designated bluff share of the defined hand set, rounded to whole hands.
   - The review compares call and fold using the recorded player view and its stated range model.
 4:30 The close (30 seconds): what we would build next (reading the other player, the Proofs screen), and thanks.
 

@@ -58,6 +58,9 @@
     "more_risk_never_folds_a_call",
     "ideal_is_textbook",
     "ideal_river_set",
+    "botDecide_no_bet_off_river",
+    "more_bluff_never_checks_a_bet",
+    "more_risk_never_checks_a_bet",
     "exploreHandAt_moves",
     "exploreHandAt_more_risk_continues"
   ],
