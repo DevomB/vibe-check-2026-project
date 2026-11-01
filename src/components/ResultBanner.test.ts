@@ -1,8 +1,9 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import type { Game } from "@/hooks/useGame";
-import { ResultBadge } from "./ResultBanner";
+import type { Game, HandGrades } from "@/hooks/useGame";
+import type { ReviewDecision, ReviewLabel } from "@/lean/protocol";
+import { NextHandBar, ResultBadge } from "./ResultBanner";
 
 function badge(outcome: "player0" | "player1" | "tie" | "fold", names: [string, string], winnings: [number, number]) {
   // Renderer-only fixture: these are the fields ResultBadge reads, not a simulated engine.
@@ -40,5 +41,34 @@ describe("showdown hand names", () => {
     expect(html).toContain("Bot folded");
     expect(html).not.toContain("Pair");
     expect(html).not.toContain("High Card");
+  });
+});
+
+/** A graded call, with only the fields the result bar reads. */
+function graded(label: ReviewLabel): ReviewDecision {
+  return { street: "flop", your_action: "call", label, worth_bb: null, equity_had: null, equity_needed: null };
+}
+
+function bar(grades: HandGrades | null) {
+  const game = {} as Game;
+  const noop = () => {};
+  return renderToStaticMarkup(createElement(NextHandBar, { game, delay: 0, gameOver: false, grades, onNextHand: noop, onReview: noop }));
+}
+
+describe("the hand's grades on the result bar", () => {
+  it("shows a badge per graded move, in order, and how many there were", () => {
+    const html = bar({ hand: 4, decisions: [graded("Best"), graded("Mistake")] });
+    expect(html).toContain("2 graded moves");
+    expect(html.indexOf("Best")).toBeLessThan(html.indexOf("Mistake"));
+  });
+
+  it("says so when Lean graded nothing in the hand", () => {
+    expect(bar({ hand: 4, decisions: [] })).toContain("No graded move");
+  });
+
+  it("shows nothing before the grades are back", () => {
+    const html = bar(null);
+    expect(html).not.toContain("graded");
+    expect(html).toContain("Next hand");
   });
 });

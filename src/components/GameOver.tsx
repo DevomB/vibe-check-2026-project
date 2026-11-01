@@ -1,9 +1,13 @@
 import { chips } from "@/lib/format";
-import type { Stats } from "@/hooks/useGame";
+import type { HandGrades, Stats } from "@/hooks/useGame";
+import { labelCounts } from "@/lib/review";
+import { ReviewBadge } from "./ReviewBadge";
 
 interface Props {
   won: boolean;
   stats: Stats;
+  /** Lean's grades for the finished hands: none until they are back, and none while a Mystery bot is hidden. */
+  grades?: readonly HandGrades[];
   /** Seconds to wait so the last hand's result can be seen first. */
   delay: number;
   /** The game's seed, so it can be replayed. Null while a Mystery bot is not yet revealed. */
@@ -21,7 +25,29 @@ interface Props {
   onGuess?: () => void;
 }
 
-export function GameOver({ won, stats, delay, seed, replay, onAgain, onReplay, onReview, onLobby, onGuess }: Props) {
+/** The game's score: how many graded moves were Best or Good, and how many got each label. */
+export function GradeTally({ grades }: { grades: readonly HandGrades[] }) {
+  const decisions = grades.flatMap((g) => g.decisions);
+  if (decisions.length === 0) return null;
+  const counts = labelCounts(decisions);
+  const sound = counts[0]!.count + counts[1]!.count;
+  return (
+    <div className="grade-tally" aria-label="Your graded moves">
+      <p>
+        <b>{sound}</b> of your {decisions.length} graded {decisions.length === 1 ? "move was" : "moves were"} Best or Good
+      </p>
+      <div className="grade-tally-counts">
+        {counts.map(({ info, count }) => (
+          <span key={info.key} className={count === 0 ? "muted" : undefined}>
+            <ReviewBadge label={info.label} size="sm" /> {count}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function GameOver({ won, stats, grades = [], delay, seed, replay, onAgain, onReplay, onReview, onLobby, onGuess }: Props) {
   const hidden = "hidden until you guess";
   return (
     <div className="modal-backdrop" style={{ animationDelay: `${delay}s` }}>
@@ -42,6 +68,7 @@ export function GameOver({ won, stats, delay, seed, replay, onAgain, onReplay, o
             <span>biggest pot won</span>
           </div>
         </div>
+        <GradeTally grades={grades} />
         <div className="modal-actions">
           {onGuess && (
             <button className="btn btn-primary" onClick={onGuess}>

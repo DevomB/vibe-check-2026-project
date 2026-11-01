@@ -73,7 +73,10 @@ T1 to T9 are proved on `main`. Each is listed with its Lean theorems. The statem
   with `review_hands_ne_nil` and `botHands_ne_nil_of_board`: the review always has a hand
   to count). For a graded river call or fold, Best means the choice was worth at least as much as the
   other one, averaged over the bot's possible hands. A decision that lost fewer big blinds
-  never gets a worse label.
+  never gets a worse label. This covers only the call or fold after the bot opens the river
+  with a bet (`"model": "river-set"`). The review also grades other calls and folds facing a
+  bet against every hand the bot could hold, assuming a call checks down
+  (`"model": "any-hand"`). No theorem covers those grades.
 - **T6 the exact counts see every outcome once** (MVP `enumeration_exact`; Lean
   `enumeration_exact`, `riverOpponentHands_length`, `turnOutcomes_length`,
   `countsFor_river`, `countsFor_turn`). On the river, each of the 990 opponent hands; on the
@@ -88,8 +91,8 @@ T1 to T9 are proved on `main`. Each is listed with its Lean theorems. The statem
   the set has 160 bluffs. This is a count in a set of hands, not how often the bot bluffs in
   play.
 - **T8 no hindsight** (MVP `no_hindsight`; Lean `no_hindsight`, `bot_hand_in_review`). Two
-  hands that look the same to the human get the same review, whatever cards the bot really
-  holds. The bot's real hand is always one of the hands the review counts.
+  hands that look the same to the human get the same river grade, whatever cards the bot really
+  holds. The bot's real hand is always one of the hands the river grade counts.
 - **T9 `every_hand_ends`** (completed stretch). Every run of accepted moves in one reachable
   hand has at most 200 moves. This does not bound the length of an entire match.
 - **T10 `evaluator_equals_spec`** (stretch, Tier 3). At showdown, the winner is the player with the better
