@@ -109,7 +109,8 @@ theorem bot_move_accepted (g : Game) (hg : g.Reachable) (hnot : g.hand.ended = n
     (botDecide_legal sl seed hole board _ (player_to_act_may_act g hg hnot))
 
 /-- In a session whose game is reachable, when it is the bot's turn, the session accepts
-the bot's move: `Session.runBot` never needs its fallback. -/
+the bot's move. So the `.error` branch of `Session.runBot` is never taken in the app (see
+"The removed fallback" below). -/
 theorem Session.botChoice_accepted (s : Session) (hs : s.game.Reachable)
     (hbot : s.botToAct = true) : ∃ next, s.move s.botChoice.action = .ok next := by
   have hnot : s.game.hand.ended = none := by
@@ -209,6 +210,21 @@ theorem handle_keeps_reachable (cur : Option Session) (c : Command) (s' : Sessio
     | some s =>
       cases hok
       exact hcur s rfl
+
+/-! ## The removed fallback
+
+`Session.runBot` used to test the bot's move first and, if the engine rejected it, play
+`botMove` (check or call) instead. That code was removed. What the app does did not change:
+
+- `Session.botChoice_accepted`: in a session whose game is reachable, the engine accepts the
+  bot's move. So the old test always passed on such a session.
+- `runBot` only runs on such sessions when the old session's game is reachable (or there is
+  no game yet). `Session.start` runs it on a new game, `next_hand` on a new hand of a
+  reachable game, and `Session.humanAct` after a move the engine accepted in a reachable
+  game (the proofs of `Session.start_reachable`, `handle_keeps_reachable` and
+  `Session.humanAct_reachable` above). Each bot move keeps the game reachable
+  (`Session.runBot_reachable`).
+-/
 
 #print axioms bot_move_accepted
 #print axioms Session.botChoice_accepted
