@@ -1,22 +1,32 @@
-# Poker spec (draft)
+# Poker spec
 
 Game: heads-up (two players) no-limit Texas Hold'em. One human, one bot.
 
 This file says, in plain English, what "correct" means. The Lean files in
 `engine/Poker/Spec/` say the same things in Lean. If the two disagree, this file is the
-intent and the Lean is the bug. Theorem names and numbers (T1, T2, ...) follow `MVP.txt`.
+intent and the Lean is the bug. Theorem numbers (T1, T2, ...) follow `MVP.txt`. The Lean
+names are the ones in `engine/Checks/Challenge.lean`, the statements the team agreed on.
 
-## Proof targets (completion requires actual proofs and final checks)
+## Proof targets
 
-- **T1 `chips_conserved`.** Every move, and every payout, keeps the total chips on the
+T1 to T8 are proved on `main`. Each is listed with its Lean theorems. The statements are in
+`engine/Checks/Challenge.lean`; the proofs are in `engine/Engine/Proofs/`.
+
+- **T1 chips are never created or destroyed** (MVP name `chips_conserved`; Lean
+  `step_keeps_chips`, `startHand_keeps_chips`, `chips_always_1000`). Every move, and every payout, keeps the total chips on the
   table the same: 1,000 chips in total. Any part of a bet the other player cannot match
   is given back. So at showdown both players have put in the same amount, and the pot is
   even. The pot goes entirely to the winner, or is split in half on a tie. If a split ever
   left an odd chip, it would go to the big blind (this cannot happen with the refund rule,
-  but it is the agreed rule from `MVP.txt`).
-- **T2 `no_duplicate_cards`.** A shuffled deck holds the same 52 cards as a new deck: no
-  card missing, no card twice.
-- **T3 `legal_only`.** The game rejects any illegal move and leaves the game unchanged. The
+  but it is the agreed rule from `MVP.txt`). In Lean: an accepted move and a new deal keep
+  the total, and every game the engine can reach (`Game.Reachable`) holds 1,000 chips.
+- **T2 no card is dealt twice** (MVP `no_duplicate_cards`; Lean `shuffle_same_cards`,
+  `shuffle_fair`, `no_card_dealt_twice`). A shuffled deck holds the same 52 cards as a new
+  deck: no card missing, no card twice. In every reachable game, the dealt cards are all
+  different.
+- **T3 only legal moves** (MVP `legal_only`; Lean `accepted_move_is_legal`,
+  `illegal_move_rejected`, `player_to_act_may_act`, `botDecide_legal`). The game rejects
+  any illegal move and leaves the game unchanged. The
   bot only ever picks a legal move. Only a player with chips remaining who has not bet
   more than the other player can act (`State.MayAct`). The rules:
   - *Check*: only when there is nothing to call.
@@ -27,12 +37,39 @@ intent and the Lean is the bug. Theorem names and numbers (T1, T2, ...) follow `
     you must have the chips,
     and the raise must be at least as big as the last raise and the big blind. The one exception is going
     all-in, which may be smaller.
+- **T4 more Risk never turns a fold into a call** (MVP `risk_monotone`; Lean `risk_monotone`,
+  `botDecide_risk_monotone`, `more_risk_takes_fewer_gambles`). For one decision (the same
+  state, cards, counts and Bluff), if the bot calls or raises at some Risk, it also calls or
+  raises at every lower Risk. With it: `callPays_iff_takes`, `bot_calls_only_when_worth_it`,
+  `bot_folds_only_when_not_worth_it` and `no_loss_always_taken` say the bot calls exactly
+  when the call, with a lost chip counted (1 + Risk/50) times, is worth it.
+- **T5 the review's labels are sound** (MVP `review_sound`; Lean `review_worth`,
+  `review_lost`, `review_best_iff`, `review_label_monotone`, `review_call_best_iff_equity`).
+  For a graded river call or fold, Best means the choice was worth at least as much as the
+  other one, averaged over the bot's possible hands. A decision that lost fewer big blinds
+  never gets a worse label.
+- **T6 the exact counts see every outcome once** (MVP `enumeration_exact`; Lean
+  `enumeration_exact`, `riverOpponentHands_length`, `turnOutcomes_length`,
+  `countsFor_river`, `countsFor_turn`). On the river, each of the 990 opponent hands; on the
+  turn, each of the 45,540 (river card, opponent hand) pairs.
+- **T7 the Bluff count** (MVP `bluff_frequency`; Lean `bluff_frequency`,
+  `value_and_bluffs_apart`, `bot_bets_its_set`). On any river board, the bot's betting set
+  has 324 value hands, and the number of bluffs nearest to 324 x b / (100 - b). This is a
+  count in a set of hands, not how often the bot bluffs in play.
+- **T8 no hindsight** (MVP `no_hindsight`; Lean `no_hindsight`, `bot_hand_in_review`). Two
+  hands that look the same to the human get the same review, whatever cards the bot really
+  holds. The bot's real hand is always one of the hands the review counts.
+- **T9 `every_hand_ends`** (stretch). Every hand finishes in a bounded number of moves. Not
+  proved yet.
 - **T10 `evaluator_equals_spec`** (stretch, Tier 3). At showdown, the winner is the player with the better
   five-card hand. "Better" is defined by a short, obviously correct reference ranking (best
   of the 21 five-card hands). The fast evaluator used in the game must agree with it on
   every valid deal: two cards per player, five on the board, and no duplicates (`ValidDeal`).
   Kicker comparisons use only each player's best five cards.
-- **T9 `every_hand_ends`** (stretch). Every hand finishes in a bounded number of moves.
+  - **There is no separate fast evaluator.** The game scores every hand with the spec's own
+    `bestScore` (`engine/Poker/Spec/HandRank.lean`): at showdown, in the equity counts and
+    in the river betting set. So the game already uses the reference ranking, and T10 has
+    nothing to compare. MVP section 8 still lists T10; whether to keep it is the team's call.
 
 ## What we do NOT prove
 
@@ -62,19 +99,37 @@ These follow `MVP.txt`, which is the team's agreed rule set.
   runnable checks, not universal proofs of T1-T3.
 - `engine/Engine/HandRankTests.lean`: known showdowns, kicker comparisons and random-deal checks.
 - `engine/Engine/Proofs.lean`: proofs about which player may receive the turn.
+- `engine/Engine/Equity.lean`, `Slider.lean`, `River.lean` and `Review.lean`: the win
+  counts, the slider bot, the river betting set and the river review.
+- `engine/Engine/Session.lean`: the game loop the app runs. `engine/Engine/Protocol.lean`:
+  the JSON messages. `engine/Main.lean` only reads and writes lines.
+- `engine/Engine/Proofs/`: the proofs of T1 to T8, and the definitions they rely on
+  (`Reachable.lean`, `RiskSpec.lean`, `BotSpec.lean`, `EquitySpec.lean`, `BluffSpec.lean`,
+  `ReviewSpec.lean`).
+- `engine/Checks/Challenge.lean` and `engine/comparator.json`: the agreed statements, which
+  Comparator checks against the proofs.
 
 ## What is proven so far
 
+- **T1 to T8**, with the Lean names above. The Lean proofs CI on `main` at `df6904a`
+  passed the axiom audit, Comparator and `lake check`
+  ([run 41281639578](https://github.com/DevomB/vibe-check-2026-project/actions/runs/41281639578)).
+  Only `propext`, `Classical.choice` and `Quot.sound` are used.
 - `no_raise_against_all_in`, `all_in_player_cannot_act`, `player_ahead_cannot_act`,
   `raise_at_least_big_blind` (`engine/Poker/Spec/Basics.lean`): facts about the rules themselves.
 - `step_turn_ok` and `startHand_turn_ok` (`engine/Engine/Proofs.lean`): after a new hand
   or an accepted move, either the hand is over or the player to act has chips and is not
-  ahead in street contributions. These prove the turn condition, not all of T1-T3.
+  ahead in street contributions.
 
 ## Still to write
 
-- JSON command handling and the Node-to-Lean bridge; `Main.lean` is still a placeholder.
-- The Risk/Bluff bot and river review, including T4/T5 and the Tier 2 targets in `MVP.txt`.
-- Runtime validation of incoming card sets before hand ranking. `State` describes a betting
-  turn; the engine's `Hand.ended` controls the finished-hand lifecycle.
-- The Lean statements of T1, T2, T3 and T10, so each can be proven.
+- Theorems about the session loop (`Engine/Session.lean`), which no theorem covers yet:
+  - a rejected command leaves the session unchanged;
+  - every game a session plays is `Game.Reachable`, so T1 and T2 cover the app's games;
+  - the engine always accepts the bot's planned move, so the check-or-call fallback in
+    `runBot` is never used;
+  - when the bot acts, the amount to call is at most the pot. `bot_calls_only_when_worth_it`
+    and `bot_folds_only_when_not_worth_it` assume this. No theorem proves it yet.
+- That `legalOptions` (the moves and raise bounds the human is offered) matches `Legal`.
+- T9. T10, if the team keeps it (see above).
+- The JSON layer (`Engine/Protocol.lean`) is tested, not proved.
