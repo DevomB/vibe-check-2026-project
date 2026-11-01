@@ -45,12 +45,12 @@ the choice against the bot's defined range, rather than rewarding luck."
 
 ## Fourth test: Risk changes a decision
 
-1. Return to setup, pick **Ivy** (Risk **100**, Bluff **0%**), seed **1**, and **Start**.
+1. Return to setup, pick **Ivy** (Risk **0**, the Rock), seed **1**, and **Start**.
 2. Raise **to 150**. The bot folds; your stack becomes **510**.
 3. Open **Review**. The human preflop raise should say **not graded yet**.
 4. In the Risk explorer, select the bot's fold and move Risk between **0** and **100**.
-   Expect **Call** at 0, **Fold** at 100, and:
-   **Calls at Risk 0–29, folds at 30–100.**
+   Expect **Fold** at 0, **Call** at 100, and:
+   **Folds at Risk 0-35, calls at 36-100.**
 5. Open the Risk guarantee link. It describes this fixed-decision comparison, not a promise
    about whole matches.
 
@@ -77,7 +77,7 @@ fresh visual recheck after deployment; these passes do not validate later UI rev
 | Catch a bluff: win and Best | [x] | User confirmed a win and Best, about +1.6 BB, with Peek off. |
 | Peek reveals and re-hides cards | [x] | User confirmed Ks 9d reveal, re-hide, and the review retains the Peek warning. |
 | Range panel shows expected counts | [x] | 810 = 324 value + 486 bluffs; 73 blocked; beat 132, tie 9, lose 596. |
-| Risk explorer works | [x] | Tester moved the slider: 0/29 Call, 30/100 Fold. |
+| Risk explorer works | [x] | Tester moved the slider: 0/29 Call, 30/100 Fold (the old two-slider engine; the one-slider engine gives Fold at 0-35, Call at 36-100). |
 | Range proof link opens at T7 | [x] | User confirmed T7/Bluff is in view and highlighted. |
 | Proof drawer closes back to the review | [x] | T4/T5/T7 links open correctly and close to the intact review. |
 | Normal Next Hand, all-in and replay | [x] | Includes short-stack 20-chip return. New game button clipping remains a reported defect pending retest. |
