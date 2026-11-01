@@ -13,7 +13,8 @@ export const BLUFF_PCT_MAX = 60;
 export type LeanCommand =
   | { cmd: "new_game"; seed: string; risk: number; bluff_pct: number }
   | { cmd: "act"; action: "fold" | "check" | "call" }
-  | { cmd: "act"; action: "raise"; amount: number }
+  /** A bet or raise to `amount` chips this round. Lean treats "bet" and "raise" the same. */
+  | { cmd: "act"; action: "bet" | "raise"; amount: number }
   | { cmd: "next_hand" }
   | { cmd: "state" }
   | { cmd: "review"; hand: number };
@@ -29,7 +30,7 @@ export interface LeanPlayer {
   /** A short, generic note of the last move, like "bet 60". */
   lastAction: string | null;
   /**
-   * The name of this player's best five-card hand, like "Two Pair, Kings and Fives". For
+   * The kind of this player's best five-card hand, like "Two Pair" or "Flush". For
    * the human, once the board has 3 or more cards; for the bot, only when its cards are
    * shown at a showdown. Otherwise null.
    */
