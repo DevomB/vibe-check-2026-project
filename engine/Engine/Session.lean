@@ -51,7 +51,10 @@ structure HandLog where
 /-- What the game program remembers between commands. -/
 structure Session where
   game : Game
+  /-- The bot's two internal settings: `Sliders.ofRisk risk`. -/
   sliders : Sliders
+  /-- The Risk the player set, 0 to 100. The bot's reasons quote it. -/
+  risk : Nat
   /-- Each player's latest move this betting round, for display ("Call", "Bet 60"). -/
   labels : Player → Option String := fun _ => none
   /-- What happened since the last reply. -/
@@ -65,7 +68,8 @@ structure Session where
 
 /-- The requests that may change the game. (A review never does: see `Session.review`.) -/
 inductive Command where
-  | newGame (seed risk bluffPct : Nat)
+  /-- A new game at the player's Risk, 0 to 100. -/
+  | newGame (seed risk : Nat)
   | act (a : Action)
   | nextHand
   | state
@@ -148,10 +152,10 @@ def Session.botToAct (s : Session) : Bool :=
   s.game.hand.ended.isNone && s.game.hand.chips.toAct == bot
 
 /-- The bot's move now, from its sliders, its own cards, the board and the chips. Its only
-randomness is the seed of this hand. -/
+randomness is the seed of this hand. The reason quotes the player's Risk. -/
 def Session.botChoice (s : Session) : BotChoice :=
   let h := s.game.hand
-  botDecide s.sliders (handSeed s.game.seed s.game.handNo) (h.hole bot) h.board h.chips
+  botDecide s.sliders (handSeed s.game.seed s.game.handNo) (h.hole bot) h.board h.chips (some s.risk)
 
 /-- Enough moves for any hand: each of four betting rounds needs fewer than 50, since every
 raise puts at least 10 more chips in and there are only 1,000 chips. -/
@@ -200,12 +204,12 @@ def Session.dealt (s : Session) (g : Game) (stacks : Player → Nat) : Session :
     logs := s.logs.push {} }
   Session.runBot botFuel s
 
-/-- A new game with the given sliders. Risk must be 0 to 100 and Bluff 0 to 60. -/
-def Session.start (seed risk bluffPct : Nat) : Except String Session := do
+/-- A new game at the player's Risk, which must be 0 to 100. The bot's two internal
+settings come from it (`Sliders.ofRisk`). -/
+def Session.start (seed risk : Nat) : Except String Session := do
   if risk > 100 then throw "risk must be 0-100"
-  if bluffPct > 60 then throw "bluff_pct must be 0-60"
   let g := newGame seed
-  return Session.dealt { game := g, sliders := ⟨risk, bluffPct⟩ } g (fun _ => startingStack)
+  return Session.dealt { game := g, sliders := Sliders.ofRisk risk, risk } g (fun _ => startingStack)
 
 /-- The human makes move `a`, then the bot plays. A call or fold that answers the bot's
 opening river bet is kept for grading; a raise is not graded. -/
@@ -225,7 +229,7 @@ def Session.humanAct (s : Session) (a : Action) : Except String Session := do
 /-- Run one command. Each reply lists only what happened during this command. A rejected
 command gives a reason, and the caller keeps the old session. -/
 def Session.handle : Option Session → Command → Except String Session
-  | _, .newGame seed risk bluffPct => Session.start seed risk bluffPct
+  | _, .newGame seed risk => Session.start seed risk
   | none, _ => throw "no game yet: send new_game first"
   | some s, .state => pure { s with events := #[] }
   | some s, .act a => { s with events := #[] }.humanAct a

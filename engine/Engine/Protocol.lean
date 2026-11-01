@@ -11,8 +11,10 @@ request, runs it on the session (`Engine/Session.lean`) and writes the reply. It
 rule itself.
 
 Requests:
-- `{"cmd":"new_game","seed":"42","risk":50,"bluff_pct":33}`: the seed is a number or a string
-  of digits; Risk is 0 to 100 and Bluff 0 to 60, both whole numbers.
+- `{"cmd":"new_game","seed":"42","risk":50}`: the seed is a number or a string of digits;
+  Risk is a whole number from 0 to 100, the one slider the player sets (`Sliders.ofRisk`
+  turns it into the bot's two internal settings). A `bluff_pct` field is an error: Bluff is
+  no longer set on its own.
 - `{"cmd":"act","action":"call"}`, with `action` one of fold, check, call, raise;
   a raise also needs `"amount"`, the player's total bet for this round.
 - `{"cmd":"next_hand"}`, `{"cmd":"state"}`
@@ -25,6 +27,9 @@ not when the bot's reasons are sent.
 Replies: `{"ok":true,"state":...}`, plus `"review":...` for a review. A rejected request gets
 `{"error":"...","state":...}` with the state unchanged. Without `peek`, the bot's cards are
 only sent once the hand reaches a showdown. Its reasons are only sent once the hand is over.
+
+The state's `sliders` is `{"risk": 50, "caution": 0, "bluffPct": 33}`: the player's Risk,
+then the two internal settings it maps to.
 -/
 
 open Lean
@@ -125,7 +130,9 @@ def stateJson (srv : Session) (peek : Bool := false) (commit : String := "unknow
       ("legal", legal),
       ("result", result),
       ("events", Json.arr (srv.events.map Event.json)),
-      ("sliders", Json.mkObj [("risk", toJson srv.sliders.risk), ("bluffPct", toJson srv.sliders.bluffPct)]),
+      -- The player's Risk, and the two internal settings `Sliders.ofRisk` makes of it.
+      ("sliders", Json.mkObj [("risk", toJson srv.risk), ("caution", toJson srv.sliders.risk),
+        ("bluffPct", toJson srv.sliders.bluffPct)]),
       ("botReasons", match srv.botReasons with | some rs => toJson rs | none => Json.null),
       -- Replay record (MVP §5, §15). The turn is always counted exactly: see the mode note
       -- "Turn: exact" in `Engine/Equity.lean`.
@@ -138,8 +145,10 @@ def RangeSummary.json (r : RangeSummary) : Json :=
     [ ("value", toJson r.value), ("bluffs", toJson r.bluffs), ("blocked", toJson r.blocked),
       ("beat", toJson r.beat), ("tie", toJson r.tie), ("lose", toJson r.lose) ]
 
-/-- One bot move in the Risk explorer (`exploreHand`, `Engine/Explain.lean`). Moves are named
-as the table names them ("Call", "Bet 60"); `actions` has one per Risk from 0 to 100. -/
+/-- One bot move in the Risk explorer (`exploreHandAt`, `Engine/Explain.lean`). Moves are
+named as the table names them ("Call", "Bet 60"); `actions` has one per Risk from 0 to 100,
+the player's Risk. `continuesFrom` is the lowest Risk at which the bot calls, raises or bets,
+or `null`. -/
 def RiskExplorerEntry.json (e : RiskExplorerEntry) : Json :=
   Json.mkObj
     [ ("street", toJson (streetName e.street)),
@@ -150,7 +159,7 @@ def RiskExplorerEntry.json (e : RiskExplorerEntry) : Json :=
       ("risk", toJson e.risk),
       ("action", toJson (moveText e.state e.action)),
       ("actions", toJson (e.moves.map (moveText e.state))),
-      ("continuesUpTo", match e.continuesUpTo with | some k => toJson k | none => Json.null),
+      ("continuesFrom", match e.continuesFrom with | some k => toJson k | none => Json.null),
       ("riskMatters", toJson e.riskMatters),
       ("effect", toJson e.effect.name),
       ("summary", toJson e.effect.summary) ]
@@ -227,8 +236,9 @@ def parsePeek (j : Json) : Except String Bool :=
 def parseRequest (j : Json) : Except String Request := do
   match ← j.getObjValAs? String "cmd" with
   | "new_game" =>
-    return .game (.newGame (← parseSeed j) (← parseUpTo j "risk" 100 "risk must be 0-100")
-      (← parseUpTo j "bluff_pct" 60 "bluff_pct must be 0-60"))
+    -- A caller still sending the old Bluff slider fails loudly instead of being ignored.
+    if let .ok _ := j.getObjVal? "bluff_pct" then throw "bluff_pct was removed; Risk sets both"
+    return .game (.newGame (← parseSeed j) (← parseUpTo j "risk" 100 "risk must be 0-100"))
   | "act" => return .game (.act (← parseAction j))
   | "next_hand" => return .game .nextHand
   | "state" => return .game .state

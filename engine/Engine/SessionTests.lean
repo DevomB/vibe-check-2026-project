@@ -31,19 +31,30 @@ def isError (j : Json) : Bool := (j.getObjVal? "error").toBool
 def stateOf (j : Json) : Json := (j.getObjVal? "state").toOption.getD Json.null
 def field (j : Json) (k : String) : Json := (j.getObjVal? k).toOption.getD Json.null
 
-def start42 := "{\"cmd\":\"new_game\",\"seed\":\"42\",\"risk\":50,\"bluff_pct\":33}"
+/-- A new game with seed 42 at Risk 50: the textbook setting, internal pair (0, 33). -/
+def start42 := "{\"cmd\":\"new_game\",\"seed\":\"42\",\"risk\":50}"
 
--- Sliders out of range, or missing, are rejected.
-#guard (runLines ["{\"cmd\":\"new_game\",\"seed\":1,\"risk\":101,\"bluff_pct\":0}"]).all isError
-#guard (runLines ["{\"cmd\":\"new_game\",\"seed\":1,\"risk\":0,\"bluff_pct\":61}"]).all isError
+-- A Risk out of range, or missing, is rejected. So is the old Bluff slider, even in range.
+#guard (runLines ["{\"cmd\":\"new_game\",\"seed\":1,\"risk\":101}"]).all isError
 #guard (runLines ["{\"cmd\":\"new_game\",\"seed\":1}"]).all isError
+#guard (runLines ["{\"cmd\":\"new_game\",\"seed\":1,\"risk\":50,\"bluff_pct\":33}"]).all isError
+#guard (runLines ["{\"cmd\":\"new_game\",\"seed\":1,\"risk\":50,\"bluff_pct\":33}"]).map
+  (field · "error") == #[Json.str "bluff_pct was removed; Risk sets both"]
 -- The `bot` command is gone: the bot moves inside Lean.
 #guard (runLines [start42, "{\"cmd\":\"bot\"}"]).map isError == #[false, true]
 
--- Hand 1: the human is on the button and acts first before the flop.
+-- Hand 1: the human is on the button and acts first before the flop. Risk 50 is the internal
+-- pair (0, 33), and the state reports all three numbers.
 #guard match sessionAfter [start42] with
-  | some s => s.game.hand.chips.toAct == human && s.sliders == ⟨50, 33⟩ && s.botReasons.isNone
+  | some s => s.game.hand.chips.toAct == human && s.risk == 50 && s.sliders == ⟨0, 33⟩
+      && s.botReasons.isNone
   | none => false
+#guard (runLines [start42]).map (fun r => field (stateOf r) "sliders")
+  == #[Json.mkObj [("risk", 50), ("caution", 0), ("bluffPct", 33)]]
+-- Risk 0 is the rock: internal pair (100, 0).
+#guard (runLines ["{\"cmd\":\"new_game\",\"seed\":\"42\",\"risk\":0}"]).map
+  (fun r => field (stateOf r) "sliders")
+  == #[Json.mkObj [("risk", 0), ("caution", 100), ("bluffPct", 0)]]
 
 -- A rejected command gives the state unchanged: the same reply as `state`.
 #guard

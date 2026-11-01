@@ -1,6 +1,7 @@
 import Engine.Protocol
 import Engine.Proofs.Legal
 import Engine.Proofs.BotLegal
+import Engine.Proofs.OneSlider
 
 /-!
 # The game session: proofs about the code the app runs
@@ -111,6 +112,9 @@ theorem Session.botChoice_accepted (s : Session) (hs : s.game.Reachable)
     exact hbot.1
   obtain ⟨h', hstep⟩ := bot_move_accepted s.game hs hnot s.sliders
     (handSeed s.game.seed s.game.handNo) (s.game.hand.hole bot) s.game.hand.board
+  -- The reason quotes the player's Risk; the move is the same (`botDecide_action_shown`).
+  unfold Session.botChoice
+  rw [botDecide_action_shown]
   exact Session.move_ok_of_act (Game.act_of_step hstep)
 
 /-! ## (b) Every accepted command keeps the game reachable -/
@@ -146,11 +150,11 @@ theorem Session.dealt_reachable (s : Session) (g : Game) (stacks : Player → Na
   Session.runBot_reachable _ _ hg
 
 /-- A new game the session accepts is reachable. -/
-theorem Session.start_reachable {seed risk bluffPct : Nat} {s' : Session}
-    (hs : Session.start seed risk bluffPct = .ok s') : s'.game.Reachable := by
+theorem Session.start_reachable {seed risk : Nat} {s' : Session}
+    (hs : Session.start seed risk = .ok s') : s'.game.Reachable := by
   unfold Session.start at hs
-  by_cases h1 : risk > 100 <;> by_cases h2 : bluffPct > 60 <;>
-    simp [h1, h2, throw, throwThe, MonadExceptOf.throw, bind, Except.bind, pure,
+  by_cases h1 : risk > 100 <;>
+    simp [h1, throw, throwThe, MonadExceptOf.throw, bind, Except.bind, pure,
       Except.pure] at hs
   subst hs
   exact Session.dealt_reachable _ _ _ (.start seed)
@@ -182,7 +186,7 @@ theorem handle_keeps_reachable (cur : Option Session) (c : Command) (s' : Sessio
     (hok : Session.handle cur c = .ok s') :
     s'.game.Reachable := by
   cases c with
-  | newGame seed risk bluffPct => exact Session.start_reachable hok
+  | newGame seed risk => exact Session.start_reachable hok
   | act a =>
     cases cur with
     | none => cases hok
