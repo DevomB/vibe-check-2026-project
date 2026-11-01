@@ -1,0 +1,36 @@
+{
+  "challenge_module": "Checks.Challenge",
+  "solution_module": "Checks.Solution",
+  "theorem_names": [
+    "accepted_move_is_legal",
+    "illegal_move_rejected",
+    "player_to_act_may_act",
+    "callPays_iff_takes",
+    "bot_calls_only_when_worth_it",
+    "bot_folds_only_when_not_worth_it",
+    "more_risk_takes_fewer_gambles",
+    "no_loss_always_taken",
+    "botDecide_legal",
+    "risk_monotone",
+    "botDecide_risk_monotone",
+    "enumeration_exact",
+    "riverOpponentHands_length",
+    "turnOutcomes_length",
+    "countsFor_river",
+    "countsFor_turn",
+    "bluff_frequency",
+    "value_and_bluffs_apart",
+    "bot_bets_its_set",
+    "step_keeps_chips",
+    "startHand_keeps_chips",
+    "chips_always_1000",
+    "shuffle_same_cards",
+    "shuffle_fair",
+    "no_card_dealt_twice"
+  ],
+  "permitted_axioms": [
+    "propext",
+    "Quot.sound",
+    "Classical.choice"
+  ]
+}

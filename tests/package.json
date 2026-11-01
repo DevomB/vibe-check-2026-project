@@ -1,0 +1,12 @@
+{
+  "name": "holdem-differential-tests",
+  "private": true,
+  "type": "module",
+  "description": "Differential tests: the Lean engine against poker-calculations (MVP section 7).",
+  "scripts": {
+    "diff": "npx --yes tsx@4.20.6 diff/run.ts"
+  },
+  "devDependencies": {
+    "poker-calculations": "4.0.3"
+  }
+}

@@ -1,8 +1,10 @@
 # `make install && make run` builds the app, starts it and opens http://localhost:3000.
 # Works on Linux, macOS, WSL, and Windows in Git Bash with GNU make.
+# Use another port with `make run PORT=3001`.
 export PATH := $(HOME)/.elan/bin:$(PATH)
 
-URL := http://localhost:3000
+PORT ?= 3000
+URL := http://localhost:$(PORT)
 
 # How to open the browser on this system.
 ifeq ($(OS),Windows_NT)
@@ -28,12 +30,16 @@ lean:
 	  { curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none; }
 	cd engine && lake build
 
-# Builds the web app and serves it, and opens the browser once the server answers.
+# Builds the web app and serves it, and opens the browser once the server answers. Stops
+# first if another server already answers on the port, so the browser never opens the wrong app.
 run: lean
 	npm run build
-	@( n=0; until curl -s -o /dev/null $(URL) || [ $$n -ge 60 ]; do n=$$((n+1)); sleep 1; done; \
-	   $(OPEN) $(URL) >/dev/null 2>&1; echo "The app is at $(URL)" ) &
-	npm start
+	@if curl -s -o /dev/null $(URL); then \
+	  echo "Port $(PORT) is already in use. Stop that server, or run: make run PORT=3001"; exit 1; fi
+	@( for i in $$(seq 60); do \
+	     if curl -s -o /dev/null $(URL); then $(OPEN) $(URL) >/dev/null 2>&1; echo "The app is at $(URL)"; exit 0; fi; \
+	     sleep 1; done ) &
+	npm start -- --port $(PORT)
 
 dev:
 	npm run dev

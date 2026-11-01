@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { type Action, type DealtHand, type HandState, type LegalActions, type Session, evaluate, randomGameSeed } from "@/engine";
+import { type Action, type DealtHand, type HandState, type LegalActions, type Session, randomGameSeed } from "@/engine";
 import type { LeanCommand, LeanEvent, LeanReply, LeanReview, LeanState } from "@/lean/protocol";
 import { cardText, chips } from "@/lib/format";
-import { BOT, HUMAN_COLOR } from "@/lib/roster";
+import { HUMAN_COLOR, botFor } from "@/lib/roster";
 
 /**
  * Runs a game against the Lean game program. Every rule decision (dealing, which moves are
  * legal, the bot's moves, who wins, the review grades) is made in Lean and arrives through `/api/game`.
  * This file only sends the human's clicks and turns Lean's replies into what the table
- * components draw. The TypeScript engine is used only for its types and to name the
- * hands at showdown ("Two Pair, Kings and Fives"), which is display only.
+ * components draw. The TypeScript engine is used only for its types; hand names and the
+ * winning five cards come from Lean too (`handName`, `bestCards`).
  */
 
 /** Heads-up table rules, fixed for the whole game. They are set in Lean (Spec/Basics.lean). */
@@ -120,8 +120,8 @@ function toHandState(s: LeanState, names: string[]): HandState {
       },
     ],
     winnings: [...s.result.winnings],
-    // Hand names for display only; Lean already decided the winner.
-    hands: s.players.map((p) => (showdown && p.cards ? evaluate([...p.cards, ...s.board]) : null)),
+    // Hand names and best cards come from Lean (game.lean.players); none are computed here.
+    hands: s.players.map(() => null),
   };
   return {
     config: { smallBlind: TABLE.smallBlind, bigBlind: TABLE.bigBlind },
@@ -222,7 +222,7 @@ export function gameStatus(game: Game): Status {
 export function useGame() {
   const [game, setGame] = useState<Game | null>(null);
   const [error, setError] = useState<string | null>(null);
-  /** True while the bot's reply is held back so it seems to think. */
+  /** True from sending a human move until Lean's reply is shown: the bot is "thinking". */
   const [thinking, setThinking] = useState(false);
   /** The review of the finished hand, once asked for. */
   const [review, setReview] = useState<LeanReview | null>(null);
@@ -233,19 +233,22 @@ export function useGame() {
   const generation = useRef(0);
 
   /** Send a command and apply Lean's reply. `make` builds the next game from the reply.
-   * With `pause`, a reply in which the bot moved is held back while the bot "thinks". */
+   * With `pause` (the human's moves), the human cannot act from the moment the move is sent,
+   * and a reply in which the bot moved is held back until the bot has "thought" that long,
+   * counting the time Lean took. */
   const request = useCallback(async (command: LeanCommand, make: (s: LeanState) => Game, pause?: (s: LeanState) => number) => {
     if (busy.current) return;
     busy.current = true;
     const gen = generation.current;
+    const sent = Date.now();
+    if (pause) setThinking(true);
     try {
       const reply = await sendToLean(command);
       if (gen !== generation.current) return;
       if ("ok" in reply) {
         setError(null);
-        const wait = pause && botMoved(reply.state.events) ? pause(reply.state) : 0;
+        const wait = pause && botMoved(reply.state.events) ? pause(reply.state) - (Date.now() - sent) : 0;
         if (wait > 0) {
-          setThinking(true);
           await new Promise((resolve) => window.setTimeout(resolve, wait));
           if (gen !== generation.current) return;
         }
@@ -271,7 +274,7 @@ export function useGame() {
       setReview(null);
       const players: Player[] = [
         { name: "You", color: HUMAN_COLOR },
-        { name: BOT.name, color: BOT.color },
+        botFor(settings.risk, settings.bluffPct),
       ];
       const seed = settings.seed ?? randomGameSeed();
       const base = { settings, seed, players, log: [], stats: { handsPlayed: 0, handsWon: 0, biggestPot: 0 } };

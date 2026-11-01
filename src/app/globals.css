@@ -1512,3 +1512,48 @@ kbd {
   font-size: 14px;
   text-align: center;
 }
+
+/* Named opponents on the start screen (presets for the Risk and Bluff sliders). */
+.opponent-list {
+  display: grid;
+  gap: 4px;
+  padding: 6px;
+  border-radius: 12px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+}
+
+.opponent {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.opponent:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.opponent.on {
+  border-color: rgba(233, 196, 106, 0.7);
+  background: rgba(233, 196, 106, 0.08);
+}
+
+.opponent-name {
+  font-weight: 700;
+}
+
+.opponent-style {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+div.opponent { cursor: default; }
