@@ -164,8 +164,12 @@ def Session.runBot : Nat → Session → Session
     if !s.botToAct then s else
     let h := s.game.hand
     let c := s.botChoice
+    -- The bot only makes legal moves (T3). If one were ever rejected, it checks or calls
+    -- instead (`botMove`, legal by `botMove_legal`), so the game never gets stuck.
+    let c := if (s.move c.action).toBool then c
+      else ⟨botMove h.chips, "Check or call: the planned move was not allowed."⟩
     match s.move c.action with
-    | .error _ => s   -- never happens: the bot only makes legal moves
+    | .error _ => s   -- never happens: see above
     | .ok next =>
       let next := next.logHand fun l => { l with reasons := l.reasons.push c.reason }
       let h' := next.game.hand
@@ -233,7 +237,8 @@ def Session.botReasons (s : Session) : Option (Array String) :=
 
 /-- The bot's reasons for hand `n`, once that hand is over. -/
 def Session.reasonsFor (s : Session) (n : Nat) : Option (Array String) :=
-  if n = s.game.handNo then s.botReasons else s.logs[n - 1]?.map (·.reasons)
+  if n = 0 then none
+  else if n = s.game.handNo then s.botReasons else s.logs[n - 1]?.map (·.reasons)
 
 /-! ## Review -/
 

@@ -70,7 +70,9 @@ structure RiverVerdict where
 def riverSpotOf (h : Hand) (bluffPct : Nat) : RiverSpot :=
   let s := h.chips
   { board := h.board, hole := h.hole s.toAct, pot := s.pot + s.bet 0 + s.bet 1,
-    toCall := s.toCall, stack := s.stack s.toAct, bluffPct }
+    -- The whole bet to answer, not capped at the human's stack: `reviewRiver` takes off
+    -- the part they cannot match.
+    toCall := s.bet (other s.toAct) - s.bet s.toAct, stack := s.stack s.toAct, bluffPct }
 
 /-- The label for losing `lost` big blinds against the better of call and fold (MVP §6):
 Best = 0, Good under 0.5, Inaccuracy under 2, Mistake under 5, else Blunder. -/
@@ -124,3 +126,8 @@ def exRiverSpot : RiverSpot :=
   let weak := { exRiverSpot with hole := [card 3 .clubs, card 4 .diamonds] }
   (reviewRiver weak .call).label == .mistake && (reviewRiver weak .fold).label == .best
     && (reviewRiver weak .call).worthCall == ⟨-97200, 19800⟩
+
+-- Short stack: 100 in the pot, the bot bets 100, the human has 30 left. Calling costs 30,
+-- the bot's other 70 goes back, so the final pot is 160 and the call needs 30/160.
+#guard (reviewRiver { exRiverSpot with pot := 200, toCall := 100, stack := 30 } .call).equityNeeded
+  == ⟨30, 160⟩
