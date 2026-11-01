@@ -121,8 +121,8 @@ plain-English docstring.
   [`Engine/Proofs/ShuffleSpec.lean`](engine/Engine/Proofs/ShuffleSpec.lean): `pickWith` (build
   a deck by taking the card at each given position from the cards left), `ValidPicks` and
   `allValidPicks` (which position lists are in range, and the list of all of them), `seedPicks`
-  (the positions the generator gives from a seed) and `factorial`. T2's fairness theorems are
-  about these.
+  (the positions the generator gives from a seed) and `factorial`; with `shuffle`, `nextSeed`
+  and `mixSeed` in `Engine/Deck.lean`. T2's fairness theorems are about these.
 - How many shared cards each street has, in
   [`Engine/Proofs/BoardSpec.lean`](engine/Engine/Proofs/BoardSpec.lean): `Street.boardCards`
   (0 before the flop, then 3, 4 and 5). T2b compares the board against it.
