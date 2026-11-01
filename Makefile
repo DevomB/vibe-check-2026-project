@@ -38,10 +38,9 @@ run: lean
 dev:
 	npm run dev
 
-test:
+test: lean
 	npm test
 
-check:
+check: lean
 	npm run typecheck
 	npm test
-	cd engine && lake build
