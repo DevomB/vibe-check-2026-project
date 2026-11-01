@@ -10,6 +10,8 @@ decisions are slow. Whole games against the compiled program are in
 
 open Lean
 
+namespace SessionTests
+
 /-- Run requests in order from no game, keeping the session as the program does. Returns
 every reply. -/
 def runLines (lines : List String) : Array Json := Id.run do
@@ -106,3 +108,5 @@ def foldThenNext := [start42, "{\"cmd\":\"act\",\"action\":\"fold\"}", "{\"cmd\"
 #guard
   let r := runLines [start42, "{\"cmd\":\"review\",\"hand\":1}"]
   field (field r[1]! "review") "bot_reasons" == Json.null
+
+end SessionTests
