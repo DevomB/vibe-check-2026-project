@@ -77,7 +77,7 @@ the range viewer and Risk explorer. No additional features are required for acce
 - Fresh Linux CI at implementation commit `4142d29`: **both jobs passed** — build/axiom
   audit/Comparator/kernel re-check, and fresh checkout `make install`, typecheck/tests,
   `make run PORT=3001`, followed by the production HTTP smoke.
-  [CI run 41336322319](https://github.com/DevomB/vibe-check-2026-project/actions/runs/41336322319).
+  [CI run 41336322319](https://github.com/DevomB/FoldProof/actions/runs/41336322319).
 - Historical cloud stress: 2,232 games, 64,573 hands, 257,876 requests and 0 failures on
   `df6904a`; the report was removed later, so read it with
   `git show 3f7c4e2:tasks/reports/cloud-fuzz.md`. Do not attribute those counts to this merge.
@@ -143,8 +143,9 @@ the range viewer and Risk explorer. No additional features are required for acce
 - Node, React, browser rendering, secrecy/redaction and transport correctness are tested,
   not formally verified. Conditional protocol invariants do not prove JSON parser accuracy
   or every serialized field's correctness.
-- `legalOptions` and displayed raise bounds are not proved equivalent to `Legal`; the
-  engine still rejects illegal actions it receives.
+- `legalOptions` is proved equal to `Legal` (`legalOptions_exact`, ccba65c); the browser's
+  rendering of it and the displayed raise bounds are tested, not proved, and the engine still
+  rejects illegal actions it receives.
 - Explorer calculations match the bot on recorded inputs. Faithful capture of those
   original inputs is tested, not proved.
 - The board-only review range ignores earlier betting. Its EVs are exact for that model,

@@ -86,7 +86,11 @@ export function RulesModal({ onClose, smallBlind, bigBlind }: { onClose: () => v
             <p>
               With two players, any unmatched part of a bet is returned. Only matched chips can be won. Equal hands split the pot.
             </p>
-            <p className="muted">Shortcuts: F fold · C check/call · R bet/raise · Space next hand · R review, once the hand is over</p>
+            <h3>Keys</h3>
+            <p>
+              On your turn, F folds, C checks or calls, and R bets or raises. When the hand is over, Space deals the next
+              hand and R opens its review.
+            </p>
           </section>
         </div>
 

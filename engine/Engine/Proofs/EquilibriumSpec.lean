@@ -17,7 +17,7 @@ bot's bet. Here is the bot's side. The bot has bet; you answer with a call or a 
 Your answers are a list, one for each hand you might hold, each equally likely. Calling with
 some of them and folding with others is how a "call half the time" strategy is written down.
 
-**Equilibrium** means neither player can gain by changing only their own play:
+**Equilibrium** means neither player can gain by changing only their own play in the three ways listed:
 - you cannot gain by calling more or folding more (calling and folding are worth the same);
 - the bot cannot gain by checking a bluff instead of betting it;
 - the bot cannot gain by checking a value hand instead of betting it.
@@ -53,7 +53,8 @@ def callCount (answers : List RiverChoice) : Nat :=
   answers.count .call
 
 /-- **The river is in equilibrium.** The bot bets `pot` into `pot` (a pot-sized bet) with the
-hands `value` and `bluffs`. You hold a hand scoring `mine` and answer with `answers`.
+hands `value` and `bluffs`. You hold one of several hands, all bluff catchers against this
+range with score `mine`, and `answers` lists your answer with each of them.
 1. You cannot gain by always calling or always folding: they are worth the same.
 2. The bot cannot gain by checking a bluff: betting it gains nothing over checking.
 3. The bot cannot gain by checking a value hand: betting it gains at least as much. -/

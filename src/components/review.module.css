@@ -109,10 +109,11 @@
   margin: 0;
 }
 
+/* The count of each grade, as one quiet line of icons and numbers. */
 .modal .summary {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 6px 16px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -123,10 +124,6 @@
   align-items: center;
   gap: 6px;
   margin: 0;
-  padding: 3px 10px 3px 4px;
-  border-radius: 999px;
-  background: var(--bg-2);
-  border: 1px solid var(--line);
   color: var(--text);
   font-size: 13px;
   line-height: 1.3;
@@ -142,11 +139,9 @@
 
 .note {
   margin: 0 0 12px;
-  padding: 8px 12px;
-  border-radius: 10px;
-  background: rgba(233, 196, 106, 0.1);
-  border: 1px solid rgba(233, 196, 106, 0.4);
-  color: var(--gold) !important;
+  padding: 2px 0 2px 12px;
+  border-left: 2px solid var(--brass);
+  color: var(--text) !important;
   font-size: 13px;
 }
 
@@ -194,8 +189,8 @@
   inset: 0;
   border-radius: 6px;
   overflow: hidden;
-  background: #262d36;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  background: #232e29;
+  box-shadow: inset 0 0 0 1px rgba(236, 231, 219, 0.1);
 }
 
 .equityFill {
@@ -203,8 +198,8 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(180deg, #ffffff, #dfe5ec);
-  transition: height 0.35s ease;
+  background: var(--ivory);
+  transition: height 300ms var(--ease-out);
 }
 
 .equityNeed {
@@ -216,7 +211,7 @@
   background: var(--gold);
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55);
   transform: translateY(50%);
-  transition: bottom 0.35s ease;
+  transition: bottom 300ms var(--ease-out);
 }
 
 .equityLegend {
@@ -240,28 +235,29 @@
 }
 
 .equityBar.isEmpty .equityClip {
-  background: repeating-linear-gradient(135deg, #20262e 0 6px, #262d36 6px 12px);
+  background: repeating-linear-gradient(135deg, #1c2622 0 6px, #232e29 6px 12px);
 }
 
 /* ---------- The moment in the hand ---------- */
+/* A small piece of the felt, showing the cards at the chosen move. */
 .spot {
   display: grid;
   align-content: start;
   gap: 10px;
   width: 236px;
-  padding: 12px;
-  border-radius: 14px;
-  background: radial-gradient(120% 90% at 50% 0%, var(--felt) 0%, var(--felt-deep) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: inset 0 0 0 4px rgba(0, 0, 0, 0.18);
+  padding: 14px;
+  border-radius: 12px;
+  background: radial-gradient(120% 90% at 50% 0%, #1c7c53 0%, var(--felt-deep) 100%);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.3);
 }
 
 .spotStreet {
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--gold);
+  font-family: var(--display);
+  font-style: italic;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--ivory);
 }
 
 .spotPart {
@@ -270,9 +266,9 @@
 }
 
 .spotPart > span {
-  font-size: 11.5px;
-  font-weight: 700;
-  color: rgba(233, 238, 244, 0.75);
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(243, 238, 226, 0.78);
 }
 
 .cards {
@@ -293,19 +289,17 @@
   margin: 0;
   font-size: 11.5px !important;
   line-height: 1.35 !important;
-  color: rgba(233, 238, 244, 0.8) !important;
+  color: rgba(243, 238, 226, 0.8) !important;
 }
 
 /* ---------- Coach line ---------- */
+/* The verdict on the chosen move: text beside a bar in the grade's color, not a box. */
 .coach {
   display: grid;
   gap: 6px;
   min-height: 96px;
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: var(--panel-2);
-  border: 1px solid var(--line-strong);
-  border-left: 4px solid var(--tone, var(--line-strong));
+  padding: 4px 0 4px 16px;
+  border-left: 3px solid var(--tone, var(--line-strong));
 }
 
 .coach p {
@@ -316,7 +310,10 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 16px;
+  font-family: var(--display);
+  font-size: 21px;
+  font-weight: 600;
+  line-height: 1.2;
   color: var(--text) !important;
 }
 
@@ -349,28 +346,33 @@
 }
 
 .whyChip {
-  padding: 3px 11px;
-  border-radius: 999px;
-  border: 1px solid rgba(233, 196, 106, 0.5);
-  background: rgba(233, 196, 106, 0.1);
-  color: var(--gold);
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--line-strong);
+  background: transparent;
+  color: var(--text);
   font: inherit;
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
+  transition: background-color 150ms ease;
 }
 
-.whyChip:hover,
 .whyChip[aria-expanded="true"] {
-  background: rgba(233, 196, 106, 0.2);
+  background: rgba(236, 231, 219, 0.08);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .whyChip:hover {
+    background: rgba(236, 231, 219, 0.08);
+  }
 }
 
 .whyPanel {
   margin-top: 8px;
   padding: 10px 12px;
-  border-radius: 10px;
-  background: var(--bg-2);
-  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.2);
   display: grid;
   gap: 8px;
 }
@@ -394,7 +396,19 @@
 
 .whyPanel cite {
   font-style: normal;
-  color: var(--gold);
+  color: #e3c47e;
+}
+
+/* The source name opens the source: brass, underlined, never the browser's default blue. */
+.whyPanel cite a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: rgba(227, 196, 126, 0.45);
+  text-underline-offset: 3px;
+}
+
+.whyPanel cite a:hover {
+  text-decoration-color: currentColor;
 }
 
 .citeId {
@@ -420,18 +434,18 @@
   padding: 0;
   border: 0;
   background: none;
-  color: var(--gold);
+  color: var(--text);
   font: inherit;
   font-size: 13px;
   text-decoration: underline;
   text-underline-offset: 3px;
-  text-decoration-color: rgba(233, 196, 106, 0.45);
+  text-decoration-color: var(--brass);
   cursor: pointer;
 }
 
 .proofLink:hover,
 .textButton:hover {
-  color: #f3d488;
+  color: #fff;
   text-decoration-color: currentColor;
 }
 
@@ -439,50 +453,50 @@
 .moveList {
   max-height: 260px;
   overflow-y: auto;
-  border-radius: 12px;
-  background: var(--bg-2);
+  border-radius: 10px;
   border: 1px solid var(--line);
 }
 
 .street {
-  padding: 8px 8px 6px;
+  padding: 10px 8px 6px;
 }
 
 .street + .street {
   border-top: 1px solid var(--line);
 }
 
+/* The street's name in the card serif, then the cards it dealt. */
 .streetHead {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin: 0 0 4px 4px;
-  font-size: 11.5px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--muted);
+  margin: 0 0 4px 8px;
+  font-family: var(--display);
+  font-style: italic;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text);
 }
 
 .streetCards {
   display: inline-flex;
   gap: 3px;
-  letter-spacing: 0;
-  text-transform: none;
+  font-family: var(--font-text), sans-serif;
+  font-style: normal;
 }
 
 .miniCard {
   padding: 1px 4px;
   border-radius: 4px;
-  background: #f4f1ea;
-  color: #15181c;
+  background: #f7f4ec;
+  color: var(--ink);
   font-size: 12px;
   font-weight: 800;
   line-height: 1.35;
 }
 
 .miniCard.red {
-  color: #c62828;
+  color: var(--card-red);
 }
 
 .modal .moves {
@@ -504,18 +518,21 @@
   gap: 10px;
   width: 100%;
   padding: 4px 8px;
-  border-radius: 8px;
-  border: 1px solid transparent;
+  border-radius: 6px;
+  border: 0;
   background: transparent;
-  color: #c9d2dc;
+  color: #c4c8bd;
   font: inherit;
   font-size: 14px;
   text-align: left;
   cursor: pointer;
+  transition: background-color 150ms ease;
 }
 
-.move:hover {
-  background: rgba(255, 255, 255, 0.05);
+@media (hover: hover) and (pointer: fine) {
+  .move:hover {
+    background: rgba(236, 231, 219, 0.05);
+  }
 }
 
 .move.mine {
@@ -524,8 +541,8 @@
 }
 
 .move.isSelected {
-  background: rgba(233, 196, 106, 0.14);
-  border-color: rgba(233, 196, 106, 0.55);
+  background: rgba(236, 231, 219, 0.1);
+  box-shadow: inset 3px 0 0 var(--brass);
 }
 
 .moveText {
@@ -552,13 +569,16 @@
   height: 32px;
   border-radius: 8px;
   border: 1px solid var(--line-strong);
-  background: var(--panel-2);
+  background: transparent;
   color: var(--text);
   cursor: pointer;
+  transition: background-color 150ms ease;
 }
 
-.nav button:hover:not(:disabled) {
-  background: #222c38;
+@media (hover: hover) and (pointer: fine) {
+  .nav button:hover:not(:disabled) {
+    background: rgba(236, 231, 219, 0.08);
+  }
 }
 
 .nav button:disabled {
@@ -568,16 +588,16 @@
 
 /* ---------- Range viewer ---------- */
 .range {
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: var(--bg-2);
-  border: 1px solid var(--line);
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
 }
 
 .range h4 {
   margin: 0 0 6px;
-  font-size: 15px;
-  color: var(--gold);
+  font-family: var(--display);
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--text);
 }
 
 .range p {
@@ -650,33 +670,40 @@
 
 .pill {
   padding: 5px 12px;
-  border-radius: 999px;
+  border-radius: 6px;
   border: 1px solid var(--line-strong);
-  background: rgba(255, 255, 255, 0.05);
+  background: transparent;
   color: var(--text);
   font: inherit;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+  transition:
+    transform 160ms var(--ease-out),
+    background-color 150ms ease;
 }
 
-.pill:hover {
-  background: rgba(255, 255, 255, 0.09);
+@media (hover: hover) and (pointer: fine) {
+  .pill:hover {
+    background: rgba(236, 231, 219, 0.08);
+  }
+}
+
+.pill:active {
+  transform: scale(0.97);
 }
 
 .pill.isSelected {
-  background: linear-gradient(180deg, #f3d488, var(--gold-deep));
+  background: var(--ivory);
   border-color: transparent;
-  color: #1d1505;
+  color: var(--ink);
 }
 
 .explorerCard {
   display: grid;
   gap: 8px;
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: var(--bg-2);
-  border: 1px solid var(--line);
+  padding: 14px 0 0;
+  border-top: 1px solid var(--line);
 }
 
 .explorerCard p {
@@ -737,7 +764,7 @@
 .markerTip {
   top: 0;
   transform: translateX(-50%);
-  color: var(--gold) !important;
+  color: #e3c47e !important;
   font-size: 10px !important;
 }
 

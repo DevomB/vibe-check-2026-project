@@ -19,6 +19,10 @@ export interface Citation {
   short: string;
   /** One sentence: what this source supports here, and nothing more. */
   claim: string;
+  /** The source itself: the publisher's DOI page, or the author's or vendor's own copy. */
+  url: string;
+  /** The day the URL was opened and the claim checked against it (ISO date). */
+  urlFetched: string;
 }
 
 export const CITATIONS: Record<CitationKey, Citation[]> = {
@@ -28,12 +32,16 @@ export const CITATIONS: Record<CitationKey, Citation[]> = {
       short: "Ferguson & Ferguson, on von Neumann's poker model",
       claim:
         "Calling a bet S into a pot P breaks even at equity S / (P + 2S); the review's equity needed is this number, written as cost / (prize + cost).",
+      url: "https://www.math.ucla.edu/~tom/papers/poker1.pdf",
+      urlFetched: "2026-10-31",
     },
     {
       id: "F02",
       short: "Glosten & Milgrom (1985)",
       claim:
         "A trader facing a possibly informed counterparty should price the trade on what the counterparty's willingness to trade reveals; the review grades a call against the hands the bot would bet with, for that reason.",
+      url: "https://doi.org/10.1016/0304-405X(85)90044-3",
+      urlFetched: "2026-11-01",
     },
   ],
   "bluff-ratio": [
@@ -42,6 +50,8 @@ export const CITATIONS: Record<CitationKey, Citation[]> = {
       short: "Ferguson & Ferguson, after von Neumann & Morgenstern (1944)",
       claim:
         "In the one-bet poker model a pot-sized bet is balanced when one third of the bets are bluffs; the 33% setting matches this textbook ratio under that model's conditions, and nothing more.",
+      url: "https://www.math.ucla.edu/~tom/papers/poker1.pdf",
+      urlFetched: "2026-10-31",
     },
   ],
   "min-defense": [
@@ -50,6 +60,8 @@ export const CITATIONS: Record<CitationKey, Citation[]> = {
       short: "Ferguson & Ferguson, on von Neumann's poker model",
       claim:
         "Against a bet S into a pot P the caller must continue with share P / (P + S) of its hands for a pure bluff to break even; the engine does not compute this number anywhere.",
+      url: "https://www.math.ucla.edu/~tom/papers/poker1.pdf",
+      urlFetched: "2026-10-31",
     },
   ],
   "risk-weight": [
@@ -58,18 +70,24 @@ export const CITATIONS: Record<CitationKey, Citation[]> = {
       short: "Pratt (1964)",
       claim:
         "A more risk-averse decision maker turns down every risky-or-sure choice a less risk-averse one turns down; the loss weight is our one-number version of that ordering, proved for one decision at a time.",
+      url: "https://doi.org/10.2307/1913738",
+      urlFetched: "2026-10-31",
     },
     {
       id: "F03",
       short: "Avellaneda & Stoikov (2008)",
       claim:
         "A dealer's risk-aversion parameter moves its indifference price away from the risk-neutral one and disappears at zero; the loss weight plays the same role for a call, by a different formula.",
+      url: "https://www.math.nyu.edu/~avellane/HighFrequencyTrading.pdf",
+      urlFetched: "2026-11-01",
     },
     {
       id: "F01",
       short: "Kyle (1985)",
       claim:
         "Market makers who cannot tell informed orders from noise price at the expected value and earn zero on average; the bot at Risk 50 is that risk-neutral pricer.",
+      url: "https://doi.org/10.2307/1913210",
+      urlFetched: "2026-11-01",
     },
   ],
   "exact-equity": [
@@ -78,12 +96,16 @@ export const CITATIONS: Record<CitationKey, Citation[]> = {
       short: "PokerHandEvaluator (Lee); Cactus Kev",
       claim:
         "Fast hand evaluators are checked by exhaustive comparison with each other, not by proof; our ranking is the spec's own bestScore, and the river and turn counts are proved to count every outcome once (T6).",
+      url: "https://github.com/HenryRLee/PokerHandEvaluator",
+      urlFetched: "2026-10-31",
     },
     {
       id: "E05",
       short: "PokerTracker 4, All-in Equity",
       claim:
         "Poker tools measure a hand by its equity, the share of the pot it expects to win over the remaining deals; our equity is that share, counted exactly on the turn and river.",
+      url: "https://docs.pokertracker.com/pt4/tutorials/hand-analysis-and-tools/all-in-equity-graphs/",
+      urlFetched: "2026-10-31",
     },
   ],
   "grade-bands": [
@@ -92,12 +114,16 @@ export const CITATIONS: Record<CitationKey, Citation[]> = {
       short: "Chess.com Game Review",
       claim:
         "Grading a move by what it lost against the best move, with fixed bands, is a product convention; our bands at 0.5, 2 and 5 big blinds are our own choice, set by no source.",
+      url: "https://support.chess.com/en/articles/8572705-how-are-moves-classified-what-is-a-blunder-or-brilliant-and-etc",
+      urlFetched: "2026-10-31",
     },
     {
       id: "E05",
       short: "GTO Wizard Analyzer",
       claim:
         "Poker review tools report EV lost per action in big blinds and colour it by band without publishing their thresholds; ours are published in labelFor.",
+      url: "https://help.gtowizard.com/how-to-use-the-hand-history-analyzer/",
+      urlFetched: "2026-10-31",
     },
   ],
 };

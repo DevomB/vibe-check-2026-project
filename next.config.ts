@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
-// Keep `next build` off the network, so it works on bad venue Wi-Fi. Fonts are system fonts
-// (src/app/layout.tsx). Telemetry would send usage data; set before the build reads it.
+// Keep `next build` off the network, so it works on bad venue Wi-Fi. The fonts ship with the app
+// (src/app/fonts, loaded in src/app/layout.tsx). Telemetry would send usage data; set before the
+// build reads it.
 process.env.NEXT_TELEMETRY_DISABLED ??= "1";
 
 const config: NextConfig = {

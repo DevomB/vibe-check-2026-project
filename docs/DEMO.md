@@ -21,8 +21,9 @@ same engine.
   `3a392d797dac0ba47e19164482fc136cf6f244a7d91d337e917851c8e313f9d6`. It was linked on
   Nov 1, 2026 at 12:09 PM PST, from branch `sunday/one-slider-web` at commit `f81df9d`,
   which holds lane 1's one-slider engine (`sunday/one-slider` at `073e2e5`, with
-  `sunday/review-fixes`). Lane 1's later engine commits, up to `71ee280`, change only
-  comments and proofs, not the code the program runs.
+  `sunday/review-fixes`). Later commits, up to `c11cf65`, change only comments, proofs and
+  proof imports, not the code the program runs. If the demo machine rebuilds, record the new
+  SHA here.
 - **Checked on** Nov 1, 2026, 12:48 PM PST. Each river spot was replayed twice from
   `new_game`, with the same seed and moves: once ending in a call, once in a fold. Both
   replays reached the same river state and the same `worth_bb`.
@@ -68,8 +69,8 @@ sets the bluff share from Risk: 0% for Ivy, 60% for Vex. The table shows both at
 - **The screen shows:**
   - Ivy folds. You win the blinds. Your stack is 510 (+10).
   - Click Review. "No graded move in this hand." "Lean grades one decision: your call or
-    fold when the bot bets first on the river. This hand ended before the river." Your
-    raise has no badge in the move list.
+    fold after the bot makes the first bet on the river. This hand ended before the river."
+    Your raise has no badge in the move list.
   - Why the bot played this way: "Fold: not worth calling 140 to win 160 at Risk 0, with
     win chance 58%."
 - **Optional contrast.** The same seed with Mia (Risk 50) or Vex (Risk 100) and the same
@@ -243,12 +244,13 @@ Also check the integrated features:
 
 | Item | Value |
 | --- | --- |
-| OS and machine | |
-| Commit | |
-| Date and time | |
-| `make install && make run` on a fresh clone | [ ] pass [ ] fail |
-| Scene (a) script above | [ ] PASS [ ] FAIL |
-| Green Lean proofs CI run for this commit (link) | |
+| OS and machine | WSL2 Ubuntu 26.04.1 on Windows, kernel 6.18 microsoft-standard, 20 cores, 15 GB RAM (the demo machine) |
+| Commit | 2c1ccac (rerun of the web half; the server reports `engineCommit` 2c1ccac, turn mode exact). The from-empty Lean build time below was measured on 45d13b3, whose engine code is the same; the incremental rebuild on 2c1ccac took 8.7 s. |
+| Date and time | 2026-11-01, 14:43 to 14:47 PST, rerun about 15:05 PST |
+| `make install && make run` on a fresh clone | [ ] pass [x] fail: GNU make is not installed in this WSL (`make: command not found`; apt has 4.4.1) and there is none on the Windows side. Every recipe step run by hand passed: `cd engine && lake build` from an empty `.lake` in 47.7 s wall (3 min 52 s CPU, 135 jobs, 119 MB binary); incremental rebuild 0.15 s; `npm ci` 8.8 s; `npm run build` 6.6 s; `npm start --port 3001` ready in about 2 s. Re-run the literal command after `sudo apt-get install -y make`. |
+| Scene (a) script above | [x] PASS: six requests all ok; last decision Mistake, worth call −2.67 BB, fold 0, equity had 0.185, needed 0.333 |
+| Full `npm test` against the fresh build | [x] PASS: 23 files, 466 tests, 29 s |
+| Green Lean proofs CI run for this commit (link) | [Run 41358927590 on 2c1ccac](https://github.com/DevomB/FoldProof/actions/runs/41358927590), success. Later commits change only `docs/DEMO.md`, which the workflow does not watch. The runs for 45d13b3 and 1f0768d show "cancelled": superseded by the next push under the workflow's concurrency rule, not failures. |
 
 ### Build-path notes for the Sunday check
 
@@ -258,4 +260,5 @@ These were seen and are not fixed yet; they are planned for after judging.
   (`Makefile:37`) runs after the build, so a busy port shows up only after a full build.
 - `Makefile:4` joins PATH with `:`. Native Windows GNU make uses `;`, so it may not find
   elan's `lake`. The Makefile says to use Git Bash on Windows.
-- Nobody has timed a fresh `lake build` from an empty `.lake`. Time it on Sunday.
+- A fresh `lake build` from an empty `.lake` took 47.7 s wall on the demo machine (20 cores) on
+  Nov 1; see the Sunday check table.

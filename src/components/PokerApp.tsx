@@ -243,10 +243,7 @@ export function PokerApp() {
   return (
     <div className="app">
       <header className="topbar">
-        <div className="brand">
-          <span className="brand-mark">♠</span>
-          <span>Hold'em</span>
-        </div>
+        <div className="brand">FoldProof</div>
         <div className="topbar-info">
           <span>
             Hand <b>#{game.session.handNumber}</b>
@@ -265,8 +262,8 @@ export function PokerApp() {
           <span title="The bot's Risk, and the bluff share Lean set from it">
             Bot{" "}
             <b>
-              {mystery && "Mystery · "}
-              {shownSliders ? `Risk ${shownSliders.risk} · bluff share ${shownSliders.bluffPct}%` : "hidden until you guess"}
+              {mystery && "Mystery, "}
+              {shownSliders ? `Risk ${shownSliders.risk}, bluff share ${shownSliders.bluffPct}%` : "hidden until you guess"}
             </b>
           </span>
           {replaySeed !== null && (

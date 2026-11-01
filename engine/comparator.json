@@ -91,7 +91,17 @@
     "bot_river_bet_is_pot_sized",
     "more_bluffs_more_call_total",
     "maniac_bluff_catcher_total",
-    "rock_bluff_catcher_total"
+    "rock_bluff_catcher_total",
+    "shuffle_eq_pickWith",
+    "pickWith_perm",
+    "allValidPicks_length",
+    "mem_allValidPicks",
+    "allValidPicks_nodup",
+    "every_order_possible",
+    "picks_one_to_one",
+    "each_order_once",
+    "shuffle_uses_64_bits",
+    "fewer_seeds_than_orders"
   ],
   "permitted_axioms": [
     "propext",

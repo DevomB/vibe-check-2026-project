@@ -1,5 +1,5 @@
 {
-  "name": "holdem-differential-tests",
+  "name": "foldproof-differential-tests",
   "private": true,
   "type": "module",
   "description": "Differential tests: the Lean engine against poker-calculations (MVP section 7).",

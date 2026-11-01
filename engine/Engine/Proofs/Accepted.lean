@@ -18,9 +18,12 @@ example : ∃ h', step (startHand (fun _ => startingStack) 0 7) .call = .ok h' :
 example : ∃ h', step (startHand (fun _ => startingStack) 0 7) (.raiseTo 20) = .ok h' :=
   legal_move_accepted _ _ rfl (by decide)
 
-/-- The statement rejects an engine that turns a legal move away: an error is never an
-accepted move. -/
-example : ¬ ∃ h', (Except.error "illegal move" : Except String Hand) = .ok h' := by
-  intro ⟨_, h⟩; cases h
+/-- The statement rejects an engine that turns this legal call away: on the real deal, `step`
+never answers the call with an error, whatever the message. -/
+example (msg : String) :
+    step (startHand (fun _ => startingStack) 0 7) .call ≠ .error msg := by
+  obtain ⟨h', hok⟩ :=
+    legal_move_accepted (startHand (fun _ => startingStack) 0 7) .call rfl (by decide)
+  rw [hok]; intro h; cases h
 
 #print axioms legal_move_accepted

@@ -7,9 +7,10 @@ import Engine.Proofs.Board
 The theorems about a single hand (`showdown_pays_better_hand`, `fold_pays_other_player`,
 `board_matches_street`, `showdown_has_five_cards`) are stated for a hand dealt with
 `startHand` from stacks above 0 and then played with accepted moves. `game_hand_from_deal`
-shows every hand of every game the engine can reach is exactly that. So those theorems hold
-for every hand the app plays, with no extra assumption: a new hand is only dealt while both
-players still have chips.
+shows every hand of every game the engine can reach is exactly that, and `app_game_reachable`
+(`Engine/Proofs/Session.lean`) shows the app's game is always one the engine can reach. So
+those theorems hold for every hand the app plays: a new hand is only dealt while both players
+still have chips.
 -/
 
 /-- A run of accepted moves can be extended by one more accepted move. -/
@@ -78,7 +79,8 @@ example : ∃ (stacks : Player → Nat) (button : Player) (seed : Nat) (as : Lis
     0 < stacks 0 ∧ 0 < stacks 1 ∧ RunsTo (startHand stacks button seed) as (newGame 7).hand :=
   game_hand_from_deal _ (.start 7)
 
-/-- The statement rejects a hand dealt to a player with no chips: 0 is not above 0. -/
-example : ¬ (0 < (0 : Nat)) := by decide
+-- There is no separate bad case here: the theorem has no hypothesis beyond reachability, and
+-- its conclusion is the claim itself. A wrong engine that dealt after a player went broke is
+-- caught by the proof failing, not by a check in this file.
 
 #print axioms game_hand_from_deal

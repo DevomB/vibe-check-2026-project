@@ -9,7 +9,7 @@ The implemented product is beyond the agreed MVP: the Lean game, bot, call/fold 
 review, bridge and local UI exist, with practice challenges, Mystery mode, a range viewer,
 a Risk explorer, research explanations and a navigable review screen added on top.
 
-- [CI for c11cf65](https://github.com/DevomB/vibe-check-2026-project/actions/runs/41353486059)
+- [CI for c11cf65](https://github.com/DevomB/FoldProof/actions/runs/41353486059)
   passed: proof audit, Comparator, `lake check`, fresh-checkout app checks and production
   HTTP smoke. Its app job reports **420 tests passed**. `engine/comparator.json` registers
   **69 theorems**. Their scope is described in `PROVED.md` and `GUARANTEES.md`.

@@ -44,7 +44,7 @@ for every value `ofRisk` can produce. The theorems about the map itself are in s
 ### 1.1 The twelve theorems of the one-slider change, in plain words
 
 All twelve are registered in `engine/Checks/Challenge.lean` and `engine/comparator.json`
-(61 names in all, with the three merged from `sunday/review-fixes`), so Comparator checks
+(all in `comparator.json`, with the three merged from `sunday/review-fixes`), so Comparator checks
 each statement. Seven are in `engine/Engine/Proofs/OneSlider.lean`, three in
 `engine/Engine/Proofs/Explain.lean`, two in `engine/Engine/Proofs/OneSliderRiver.lean`.
 
@@ -259,7 +259,7 @@ proportionally more value hands (309 value, 156 bluffs left), so calling is righ
 the pot on the river when it can (`bot_river_bet_is_pot_sized`). Against a pot-sized bet, a
 bluff breaks even exactly when you call half the time (`half_calls_bluff_breaks_even`), and a
 value bet is never worse than a check (`value_bet_never_worse`). Put together with the caller's
-half: with a bluff catcher, neither side can gain by changing only its own play exactly when one
+half: with a bluff catcher, neither side can gain by checking instead of betting, or by calling instead of folding, exactly when one
 bet in three is a bluff and you call half the time (`river_equilibrium_iff`). That is the river
 equilibrium of this simple model. Risk 50 sits two bluffs off it.
 
@@ -324,8 +324,8 @@ The README's "What we trust" section is the list of record. The items that bear 
 
 - The web app, the browser code, Node and the JSON bridge are tested, not proved. The
   conversion of the engine's state to JSON (`engine/Engine/Protocol.lean`) is not proved.
-- The buttons the browser offers (`legalOptions`) are not proved equal to the rules (`Legal`);
-  the engine rejects illegal moves anyway (T3).
+- The buttons the browser offers (`legalOptions`) are proved equal to the rules
+  (`legalOptions_exact`, added Nov 1); what the browser does with them is tested, not proved.
 - The preflop table and the flop's 1,000 deals are estimates. Only the turn and river counts are
   exact (T6).
 - The shuffle is proved to be a permutation of the 52 cards (T2), not to be random.

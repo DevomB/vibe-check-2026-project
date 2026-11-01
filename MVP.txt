@@ -1,4 +1,4 @@
-VIBECHECK 2026 POKER PROJECT: MVP SPEC (v3, Saturday Oct 31)
+FOLDPROOF (VIBECHECK 2026 POKER PROJECT): MVP SPEC (v3, Saturday Oct 31)
 
 CHANGED FROM v2 (decisions confirmed during the MVP review)
 - Removed personal task allocations. Section 11 now records what exists and what still needs doing.
@@ -30,7 +30,7 @@ WHY THIS WINS (the two judging axes)
 1. SETUP CHECKLIST (everyone, before 2:30 PM)
 - Node 22.12 or newer, and npm. Check with "node -v" and "npm -v".
 - Lean 4.35.0 through elan, plus the Lean 4 extension in VS Code. The project must pin leanprover/lean4:v4.35.0 and matching dependencies.
-- git, and your own clone of github.com/DevomB/vibe-check-2026-project.
+- git, and your own clone of github.com/DevomB/FoldProof.
 - make. On Windows: "winget install ezwinports.make".
 - Claude Code. The API key lives only in your own terminal, never in a file in the repo.
 
@@ -176,7 +176,7 @@ DONE / PRESENT:
 - Heads-up 500-chip games, fixed 5/10 blinds, one Risk slider (Nov 1; was Risk/Bluff sliders), explicit Next Hand, game-over handling and replays. Random-game seeds are generated on the server and hidden until game over; entered seeds are intentional replays.
 - The Lean slider bot, preflop count data, sampled flop counts, exact turn/river counts, river betting sets and opening-river-bet call/fold review are implemented.
 - Lean project under engine/, pinned to 4.35.0. Poker/Spec/ contains card/deck, legality and hand-ranking definitions; Engine/ contains seeded shuffling, hand/game transitions and payouts.
-- Tier 1 T1-T5 and Tier 2 T6-T8 proofs are present, with standard-axiom audits, Comparator and kernel re-checks in Linux CI (the green run is the evidence line in README.md). These prove their stated Lean properties; they do not prove the browser or Node transport correct.
+- T1-T9, T1b (the right player wins the pot) and T2b (the board matches the street) are proved, with standard-axiom audits, Comparator and kernel re-checks in Linux CI (the green run is the evidence line in README.md). These prove their stated Lean properties; they do not prove the browser or Node transport correct.
 - Lean examples, known-showdown checks, 300 simulated random games, JavaScript unit/integration tests against the compiled Lean program, and a differential harness with recorded results under tests/diff/ are present. TypeScript game code remains a test reference.
 - Makefile builds Lean before integration tests. Source, build, proof checks and a final GUI launch rehearsal are separate checks.
 - Product decisions confirmed above: Lean 4.35.0 shipping engine and standard axioms; actual-outcome Risk utility; hand-set Bluff target; deterministic ranking/rounding; opening-bet call/fold review only; detailed reasons after the hand; street-total amounts and legal pot sizing/fallback; explicit Next Hand and separate statuses; Lean-driven bot scheduling; fixed benchmark-selected turn mode; one local game; Tier 1 mandatory, optional proof claims only once completed.

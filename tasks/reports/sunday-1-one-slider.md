@@ -258,8 +258,10 @@ described above, and `Session.botChoice` is covered by `botDecide_action_shown`.
   `docs/THEORY.md` section 5 gives the reasons from the sources. One wording point: above Risk
   50 caution is already 0, so Vex calls exactly as Mia does and differs only in bluffing. The
   UI should say that, or "more Risk" above 50 reads as "calls more".
-- **Mystery reveal**: lives in `src/app/api/game/route.ts`, not Lean. The route must pick one
-  hidden Risk and answer `{"guess":{"risk":n}}` with `{risk, off}`; see the contract file.
+- **Mystery reveal**: lives in `src/app/api/game/route.ts`, not Lean. The route picks one
+  hidden Risk. As shipped by lane 2 the request is `{"cmd":"reveal","risk":n}` and the reply
+  is `{risk, guess, off}` with `guess` a number (not the brief's `{"guess":{"risk":n}}` and
+  `{risk, off}`); a `bluff_pct` field is refused with 400.
 - **River bluff reason text**: unchanged, see above.
 - **The explorer's `bluffsFrom` pattern** ("checks below Risk k, bluffs from k up") is backed
   by `more_risk_never_checks_a_bet`; the classifier still falls back to

@@ -34,14 +34,19 @@ export function WhyChip({ ideas }: { ideas: CitationKey[] }) {
               <ul>
                 {CITATIONS[key].map((c) => (
                   <li key={c.id + c.short}>
-                    {c.claim} <cite>{c.short}</cite>
+                    {c.claim}{" "}
+                    <cite>
+                      <a href={c.url} target="_blank" rel="noopener noreferrer">
+                        {c.short}
+                      </a>
+                    </cite>
                     <span className={styles.citeId}> [{c.id}]</span>
                   </li>
                 ))}
               </ul>
             </section>
           ))}
-          <p className={styles.whyFoot}>Sources are listed in docs/research/sources. They support the ideas; they are not proofs.</p>
+          <p className={styles.whyFoot}>Each source name opens the source. Our notes on them are in docs/research/sources. They support the ideas; they are not proofs.</p>
         </div>
       )}
     </div>

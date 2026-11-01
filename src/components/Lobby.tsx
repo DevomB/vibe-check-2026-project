@@ -96,13 +96,18 @@ export function Lobby({
           <PlayingCard card="As" size="lg" />
           <PlayingCard card="Kh" size="lg" />
         </div>
-        <h1>Texas Hold'em</h1>
+        <h1>FoldProof</h1>
         <p className="lobby-sub">
-          Heads-up no-limit · {TABLE.startingStack} chips each · blinds {TABLE.smallBlind}/{TABLE.bigBlind}
+          No-limit Texas Hold'em, one on one. You and the bot each start with {TABLE.startingStack} chips, and the blinds are{" "}
+          {TABLE.smallBlind} and {TABLE.bigBlind}.
         </p>
+        <button className="btn btn-link" onClick={onRules}>
+          New to poker? Read the rules
+        </button>
       </div>
 
       <div className="lobby-card">
+        <h2 className="lobby-section">Your opponent</h2>
         <label className={styles.toggle}>
           <input type="checkbox" checked={mystery} onChange={(e) => setMystery(e.target.checked)} />
           <span className="field-label">Mystery opponent</span>
@@ -114,7 +119,6 @@ export function Lobby({
           </p>
         ) : (
           <>
-            <div className="field-label">Your opponent</div>
             <div className="opponent-list" role="radiogroup" aria-label="Opponent">
               {OPPONENTS.map((o) => (
                 <button
@@ -143,7 +147,6 @@ export function Lobby({
               </div>
             </div>
 
-            <div className="field-label">Set up the bot</div>
             <BotSlider
               label="Risk"
               value={risk}
@@ -191,12 +194,9 @@ export function Lobby({
         <button className="btn btn-primary btn-big" onClick={start} disabled={!seedValid}>
           Start
         </button>
-        <div className="field-label">Practice</div>
-        <ChallengePicker onPick={(c) => onPractice(c, fast)} />
 
-        <button className="btn btn-link" onClick={onRules}>
-          New to poker? Read the rules
-        </button>
+        <h2 className="lobby-section">Practice</h2>
+        <ChallengePicker onPick={(c) => onPractice(c, fast)} />
       </div>
     </div>
   );

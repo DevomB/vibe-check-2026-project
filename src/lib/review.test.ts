@@ -187,11 +187,43 @@ describe("labels", () => {
 });
 
 describe("noGradeReason", () => {
-  it("says the hand ended before the river, or had no such decision", () => {
-    expect(noGradeReason(EVENTS.slice(0, 4))).toBe(
-      "Lean grades one decision: your call or fold when the bot bets first on the river. This hand ended before the river.",
+  const reason = (why: string) => `Lean grades one decision: your call or fold after the bot makes the first bet on the river. ${why}`;
+  const toRiver = EVENTS.slice(0, 11);
+  const act = (player: number, action: "check" | "raise" | "fold", amount = 0): LeanEvent => ({ type: "action", player, action, amount, allIn: false });
+
+  it("says the hand ended before the river", () => {
+    expect(noGradeReason(EVENTS.slice(0, 4), 0)).toBe(reason("This hand ended before the river."));
+  });
+
+  it("says when nobody bet on the river", () => {
+    expect(noGradeReason([...toRiver, act(1, "check"), act(0, "check")], 0)).toBe(reason("Nobody bet on the river."));
+  });
+
+  it("says when you bet the river first", () => {
+    expect(noGradeReason([...toRiver, act(1, "check"), act(0, "raise", 20), act(1, "fold")], 0)).toBe(
+      reason("You made the first bet on the river."),
     );
-    expect(noGradeReason(EVENTS)).toMatch(/This hand had no such decision\.$/);
-    expect(noGradeReason(null)).toMatch(/This hand had no such decision\.$/);
+  });
+
+  it("says when you raised the bot's river bet", () => {
+    expect(noGradeReason([...toRiver, act(1, "raise", 20), act(0, "raise", 60), act(1, "fold")], 0)).toBe(
+      reason("You raised the bot's bet instead of calling or folding."),
+    );
+  });
+
+  it("says when an all-in left no river betting", () => {
+    const allIn: LeanEvent[] = [
+      ...EVENTS.slice(0, 2),
+      { type: "action", player: 0, action: "raise", amount: 495, allIn: true, to: 500 },
+      { type: "action", player: 1, action: "call", amount: 490, allIn: true },
+      ...EVENTS.filter((e) => e.type === "street"),
+      { type: "win", player: 0, amount: 1000 },
+    ];
+    expect(noGradeReason(allIn, 0)).toBe(reason("A player was all-in before the river, so there was no betting on it."));
+  });
+
+  it("falls back when the events are not known, or the hand had the spot", () => {
+    expect(noGradeReason(null, 0)).toBe(reason("This hand had no such decision."));
+    expect(noGradeReason(EVENTS, 0)).toBe(reason("This hand had no such decision."));
   });
 });

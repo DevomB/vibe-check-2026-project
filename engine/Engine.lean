@@ -50,3 +50,4 @@ import Engine.ExplainTests
 import Engine.Proofs.Explain
 import Engine.Proofs.BluffCatcher
 import Engine.Proofs.Equilibrium
+import Engine.Proofs.Shuffle

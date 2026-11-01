@@ -67,7 +67,7 @@ Risk wins more games or makes a whole match follow the same trajectory.
 
 Commit `6230d04` adds ten registered bluff-catcher theorems, taking the list from 69 to 79;
 `f5a016b` adds them to the proof drawer and docs.
-[Its CI passed](https://github.com/DevomB/vibe-check-2026-project/actions/runs/41356539142),
+[Its CI passed](https://github.com/DevomB/FoldProof/actions/runs/41356539142),
 including the proof audit, Comparator, kernel recheck and app checks. This does not establish
 human approval of the new `BluffCatcherSpec.lean`; its assumptions still need that review.
 
@@ -99,7 +99,13 @@ pot-sized total is legal. `RiverEquilibrium` packages three conditions about cal
 checking versus betting; it does not quantify over all Hold'em strategies, bet sizes or
 earlier streets. Do not turn this into the claim "our bot is Nash/GTO". Human review of the
 new `EquilibriumSpec.lean` remains part of its acceptance.
-[CI for 8f50833 passed](https://github.com/DevomB/vibe-check-2026-project/actions/runs/41357333527).
+[CI for 8f50833 passed](https://github.com/DevomB/FoldProof/actions/runs/41357333527).
+
+While this audit ran, `3e01c5b` added three further registered river statements (90 total):
+`more_bluffs_more_call_total`, `maniac_bluff_catcher_total` and `rock_bluff_catcher_total`.
+They keep the pure-bluff-catcher assumption; the endpoint totals are before hero blockers.
+They do not change the chosen live-demo headlines. Check their final CI before counting
+them as release-checked evidence.
 
 This pass corrected the blocker explanation in `BluffCatcher.lean` and `THEORY.md`:
 T-clubs T-diamonds removes 12/324 value hands and 8/160 bluffs, reducing the bluff share;
