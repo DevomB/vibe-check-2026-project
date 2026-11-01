@@ -108,3 +108,11 @@ export interface LeanReview {
 export type LeanReply =
   | { ok: true; state: LeanState; review?: LeanReview }
   | { error: string; state: LeanState | null };
+
+/**
+ * A reply from `/api/game`: Lean's reply, plus what the bridge adds.
+ * `lost` is true when the game is gone: the program stopped, did not answer, or restarted
+ * without it. The screen must then offer only a new game. A malformed request is turned away
+ * (HTTP 400) without `lost`, and the game goes on.
+ */
+export type ApiReply = LeanReply & { lost?: true };

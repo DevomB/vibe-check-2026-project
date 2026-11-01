@@ -1,6 +1,5 @@
 import type { CSSProperties } from "react";
-import { type Card, potTotal } from "@/engine";
-import { chips } from "@/lib/format";
+import type { Card } from "@/engine";
 import { HUMAN_SEAT, type Game } from "@/hooks/useGame";
 import { ChipStack } from "./Chips";
 import { CardSlot, PlayingCard } from "./PlayingCard";
@@ -52,7 +51,9 @@ export function Table({ game, botThinking = false }: { game: Game; botThinking?:
     if (best) winningCards = new Set(best);
   }
 
-  const collected = hand.players.reduce((sum, p) => sum + p.totalBet - p.streetBet, 0);
+  // Lean's pot holds the chips from earlier streets; the pot shown adds both players' bets on
+  // this street, on every street (MVP §13).
+  const displayedPot = game.lean.pot + game.lean.players[0].bet + game.lean.players[1].bet;
   const buttonSeat = seatOf[hand.button]!;
 
   return (
@@ -79,13 +80,7 @@ export function Table({ game, botThinking = false }: { game: Game; botThinking?:
             })}
           </div>
           <div className="pot">
-            {result ? (
-              <ResultBadge game={game} delay={revealDelay} />
-            ) : collected > 0 ? (
-              <ChipStack amount={collected} label="Pot" />
-            ) : (
-              <span className="pot-label">Pot {chips(potTotal(hand))}</span>
-            )}
+            {result ? <ResultBadge game={game} delay={revealDelay} /> : <ChipStack amount={displayedPot} label="Pot" />}
           </div>
         </div>
 

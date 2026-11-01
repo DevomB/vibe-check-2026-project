@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
-import { LeanProcess } from "@/lean/process";
-import type { LeanCommand } from "@/lean/protocol";
+import { EngineStoppedError, LeanProcess } from "@/lean/process";
+import type { ApiReply, LeanCommand, LeanReply } from "@/lean/protocol";
 
 /**
  * The bridge between the browser and the Lean game program. Lean decides the game state;
@@ -51,26 +51,40 @@ function parseCommand(body: unknown): LeanCommand | null {
   }
 }
 
+const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
+
+/** A program that stopped or hung took its game with it. The browser must offer a new game. */
+function gameLost(status: number): Response {
+  return Response.json({ error: "The game engine stopped. Start a new game.", state: null, lost: true } satisfies ApiReply, { status });
+}
+
 export async function POST(request: Request): Promise<Response> {
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return Response.json({ error: "bad JSON", state: null }, { status: 400 });
+    return Response.json({ error: "bad JSON", state: null } satisfies ApiReply, { status: 400 });
   }
   const command = parseCommand(body);
-  if (!command) return Response.json({ error: "unknown or malformed command", state: null }, { status: 400 });
+  // Turned away before Lean sees it: the game, if any, is unchanged.
+  if (!command) return Response.json({ error: "unknown or malformed command", state: null } satisfies ApiReply, { status: 400 });
+  let lean: LeanProcess;
   try {
-    // A program that stopped took its game with it; a new program has no game until new_game.
-    const lost = holder.__leanProcess !== undefined && !holder.__leanProcess.alive;
-    const reply = await engine().send(command);
-    if (lost && command.cmd !== "new_game" && "error" in reply) {
-      return Response.json({ error: "The game engine stopped and this game was lost. Please start a new game.", state: null });
-    }
-    // One seed determines future hands too, so a hand ending must not reveal it.
-    if (reply.state && reply.state.status !== "gameOver") reply.state.seed = null;
-    return Response.json(reply);
+    lean = engine();
   } catch (e) {
-    return Response.json({ error: e instanceof Error ? e.message : String(e), state: null }, { status: 500 });
+    // The program could not start at all (for example, it was never built).
+    return Response.json({ error: message(e), state: null, lost: true } satisfies ApiReply, { status: 500 });
   }
+  let reply: LeanReply;
+  try {
+    reply = await lean.send(command);
+  } catch (e) {
+    if (e instanceof EngineStoppedError) return gameLost(503);
+    return Response.json({ error: message(e), state: null } satisfies ApiReply, { status: 500 });
+  }
+  // Lean has no game, but this command needs one: the program restarted since the game began.
+  if ("error" in reply && reply.state === null && command.cmd !== "new_game") return gameLost(410);
+  // One seed determines future hands too, so a hand ending must not reveal it.
+  if (reply.state && reply.state.status !== "gameOver") reply.state.seed = null;
+  return Response.json(reply satisfies ApiReply);
 }

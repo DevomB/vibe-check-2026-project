@@ -1,7 +1,8 @@
 import { existsSync } from "node:fs";
-import { describe, expect, it } from "vitest";
-import { leanBinaryPath } from "@/lean/process";
-import type { LeanReply } from "@/lean/protocol";
+import path from "node:path";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { type LeanProcess, leanBinaryPath } from "@/lean/process";
+import type { ApiReply } from "@/lean/protocol";
 import { POST } from "./route";
 
 /**
@@ -10,10 +11,21 @@ import { POST } from "./route";
  * turns away malformed ones before they reach Lean.
  */
 
-async function post(body: unknown): Promise<{ status: number; reply: LeanReply }> {
+async function post(body: unknown): Promise<{ status: number; reply: ApiReply }> {
   const res = await POST(new Request("http://localhost/api/game", { method: "POST", body: JSON.stringify(body) }));
-  return { status: res.status, reply: (await res.json()) as LeanReply };
+  return { status: res.status, reply: (await res.json()) as ApiReply };
 }
+
+/** The route keeps its game program here (see route.ts). */
+const holder = globalThis as typeof globalThis & { __leanProcess?: LeanProcess };
+
+/** Stop the route's game program, so the next request starts a new one. */
+function stopProgram(): void {
+  holder.__leanProcess?.kill();
+  holder.__leanProcess = undefined;
+}
+
+const ENGINE_STOPPED = { error: "The game engine stopped. Start a new game.", state: null, lost: true };
 
 describe("/api/game input checks", () => {
   it.each([
@@ -30,6 +42,40 @@ describe("/api/game input checks", () => {
     const { status, reply } = await post(body);
     expect(status).toBe(400);
     expect("error" in reply).toBe(true);
+  });
+});
+
+describe("/api/game when the game program fails", () => {
+  const saved = { bin: process.env.POKER_BIN, timeout: process.env.POKER_REPLY_TIMEOUT_MS };
+  const restore = (key: string, value: string | undefined) => (value === undefined ? delete process.env[key] : (process.env[key] = value));
+  afterEach(() => {
+    stopProgram();
+    restore("POKER_BIN", saved.bin);
+    restore("POKER_REPLY_TIMEOUT_MS", saved.timeout);
+  });
+  /** Use a stand-in program from src/lean/__fixtures__ instead of the Lean one. */
+  const useStandIn = (file: string) => {
+    stopProgram();
+    process.env.POKER_BIN = path.join(process.cwd(), "src", "lean", "__fixtures__", file);
+  };
+
+  it("reports a lost game when the program stops, on that request and every later one", async () => {
+    useStandIn("exits-at-once.mjs");
+    const first = await post({ cmd: "new_game", seed: "1", risk: 0, bluff_pct: 0 });
+    expect(first.status).toBe(503);
+    expect(first.reply).toEqual(ENGINE_STOPPED);
+    for (const body of [{ cmd: "act", action: "check" }, { cmd: "state" }, { cmd: "review", hand: 1 }]) {
+      const later = await post(body);
+      expect(later.reply, JSON.stringify(body)).toEqual(ENGINE_STOPPED);
+    }
+  });
+
+  it("stops a program that never answers, and reports a lost game", async () => {
+    useStandIn("never-answers.mjs");
+    process.env.POKER_REPLY_TIMEOUT_MS = "300";
+    const { status, reply } = await post({ cmd: "new_game", seed: "1", risk: 0, bluff_pct: 0 });
+    expect(status).toBe(503);
+    expect(reply).toEqual(ENGINE_STOPPED);
   });
 });
 
@@ -51,7 +97,7 @@ describe.skipIf(!existsSync(leanBinaryPath()))("/api/game with the Lean program"
   });
 
   it("reveals a finished game's seed and replays its cards", async () => {
-    const finishes: LeanReply[] = [];
+    const finishes: ApiReply[] = [];
     for (let attempt = 0; attempt < 2; attempt++) {
       const start = await post({ cmd: "new_game", seed: "1", risk: 0, bluff_pct: 0 });
       if (!("ok" in start.reply)) throw new Error(start.reply.error);
@@ -96,5 +142,31 @@ describe.skipIf(!existsSync(leanBinaryPath()))("/api/game with the Lean program"
     const { status, reply } = await post({ cmd: "new_game", seed: "1", risk: 101, bluff_pct: 33 });
     expect(status).toBe(200);
     expect(reply).toMatchObject({ error: "risk must be 0-100" });
+  });
+
+  it("keeps the game after a malformed request", async () => {
+    const start = await post({ cmd: "new_game", seed: "9", risk: 50, bluff_pct: 33 });
+    if (!("ok" in start.reply)) throw new Error(start.reply.error);
+    const bad = await post({ cmd: "act", action: "raise" });
+    expect(bad.status).toBe(400);
+    expect(bad.reply).toEqual({ error: "unknown or malformed command", state: null });
+    const after = await post({ cmd: "state" });
+    if (!("ok" in after.reply)) throw new Error(after.reply.error);
+    expect(after.reply.state).toEqual({ ...start.reply.state, events: [] });
+  });
+
+  it("reports a game lost to a crash on every later request, until a new game", async () => {
+    const start = await post({ cmd: "new_game", seed: "9", risk: 50, bluff_pct: 33 });
+    if (!("ok" in start.reply)) throw new Error(start.reply.error);
+    const crashed = holder.__leanProcess!;
+    crashed.kill();
+    await vi.waitFor(() => expect(crashed.alive).toBe(false));
+    for (const body of [{ cmd: "act", action: "call" }, { cmd: "state" }, { cmd: "next_hand" }, { cmd: "review", hand: 1 }]) {
+      const { status, reply } = await post(body);
+      expect(status, JSON.stringify(body)).toBe(410);
+      expect(reply, JSON.stringify(body)).toEqual(ENGINE_STOPPED);
+    }
+    const again = await post({ cmd: "new_game", seed: "9", risk: 50, bluff_pct: 33 });
+    expect("ok" in again.reply).toBe(true);
   });
 });

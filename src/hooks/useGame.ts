@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { type Action, type DealtHand, type HandState, type LegalActions, type Session } from "@/engine";
-import type { LeanCommand, LeanEvent, LeanReply, LeanReview, LeanState } from "@/lean/protocol";
+import type { ApiReply, LeanCommand, LeanEvent, LeanReview, LeanState } from "@/lean/protocol";
 import { cardText, chips } from "@/lib/format";
 import { HUMAN_COLOR, botFor } from "@/lib/roster";
 
@@ -56,6 +56,11 @@ export interface Game {
   /** Hand history, one line per event. Not shown on screen; kept for testing and checking games afterwards. */
   log: string[];
   stats: Stats;
+  /**
+   * Why the game is gone (the engine stopped, hung or restarted), or null while it is live.
+   * A lost game shows only this message and a way back to the setup screen.
+   */
+  lost: string | null;
 }
 
 export type Status = "playing" | "handOver" | "gameOver";
@@ -72,13 +77,13 @@ const BOT_SEAT = 1;
 /** Oldest lines are dropped beyond this, so a very long session can't grow without bound. */
 const LOG_LIMIT = 5000;
 
-async function sendToLean(command: LeanCommand): Promise<LeanReply> {
+async function sendToLean(command: LeanCommand): Promise<ApiReply> {
   const response = await fetch("/api/game", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(command),
   });
-  return (await response.json()) as LeanReply;
+  return (await response.json()) as ApiReply;
 }
 
 /** How long the bot "thinks" before its moves appear, in milliseconds. Display only: Lean already chose the moves. */
@@ -191,7 +196,7 @@ function appendLog(log: string[], entries: string[]): string[] {
 }
 
 /** The game after a reply from Lean. `previous` is null for a new game. */
-function withReply(base: Omit<Game, "lean" | "session" | "dealt" | "legal" | "botLine" | "boardBefore">, previous: Game | null, s: LeanState): Game {
+function withReply(base: Omit<Game, "lean" | "session" | "dealt" | "legal" | "botLine" | "boardBefore" | "lost">, previous: Game | null, s: LeanState): Game {
   const names = base.players.map((p) => p.name);
   const newHand = !previous || previous.lean.hand !== s.hand;
   const header = newHand ? [`Hand #${s.hand}`] : [];
@@ -222,6 +227,7 @@ function withReply(base: Omit<Game, "lean" | "session" | "dealt" | "legal" | "bo
     botLine: lastBotLine(s.events, lines),
     log: appendLog(base.log, [...header, ...lines]),
     stats,
+    lost: null,
   };
 }
 
@@ -242,6 +248,17 @@ export function useGame() {
   // One request at a time; replies to an abandoned game are ignored.
   const busy = useRef(false);
   const generation = useRef(0);
+
+  /** Show an error reply. If it says the game is gone, the table offers only a new game. */
+  const failed = useCallback((reply: { error: string; lost?: true }) => {
+    if (reply.lost && gameRef.current) {
+      setError(null);
+      setReview(null);
+      setGame((g) => g && { ...g, lost: reply.error });
+    } else {
+      setError(reply.error);
+    }
+  }, []);
 
   /** Send a command and apply Lean's reply. `make` builds the next game from the reply.
    * With `pause` (the human's moves), the human cannot act from the moment the move is sent,
@@ -265,7 +282,7 @@ export function useGame() {
         }
         setGame(make(reply.state));
       } else {
-        setError(reply.error);
+        failed(reply);
       }
     } catch (e) {
       if (gen === generation.current) setError(`Could not reach the game engine: ${e instanceof Error ? e.message : String(e)}`);
@@ -275,7 +292,7 @@ export function useGame() {
         setThinking(false);
       }
     }
-  }, []);
+  }, [failed]);
 
   const start = useCallback(
     (settings: GameSettings) => {
@@ -299,7 +316,7 @@ export function useGame() {
   const humanAct = useCallback(
     (action: Action) => {
       const g = gameRef.current;
-      if (!g || g.lean.toAct !== HUMAN_SEAT || g.lean.status !== "playing") return;
+      if (!g || g.lost !== null || g.lean.toAct !== HUMAN_SEAT || g.lean.status !== "playing") return;
       const command: LeanCommand = action.type === "raise" ? { cmd: "act", action: "raise", amount: action.to } : { cmd: "act", action: action.type };
       void request(
         command,
@@ -312,7 +329,7 @@ export function useGame() {
 
   const nextHand = useCallback(() => {
     const g = gameRef.current;
-    if (!g || g.lean.status !== "handOver") return;
+    if (!g || g.lost !== null || g.lean.status !== "handOver") return;
     setReview(null);
     void request({ cmd: "next_hand" }, (s) => withReply(g, g, s));
   }, [request]);
@@ -320,7 +337,7 @@ export function useGame() {
   /** Ask Lean to grade the finished hand. A review changes nothing in the game. */
   const openReview = useCallback(async () => {
     const g = gameRef.current;
-    if (!g || g.lean.status === "playing" || busy.current) return;
+    if (!g || g.lost !== null || g.lean.status === "playing" || busy.current) return;
     const hand = g.lean.hand;
     const gen = generation.current;
     // Hold other commands (like Next Hand) until the review is back, so it cannot open over a new hand.
@@ -331,7 +348,7 @@ export function useGame() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ cmd: "review", hand } satisfies LeanCommand),
       });
-      const reply = (await response.json()) as LeanReply;
+      const reply = (await response.json()) as ApiReply;
       if (gen !== generation.current || gameRef.current?.lean.hand !== hand) return;
       if ("ok" in reply && reply.review) {
         setError(null);
@@ -339,14 +356,14 @@ export function useGame() {
       } else if ("ok" in reply) {
         setError("The game engine sent no review.");
       } else {
-        setError(reply.error);
+        failed(reply);
       }
     } catch (e) {
       if (gen === generation.current) setError(`Could not reach the game engine: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       if (gen === generation.current) busy.current = false;
     }
-  }, []);
+  }, [failed]);
 
   const closeReview = useCallback(() => setReview(null), []);
 

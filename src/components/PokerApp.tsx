@@ -17,9 +17,10 @@ export function PokerApp() {
   // The sliders used last, so the setup screen keeps them after leaving a table.
   const [lastSettings, setLastSettings] = useState<GameSettings | undefined>(undefined);
   const status = game ? gameStatus(game) : null;
+  const lost = game?.lost ?? null;
 
   useEffect(() => {
-    if (status !== "handOver" || showRules || review) return;
+    if (status !== "handOver" || showRules || review || lost !== null) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.repeat || (e.target instanceof HTMLElement && e.target.closest("button, input, textarea, select, [contenteditable]"))) return;
       if (e.key === " " || e.key === "Enter") {
@@ -32,7 +33,7 @@ export function PokerApp() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [status, showRules, review, nextHand, openReview]);
+  }, [status, showRules, review, lost, nextHand, openReview]);
 
   const begin = (settings: GameSettings) => {
     setLastSettings(settings);
@@ -111,7 +112,9 @@ export function PokerApp() {
       <main className="layout">
         <div className="play-column">
           <Table game={game} botThinking={thinking} />
-          {hand.result ? (
+          {lost !== null ? (
+            <ActionBar hand={hand} legal={null} waiting="Game lost" handStrength={strength} onAct={humanAct} />
+          ) : hand.result ? (
             <NextHandBar
               game={game}
               delay={resultDelay(game)}
@@ -133,7 +136,21 @@ export function PokerApp() {
         </div>
       </main>
 
-      {status === "gameOver" && replaySeed !== null && (
+      {lost !== null && (
+        <div className="modal-backdrop">
+          <div className="modal game-over" role="alertdialog" aria-label="Game lost">
+            <div className="game-over-icon">⚠</div>
+            <h2>This game was lost</h2>
+            <p className="muted">{lost}</p>
+            <div className="modal-actions">
+              <button className="btn btn-primary" onClick={quit}>
+                New game
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {lost === null && status === "gameOver" && replaySeed !== null && (
         <GameOver
           delay={resultDelay(game) + 1.2}
           won={game.session.seats[HUMAN_SEAT]!.stack > 0}
