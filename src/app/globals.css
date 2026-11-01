@@ -1640,6 +1640,31 @@ kbd {
   text-align: center;
 }
 
+/* At the table, the message floats at the top right, above any dialog (dialogs are z-index 50),
+   so a review error is not hidden behind Game Over, and the table does not move. */
+.app:not(.app-lobby) .engine-error {
+  position: fixed;
+  top: 76px;
+  right: 24px;
+  z-index: 60;
+  max-width: min(420px, calc(100vw - 48px));
+  margin: 0;
+  background: #2a1b1c;
+  box-shadow: var(--shadow);
+}
+
+/* Shown instead of the setup screen while a game or a practice hand is dealt. */
+.dealing {
+  margin: auto;
+  padding: 18px 28px;
+  border-radius: var(--radius);
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
+  color: var(--muted);
+  font-size: 16px;
+  font-weight: 600;
+}
+
 /* Named opponents on the start screen (presets for the Risk and Bluff sliders). */
 .opponent-list {
   display: grid;
