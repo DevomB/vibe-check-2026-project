@@ -3,8 +3,9 @@
 For the short live walkthrough, start with [DEMO_QUICKSTART.md](DEMO_QUICKSTART.md).
 
 This file records the demo hands, the practice-challenge spots and the morning checks.
-Every hand here was played on the compiled Lean engine, with scripted human moves. Nothing
-in this file was played in a browser yet: the UI checks below are still to do.
+Every hand here was played on the compiled Lean engine, with scripted human moves. The
+user has now confirmed all three practice scenes in the browser with the expected grades
+and outcomes. The remaining visual checks are tracked in `DEMO_QUICKSTART.md`.
 
 Integration recheck, November 1: all six scenes/challenges passed again on the integrated
 program, and fresh Linux Makefile launch plus production HTTP checks passed in

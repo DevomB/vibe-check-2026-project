@@ -65,10 +65,11 @@ Record visual results here; leave unchecked until actually seen:
 
 | Browser check | Pass | Fail / observation |
 | --- | --- | --- |
-| Practice loads at the expected river | [ ] | |
-| Bad call: Mistake and automatic review | [ ] | |
+| Practice loads at the expected river | [x] | User confirmed Fast → Avoid a bad call → Call 60 reached the expected review. |
+| Bad call: Mistake and automatic review | [x] | User confirmed the review opens with Mistake, about −2.7 BB. |
 | Retry/fold: Best | [ ] | |
-| Right-and-lose: Best despite losing | [ ] | |
+| Right-and-lose: Best despite losing | [x] | User confirmed the bot wins but the review says Best, +10.3 BB. |
+| Catch a bluff: win and Best | [x] | User confirmed a win and Best, about +1.6 BB, with Peek off. |
 | Peek reveals and re-hides cards | [ ] | |
 | Range and Risk panels work | [ ] | |
 | Proof links open and close cleanly | [ ] | |
