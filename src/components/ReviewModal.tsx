@@ -120,12 +120,16 @@ export function ReviewModal({ review, game = null, peeked = false, hideSliderInf
   };
   const stepRef = useRef(step);
   stepRef.current = step;
+  const dialogRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const keys: Record<string, "start" | "back" | "next" | "end"> = { ArrowLeft: "back", ArrowRight: "next", Home: "start", End: "end" };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") return onClose();
       const to = keys[e.key];
       if (!to || (e.target instanceof HTMLElement && e.target.closest("input, textarea, select, [contenteditable]"))) return;
+      // Only while the review is the top dialog: not under the Proofs drawer.
+      const dialogs = document.querySelectorAll('[role="dialog"]');
+      if (dialogs[dialogs.length - 1] !== dialogRef.current) return;
       e.preventDefault();
       stepRef.current(to);
     };
@@ -147,7 +151,13 @@ export function ReviewModal({ review, game = null, peeked = false, hideSliderInf
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className={`modal ${styles.modal}`} role="dialog" aria-label={`Review of hand ${review.hand}`} onClick={(e) => e.stopPropagation()}>
+      <div
+        ref={dialogRef}
+        className={`modal ${styles.modal} ${game?.mode.kind === "practice" ? styles.roomForBar : ""}`}
+        role="dialog"
+        aria-label={`Review of hand ${review.hand}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <button className="modal-close" onClick={onClose} aria-label="Close">
           ×
         </button>
@@ -303,7 +313,7 @@ export function ReviewModal({ review, game = null, peeked = false, hideSliderInf
 
         <section className={styles.section}>
           {hideSliderInfo ? (
-            <p className="muted">The bot&apos;s reasons, its betting range and the Risk explorer stay hidden until its settings are revealed.</p>
+            <p className="muted">The bot&apos;s reasons, the hands it bets and the Risk explorer stay hidden until its settings are revealed.</p>
           ) : (
             <>
               <h3>Why the bot played this way</h3>

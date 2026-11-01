@@ -90,6 +90,11 @@
   max-width: 1040px;
 }
 
+/* In Practice the verdict bar floats over the bottom of the screen; leave room to scroll past it. */
+.roomForBar:global(.modal) {
+  padding-bottom: 104px;
+}
+
 .header {
   display: flex;
   flex-wrap: wrap;
