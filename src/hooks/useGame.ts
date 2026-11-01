@@ -105,13 +105,32 @@ const MYSTERY_BOT = { name: "Mystery bot", color: CUSTOM_BOT.color } as const;
 /** Oldest lines are dropped beyond this, so a very long session can't grow without bound. */
 const LOG_LIMIT = 5000;
 
+/** No reply from the game server: it is stopped or restarting, or it sent a page that is not a reply. */
+class NoReplyError extends Error {
+  constructor() {
+    super("The game server did not send a reply. Check that it is still running, then try again.");
+  }
+}
+
+/** Send one command through the game server. Throws a NoReplyError if no reply comes back. */
 async function sendToLean(command: ApiCommand): Promise<RouteReply> {
-  const response = await fetch("/api/game", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(command),
-  });
-  return (await response.json()) as RouteReply;
+  try {
+    const response = await fetch("/api/game", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(command),
+    });
+    return (await response.json()) as RouteReply;
+  } catch {
+    // The browser's own message ("Failed to fetch") tells the player nothing.
+    throw new NoReplyError();
+  }
+}
+
+/** The message for a request that failed outside Lean: no reply from the server, or a fault in this page. */
+function failureText(e: unknown): string {
+  if (e instanceof NoReplyError) return e.message;
+  return `Something went wrong in this page: ${e instanceof Error ? e.message : String(e)}`;
 }
 
 /** How long the bot "thinks" before its moves appear, in milliseconds. Display only: Lean already chose the moves. */
@@ -354,7 +373,7 @@ export function useGame() {
         failed(reply);
       }
     } catch (e) {
-      if (gen === generation.current) setError(`Could not reach the game engine: ${e instanceof Error ? e.message : String(e)}`);
+      if (gen === generation.current) setError(failureText(e));
     } finally {
       if (gen === generation.current) {
         setThinking(false);
@@ -465,12 +484,12 @@ export function useGame() {
           g = withReply(g ?? base, g, reply.state);
         }
         if (!g || !atRiverDecision(g.lean)) {
-          setError(`"${challenge.title}" did not reach its river decision, so it was stopped. The engine may have changed since the spot was recorded.`);
+          setError(`"${challenge.title}" did not play out as recorded, so it was stopped before its river decision.`);
           return;
         }
         setGame(g);
       } catch (e) {
-        if (gen === generation.current) setError(`Could not reach the game engine: ${e instanceof Error ? e.message : String(e)}`);
+        if (gen === generation.current) setError(failureText(e));
       } finally {
         if (gen === generation.current) {
           setLoading(null);
@@ -529,7 +548,7 @@ export function useGame() {
         failed(reply);
       }
     } catch (e) {
-      if (gen === generation.current) setError(`Could not reach the game engine: ${e instanceof Error ? e.message : String(e)}`);
+      if (gen === generation.current) setError(failureText(e));
     } finally {
       if (gen === generation.current) release();
     }
@@ -567,7 +586,7 @@ export function useGame() {
         setGame(withPeek(shown, asked, peekRef.current));
         return null;
       } catch (e) {
-        return `Could not reach the game engine: ${e instanceof Error ? e.message : String(e)}`;
+        return failureText(e);
       } finally {
         if (gen === generation.current) release();
       }

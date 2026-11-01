@@ -1027,6 +1027,29 @@ kbd {
   font-variant-numeric: tabular-nums;
 }
 
+/* Turn mode and the two commits, folded under "Replay details" on a line of their own. */
+.replay-details {
+  flex-basis: 100%;
+}
+
+.replay-details summary {
+  width: fit-content;
+  margin: 0 auto;
+  cursor: pointer;
+}
+
+.replay-details summary:hover {
+  color: var(--text);
+}
+
+.replay-details-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 14px;
+  margin-top: 4px;
+}
+
 /* ---------- Modals ---------- */
 .modal-backdrop {
   position: fixed;
