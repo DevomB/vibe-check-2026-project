@@ -2,8 +2,9 @@
 
 Sun Nov 1, 2026, main at c2f4034. Every theorem named here is stated in
 [`engine/Checks/Challenge.lean`](../engine/Checks/Challenge.lean), proved under
-`engine/Engine/Proofs/`, listed in [`engine/comparator.json`](../engine/comparator.json) (61
-names), and checked on every push to main by `checks/audit.sh`, `lake comparator` and
+`engine/Engine/Proofs/`, listed in [`engine/comparator.json`](../engine/comparator.json) (69
+names since main at 6b9da7a and this update; see [GUARANTEES.md](GUARANTEES.md) for the full
+table), and checked on every push to main by `checks/audit.sh`, `lake comparator` and
 `lake check`, using only the three standard axioms. The README's "What we trust" section lists
 the definitions a reader must still read. Most important first.
 
@@ -66,8 +67,8 @@ the definitions a reader must still read. Most important first.
    optimal play. See [THEORY.md](THEORY.md), sections 3 and 6.
 
 2. **The web side.** The browser, the Node bridge and the JSON layer (`Protocol.lean`'s
-   serialisation) are tested, not proved. The buttons the UI offers (`legalOptions`) are not
-   proved equal to the rules (`Legal`); the engine rejects illegal moves anyway (T3).
+   serialisation) are tested, not proved. (The buttons the engine offers, `legalOptions`,
+   are now proved equal to the rules: `legalOptions_exact`.)
 
 3. **The estimates.** Preflop equity comes from a stored table and flop equity from 1,000
    seeded deals. Only the turn and river counts are exact.
