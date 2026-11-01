@@ -63,11 +63,12 @@ describe.skipIf(process.env.SKIP_LEAN === "1")("demo scene (a) through /api/game
     const reply = await post({ cmd: "review", hand: 1 });
     if (!("ok" in reply)) throw new Error(reply.error);
     const decisions = reply.review!.decisions;
-    // Only the river call is graded; the earlier moves show "not graded yet".
+    // The earlier moves are a raise and checks, which are not graded. Only the river call is.
     expect(decisions.slice(0, -1).every((d) => d.label === null)).toBe(true);
     expect(decisions.at(-1)).toMatchObject({
       street: "river",
       your_action: "call",
+      model: "river-set",
       label: "Mistake",
       worth_bb: { call: -2.67, fold: 0 },
       equity_had: 0.185,
