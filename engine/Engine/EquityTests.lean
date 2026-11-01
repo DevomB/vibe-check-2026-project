@@ -37,16 +37,38 @@ part of the build) and against poker-calculations by the differential tests in `
 #guard countsFor 0 [card 9 .clubs, card 9 .diamonds]
   [card 9 .hearts, card 9 .spades, card 14 .clubs, card 13 .diamonds, card 2 .hearts] == ⟨990, 0, 0⟩
 
-/-! ## Flop: 1,000 random deals from the seed -/
+/-! ## Flop: 1,000 random deals
 
-#guard countsFor 42 [card 11 .clubs, card 11 .diamonds]
-  [card 9 .hearts, card 8 .hearts, card 2 .spades] == ⟨799, 2, 199⟩
+The sampler, given a seed, matches the TypeScript reference bit for bit (seed 42 here). The bot
+starts it from `flopSampleSeed`, worked out from its cards and the board only. -/
 
--- The same seed gives the same counts; another seed gives other deals.
+#guard sampledCounts [card 11 .clubs, card 11 .diamonds]
+  [card 9 .hearts, card 8 .hearts, card 2 .spades] flopSamples 42 == ⟨799, 2, 199⟩
+
+-- The same seed gives the same deals; another seed gives other deals.
+#guard sampledCounts [card 11 .clubs, card 11 .diamonds] [card 9 .hearts, card 8 .hearts, card 2 .spades] flopSamples 43 !=
+  sampledCounts [card 11 .clubs, card 11 .diamonds] [card 9 .hearts, card 8 .hearts, card 2 .spades] flopSamples 42
+
+-- The bot's flop counts are the sampler started from its own cards and the board.
 #guard countsFor 42 [card 11 .clubs, card 11 .diamonds] [card 9 .hearts, card 8 .hearts, card 2 .spades] ==
+  sampledCounts [card 11 .clubs, card 11 .diamonds] [card 9 .hearts, card 8 .hearts, card 2 .spades] flopSamples
+    (flopSampleSeed [card 11 .clubs, card 11 .diamonds] [card 9 .hearts, card 8 .hearts, card 2 .spades])
+
+-- The game's seed no longer matters: any seed gives the same flop counts.
+#guard countsFor 43 [card 11 .clubs, card 11 .diamonds] [card 9 .hearts, card 8 .hearts, card 2 .spades] ==
   countsFor 42 [card 11 .clubs, card 11 .diamonds] [card 9 .hearts, card 8 .hearts, card 2 .spades]
-#guard countsFor 43 [card 11 .clubs, card 11 .diamonds] [card 9 .hearts, card 8 .hearts, card 2 .spades] !=
-  countsFor 42 [card 11 .clubs, card 11 .diamonds] [card 9 .hearts, card 8 .hearts, card 2 .spades]
+
+-- Card order does not matter either.
+#guard flopSampleSeed [card 11 .clubs, card 11 .diamonds] [card 9 .hearts, card 8 .hearts, card 2 .spades] ==
+  flopSampleSeed [card 11 .diamonds, card 11 .clubs] [card 2 .spades, card 9 .hearts, card 8 .hearts]
+
+-- A different board gives a different sampling seed.
+#guard flopSampleSeed [card 11 .clubs, card 11 .diamonds] [card 9 .hearts, card 8 .hearts, card 2 .spades] !=
+  flopSampleSeed [card 11 .clubs, card 11 .diamonds] [card 9 .hearts, card 8 .hearts, card 3 .spades]
+
+-- The new counts are still a sensible estimate: 1,000 deals, and the pair of jacks wins most.
+#guard (countsFor 0 [card 11 .clubs, card 11 .diamonds] [card 9 .hearts, card 8 .hearts, card 2 .spades]).total == 1000
+#guard (countsFor 0 [card 11 .clubs, card 11 .diamonds] [card 9 .hearts, card 8 .hearts, card 2 .spades]).win > 700
 
 /-! ## Preflop: the table in `data/preflop.json` -/
 

@@ -44,10 +44,12 @@ def main : IO UInt32 := do
       fun _ => countsFor 0 (cards "Ah Kh") (cards "Qh 7h 2c 9s")),
     ("turn 6c6d | As Ks 7d 2h", ⟨25456, 44, 20040⟩,
       fun _ => countsFor 0 (cards "6c 6d") (cards "As Ks 7d 2h")),
+    -- The flop sampler at a given seed, against TypeScript. (The bot itself starts the
+    -- sampler from `flopSampleSeed`, from its cards and the board.)
     ("flop JcJd | 9h 8h 2s, seed 42", ⟨799, 2, 199⟩,
-      fun _ => countsFor 42 (cards "Jc Jd") (cards "9h 8h 2s")),
+      fun _ => sampledCounts (cards "Jc Jd") (cards "9h 8h 2s") flopSamples 42),
     ("flop 5d4d | Ah Kc 3s, seed 7", ⟨292, 55, 653⟩,
-      fun _ => countsFor 7 (cards "5d 4d") (cards "Ah Kc 3s")),
+      fun _ => sampledCounts (cards "5d 4d") (cards "Ah Kc 3s") flopSamples 7),
     -- Preflop table entries rebuilt from scratch: entry i uses seed 20261031 + i,
     -- 50,000 deals, cards as in `exampleCards` (clubs, then diamonds or clubs).
     ("preflop table AA rebuilt (entry 0)", ⟨42520, 254, 7226⟩,

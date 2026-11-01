@@ -9,7 +9,7 @@ The bot counts the opponent's possible outcomes that its hand wins, ties and los
 It uses whole-number counts, never a decimal win chance.
 
 - Preflop: the fixed table in `Engine/PreflopData.lean`, looked up by starting-hand name.
-- Flop: 1,000 random deals from the seed.
+- Flop: 1,000 random deals, seeded from the bot's own cards and the board (`flopSampleSeed`).
 - Turn: exact. Every river card, and with it every opponent hand (45,540 outcomes).
 - River: exact. Every opponent hand from the 45 unseen cards (990 hands).
 
@@ -165,17 +165,34 @@ def preflopCounts : List Card → Counts
     | none => ⟨0, 0, 1⟩
   | _ => ⟨0, 0, 1⟩
 
+/-- A card's number, 0 to 51: rank first, then suit (2c = 0, 2d = 1, ..., As = 51). -/
+def cardNumber (c : Card) : Nat :=
+  4 * c.rank.val + match c.suit with | .clubs => 0 | .diamonds => 1 | .hearts => 2 | .spades => 3
+
+/-- One bit per card in `cards`, at the card's number. Card order does not matter. -/
+def cardBits (cards : List Card) : Nat :=
+  cards.foldl (fun bits c => bits ||| 2 ^ cardNumber c) 0
+
+/-- The seed for the bot's flop deals, worked out only from the cards the bot can see: its two
+cards and the board (as sets, so their order does not matter). It does not use the game's
+seed, so the deals cannot depend on how the deck was shuffled, or on your cards. -/
+def flopSampleSeed (hole board : List Card) : Nat :=
+  mixSeed (nextSeed (cardBits hole + 2 ^ 52 * cardBits board))
+
 /-- The counts for the bot's two hole cards and the board (0, 3, 4 or 5 cards): the preflop
-table, 1,000 random deals from `seed` on the flop, exact on the turn and river. The same
-inputs always give the same counts. caution and Bluff are not inputs, so the Risk slider cannot
-change the counts.
+table, 1,000 random deals on the flop, exact on the turn and river. The same cards always give
+the same counts. caution and Bluff are not inputs, so the Risk slider cannot change the counts.
+
+The first input, a seed, is not used: on the flop the deals start from `flopSampleSeed`, which
+comes only from the bot's cards and the board. So no street depends on the game's seed
+(`countsFor_ignores_seed`). The input is kept so every caller stays the same.
 
 The game never gives other board sizes; for them the counts are a single loss (a 0% win
 chance). -/
-def countsFor (seed : Nat) (hole board : List Card) : Counts :=
+def countsFor (_seed : Nat) (hole board : List Card) : Counts :=
   match board.length with
   | 0 => preflopCounts hole
-  | 3 => sampledCounts hole board flopSamples seed
+  | 3 => sampledCounts hole board flopSamples (flopSampleSeed hole board)
   | 4 => turnCounts hole board
   | 5 => riverCounts hole board
   | _ => ⟨0, 0, 1⟩

@@ -127,13 +127,13 @@ export const GUARANTEES: readonly Guarantee[] = [
     code: "T3b",
     title: "The bot cannot see your cards",
     says: [
-      "The bot decides from its own two cards, the board, the chips, its settings and the hand's seed. Two games that differ only in your cards or the cards left in the deck get exactly the same bot move.",
-      "Before the flop, on the turn and on the river, the bot does not use the seed either, so its move there does not depend on how the deck was shuffled at all.",
+      "The bot decides only from its own two cards, the board, the chips and its settings. Two games that differ only in your cards, the cards left in the deck, or the game's seed get exactly the same bot move.",
+      "The bot ignores the game's seed on every street, so its move cannot depend on how the deck was shuffled. On the flop, its random deals start from a seed worked out from its own cards and the board only.",
     ],
-    theorems: ["bot_never_sees_your_cards", "bot_ignores_seed_off_flop"],
+    theorems: ["bot_ignores_seed", "bot_never_sees_your_cards"],
     assumes: ["It is about the engine's own game session, where the bot's move is worked out."],
     limits: [
-      "On the flop the bot estimates its chances from random deals that start from the hand's seed, and the same seed shuffled the real deck. It never reads the deck or your cards, but the two are not proved independent.",
+      "It says what the bot is given, not how well it plays. The flop estimate is still 1,000 random deals, not an exact count.",
     ],
   },
   {

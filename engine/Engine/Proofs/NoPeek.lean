@@ -4,64 +4,43 @@ import Engine.Proofs.Session
 # The bot cannot see your cards
 
 The bot's move (`Session.botChoice`) is worked out from: its own two cards, the board, the
-chips, its settings, the Risk the player set, and the hand's seed. Your cards and the undealt
-deck are not among them.
+chips, its settings and the Risk the player set. The game's seed is passed in too, but the bot
+does not use it on any street (`bot_ignores_seed`): before the flop it reads a fixed table, on
+the turn and river it counts every outcome exactly, and on the flop its random deals start from
+a seed worked out only from its own cards and the board (`flopSampleSeed`). Your cards and the
+undealt deck are never among its inputs.
 
-- `bot_never_sees_your_cards`: two games that differ only in your cards, the undealt deck, or
-  anything else the bot is not given, get exactly the same bot move.
-- `bot_ignores_seed_off_flop`: before the flop, on the turn and on the river, the bot does not
-  use the seed either. So there, its move does not depend on how the deck was shuffled at
-  all: not on your cards, not even indirectly.
-
-## What is not covered: the flop
-
-On the flop the bot estimates its chances from 1,000 random deals (`sampledCounts`). Those
-random numbers start from the hand's seed (`handSeed`, cut to 32 bits), and the same seed
-also shuffled the real deck. The bot never runs the deck's shuffle, never gets the deck, and
-deals its samples from all unseen cards in a fixed order, using a different random number
-method (mulberry32, not the deck's). So it does not read your cards. But its flop samples and
-the real deal both come from one seed, so they are not proved independent. A fix, not made
-here: give the flop sampling its own seed that the deal does not use.
+- `bot_ignores_seed`: for any two seeds, the bot makes exactly the same choice. So its move
+  cannot depend on how the deck was shuffled, even indirectly.
+- `bot_never_sees_your_cards`: two games that give the bot the same settings, Risk, cards, board
+  and chips get exactly the same bot move, whatever your cards, the undealt deck, the game's
+  seed or the hand number are.
 -/
 
+/-- The bot's counts do not use the seed it is given, on any street. -/
+theorem countsFor_ignores_seed (seed seed' : Nat) (hole board : List Card) :
+    countsFor seed hole board = countsFor seed' hole board := rfl
+
+/-- **The bot ignores the seed.** For any two seeds, the slider bot makes exactly the same
+choice (the same move and the same reason), on every street. So its move cannot depend on how
+the deck was shuffled: not on the cards left in the deck, and not on your cards. -/
+theorem bot_ignores_seed (sl : Sliders) (seed seed' : Nat) (hole board : List Card) (s : State)
+    (shown : Option Nat) :
+    botDecide sl seed hole board s shown = botDecide sl seed' hole board s shown := by
+  simp only [botDecide, countsFor_ignores_seed seed seed' hole board]
+
 /-- **The bot never sees your cards.** Take two game sessions that give the bot the same
-things: the same settings and Risk, the same game seed and hand number, the same cards for
-the bot, the same board and the same chips. Then the bot makes exactly the same choice,
-whatever your cards are, whatever cards are left in the deck. -/
+things: the same settings and Risk, the same cards for the bot, the same board and the same
+chips. Then the bot makes exactly the same choice, whatever your cards are, whatever cards are
+left in the deck, and whatever the game's seed and hand number are. -/
 theorem bot_never_sees_your_cards (s s' : Session)
     (hsl : s'.sliders = s.sliders) (hrisk : s'.risk = s.risk)
-    (hseed : s'.game.seed = s.game.seed) (hno : s'.game.handNo = s.game.handNo)
     (hhole : s'.game.hand.hole bot = s.game.hand.hole bot)
     (hboard : s'.game.hand.board = s.game.hand.board)
     (hchips : s'.game.hand.chips = s.game.hand.chips) :
     s'.botChoice = s.botChoice := by
-  simp only [Session.botChoice, hsl, hrisk, hseed, hno, hhole, hboard, hchips]
-
-/-- On a board of 0, 4 or 5 cards (before the flop, the turn, the river), the bot's counts
-do not use the seed. -/
-theorem countsFor_seed_free (seed seed' : Nat) (hole board : List Card)
-    (h3 : board.length ≠ 3) : countsFor seed hole board = countsFor seed' hole board := by
-  unfold countsFor
-  split
-  · rfl
-  · exact absurd (by assumption) h3
-  all_goals rfl
-
-/-- **Off the flop, the bot's move does not depend on the shuffle at all.** Before the flop,
-on the turn and on the river, two sessions that give the bot the same settings, Risk, cards,
-board and chips get the same bot choice, even with a different game seed or hand number. So
-there the bot's move cannot depend on how the deck was shuffled, and so not on your cards,
-even indirectly. -/
-theorem bot_ignores_seed_off_flop (s s' : Session)
-    (hsl : s'.sliders = s.sliders) (hrisk : s'.risk = s.risk)
-    (hhole : s'.game.hand.hole bot = s.game.hand.hole bot)
-    (hboard : s'.game.hand.board = s.game.hand.board)
-    (hchips : s'.game.hand.chips = s.game.hand.chips)
-    (hflop : s.game.hand.board.length ≠ 3) :
-    s'.botChoice = s.botChoice := by
-  simp only [Session.botChoice, botDecide, hsl, hrisk, hhole, hboard, hchips]
-  rw [countsFor_seed_free (handSeed s'.game.seed s'.game.handNo)
-    (handSeed s.game.seed s.game.handNo) _ _ hflop]
+  simp only [Session.botChoice, hsl, hrisk, hhole, hboard, hchips]
+  exact bot_ignores_seed _ _ _ _ _ _ _
 
 /-! ## Checks -/
 
@@ -80,22 +59,30 @@ def peekSessionSwapped : Session :=
 /-- The conditions can hold: the two sessions agree on everything the bot is given, and
 differ in your cards. So the theorem applies, and the bot's choice is the same. -/
 example : peekSessionSwapped.botChoice = peekSession.botChoice :=
-  bot_never_sees_your_cards _ _ rfl rfl rfl rfl rfl rfl rfl
+  bot_never_sees_your_cards _ _ rfl rfl rfl rfl rfl
 
 -- Your cards really are different in the two sessions.
 #guard peekSessionSwapped.game.hand.hole human != peekSession.game.hand.hole human
 
-/-- Before the flop the seed does not matter either: a different game seed, same bot cards,
-board and chips, same choice. -/
-example : ({ peekSession with game := { peekSession.game with seed := 12345 } } : Session).botChoice
-    = peekSession.botChoice :=
-  bot_ignores_seed_off_flop _ _ rfl rfl rfl rfl rfl (by decide)
+/-- A different game seed and hand number, same bot cards, board and chips: same choice. -/
+example : ({ peekSession with game := { peekSession.game with seed := 12345, handNo := 9 } } :
+    Session).botChoice = peekSession.botChoice :=
+  bot_never_sees_your_cards _ _ rfl rfl rfl rfl rfl
 
-/-- The statement rejects a bot that reads your cards. A "peeking" bot that decided from
-your cards instead of its own would, in these two sessions, be given different cards, so the
-theorem's condition on the bot's cards would fail for it. -/
-example : peekSessionSwapped.game.hand.hole human ≠ peekSession.game.hand.hole human := by
-  decide
+/-- On a flop, where the bot deals random samples, two different seeds give the same choice. -/
+example : botDecide (Sliders.ofRisk 50) 1 [card 11 .clubs, card 11 .diamonds]
+      [card 9 .hearts, card 8 .hearts, card 2 .spades] exStart =
+    botDecide (Sliders.ofRisk 50) 2 [card 11 .clubs, card 11 .diamonds]
+      [card 9 .hearts, card 8 .hearts, card 2 .spades] exStart :=
+  bot_ignores_seed _ _ _ _ _ _ _
 
+-- The statement rejects a bot that samples from the game's seed. The flop sampler started
+-- from seeds 42 and 43 gives different counts, so a bot that passed the game's seed to it would
+-- make choices that depend on that seed, and `bot_ignores_seed` would fail for it.
+#guard sampledCounts [card 11 .clubs, card 11 .diamonds]
+    [card 9 .hearts, card 8 .hearts, card 2 .spades] flopSamples 42 !=
+  sampledCounts [card 11 .clubs, card 11 .diamonds]
+    [card 9 .hearts, card 8 .hearts, card 2 .spades] flopSamples 43
+
+#print axioms bot_ignores_seed
 #print axioms bot_never_sees_your_cards
-#print axioms bot_ignores_seed_off_flop
