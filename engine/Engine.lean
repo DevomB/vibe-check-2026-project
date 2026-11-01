@@ -48,3 +48,4 @@ import Engine.Proofs.Examples
 import Engine.Explain
 import Engine.ExplainTests
 import Engine.Proofs.Explain
+import Engine.Proofs.BluffCatcher
