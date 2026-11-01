@@ -287,7 +287,7 @@ def goldenCases : List GoldenCase := [
 ]
 
 /-- 40 river spots with no bet to face, decided by the river betting set
-(`riverOpeningFromSet`). These need the real `riverBets` from `Engine/River.lean`. -/
+(`riverOpeningFromSet`). `Engine/SliderRiverTests.lean` checks these. -/
 def goldenRiverOpeningCases : List GoldenCase := [
   ⟨88, 22, 18, 90, 882, "Qc As", "Ks 3d 9d Qs 7s", 750, 8, 242, 0, 0, 10, 1, "raise 8", "Bet 8: a value hand, among the strongest 30% on this board."⟩,
   ⟨91, 18, 14, 43, 933, "7d 2h", "4c 6s 5c 5d Ts", 0, 984, 16, 0, 0, 0, 1, "check", "Check: a bluff hand, but no bet is allowed."⟩,

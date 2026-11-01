@@ -230,7 +230,7 @@ ${mainCases.map(leanCase).join(",\n")}
 ]
 
 /-- ${riverCases.length} river spots with no bet to face, decided by the river betting set
-(\`riverOpeningFromSet\`). These need the real \`riverBets\` from \`Engine/River.lean\`. -/
+(\`riverOpeningFromSet\`). \`Engine/SliderRiverTests.lean\` checks these. -/
 def goldenRiverOpeningCases : List GoldenCase := [
 ${riverCases.map(leanCase).join(",\n")}
 ]
