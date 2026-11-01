@@ -114,14 +114,25 @@ export interface LeanState {
 export type ReviewLabel = "Best" | "Good" | "Inaccuracy" | "Mistake" | "Blunder";
 
 /**
- * One of the human's moves in a hand (MVP §13). Only a call or fold facing the bot's
- * opening river bet is graded; for every other move the label and numbers are null,
- * and the screen shows "not graded yet".
+ * What a grade counts as the bot's possible hands.
+ * - `river-set`: the bot's river betting set, for your call or fold after the bot opens the
+ *   river with a bet. This grade is proved (T5, T8).
+ * - `any-hand`: every hand the bot could hold, equally likely, with the hand checked down
+ *   after a call. For every other call or fold that faces a bet. Not proved.
+ */
+export type ReviewModel = "river-set" | "any-hand";
+
+/**
+ * One of the human's moves in a hand (MVP §13). A call or fold that faces a bet is graded;
+ * for every other move the label and numbers are null, and the screen says it is not graded.
  */
 export interface ReviewDecision {
   street: "preflop" | "flop" | "turn" | "river";
   your_action: "fold" | "check" | "call" | "bet" | "raise";
   label: ReviewLabel | null;
+  /** How the grade counts the bot's hands; null when not graded. Missing from an engine built
+   * before any-hand grades, which graded only the river set. */
+  model?: ReviewModel | null;
   /** What calling and folding were each worth from this point, in big blinds. */
   worth_bb: { call: number; fold: number } | null;
   /** The human's chance to win against the bot's possible hands, 0 to 1. */

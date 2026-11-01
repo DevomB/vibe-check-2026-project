@@ -3,6 +3,7 @@ import { POST } from "@/app/api/game/route";
 import { TABLE } from "@/hooks/useGame";
 import type { ApiReply, LeanCommand, LeanReview, LeanState } from "@/lean/protocol";
 import { CHALLENGES, type Challenge, atRiverDecision, practiceVerdict } from "./challenges";
+import { isRiverSetGrade } from "@/lib/review";
 
 /**
  * Replays each practice spot through the `/api/game` handler, the way the app loads it, and
@@ -30,7 +31,7 @@ async function answer(c: Challenge, choice: "call" | "fold") {
   const { state } = await send({ cmd: "act", action: choice });
   const { review } = await send({ cmd: "review", hand: 1 });
   if (!review) throw new Error("no review");
-  return { state, review, graded: review.decisions.find((d) => d.label !== null) };
+  return { state, review, graded: review.decisions.find(isRiverSetGrade) };
 }
 
 describe.skipIf(process.env.SKIP_LEAN === "1")("practice challenges through /api/game", () => {

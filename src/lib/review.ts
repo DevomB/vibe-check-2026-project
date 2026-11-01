@@ -179,50 +179,77 @@ export interface GradedCoach {
   worths: string | null;
   /** The label's band: "Mistake: 2 to 5 big blinds worse than the best choice." */
   band: string;
+  /** What the grade assumes, for a grade that is not proved (`any-hand`); null for the proved river grade. */
+  note: string | null;
 }
+
+/** A grade against the bot's river betting set: the proved one. An engine without `model` graded only this. */
+export function isRiverSetGrade(d: ReviewDecision): boolean {
+  return d.label !== null && (d.model ?? "river-set") === "river-set";
+}
+
+/** The note under an any-hand grade: what it assumes, and that it is not proved. */
+export const ANY_HAND_NOTE =
+  "This grade counts every hand the bot could hold as equally likely, and assumes no more betting after a call. It ignores how the bot played. Unlike the river grade, it is not proved in Lean.";
 
 /**
  * Words for a graded decision: a call or a fold, the only moves the review grades. When the
- * label is not Best, the other choice was worth more (theorem `review_best_iff`), so it was Best.
+ * label is not Best, the other choice was worth more (theorem `review_best_iff` for the river
+ * grade), so it was Best.
  */
 export function gradedCoach(d: ReviewDecision): GradedCoach | null {
   if (d.label === null || (d.your_action !== "call" && d.your_action !== "fold")) return null;
   const mine = d.your_action;
   const other = mine === "call" ? "fold" : "call";
   const info = labelInfo(d.label);
+  const riverSet = isRiverSetGrade(d);
+  const against = riverSet ? "the hands the bot bets here" : "any two cards the bot could hold";
   const chances =
     d.equity_had !== null && d.equity_needed !== null
-      ? `You win ${formatPct(d.equity_had)} against the hands the bot bets here (a tie counts half). Calling needed ${formatPct(d.equity_needed)} to break even.`
+      ? `You win ${formatPct(d.equity_had)} against ${against} (a tie counts half). Calling needed ${formatPct(d.equity_needed)} to break even.`
       : null;
   // Display amounts are rounded; equal decimals do not establish an exact tie.
   const better = d.label !== "Best" ? `${GERUND[other]} was Best.` : null;
   const worths = d.worth_bb ? `Calling was worth ${formatBb(d.worth_bb.call)}; folding was worth ${formatBb(d.worth_bb.fold)}.` : null;
-  return { headline: `${GERUND[mine]} is ${withArticle(d.label)}.`, chances, better, worths, band: `${info.label}: ${info.band}.` };
+  // `countsFor` deals 1,000 random boards on the flop; the turn and river counts are exact.
+  const note = riverSet ? null : d.street === "flop" ? `${ANY_HAND_NOTE} On the flop, the chance comes from 1,000 random deals, so it is an estimate.` : ANY_HAND_NOTE;
+  return { headline: `${GERUND[mine]} is ${withArticle(d.label)}.`, chances, better, worths, band: `${info.label}: ${info.band}.`, note };
 }
 
 const NO_SUCH_DECISION = "This hand had no such decision.";
 
 /**
  * Why a hand has no grade. `events` are the hand's events, or null when they are not known;
- * `human` is your seat. Lean grades only a call or fold after the bot's first river bet, so
- * the reason names the part of that the hand did not have.
+ * `human` is your seat. Lean grades your calls and folds that face a bet, so the reason says
+ * why the hand had none.
  */
 export function noGradeReason(events: readonly LeanEvent[] | null, human: number): string {
-  const what = "Lean grades one decision: your call or fold after the bot makes the first bet on the river.";
-  return `${what} ${events === null ? NO_SUCH_DECISION : missingRiverSpot(events, human)}`;
+  const what = "Lean grades your calls and folds when you face a bet.";
+  return `${what} ${events === null ? NO_SUCH_DECISION : missingGradedMove(events, human)}`;
 }
 
-/** The part of the graded spot a hand did not have: the river, a river bet, or your call or fold after the bot's. */
-function missingRiverSpot(events: readonly LeanEvent[], human: number): string {
-  const riverAt = events.findIndex((e) => e.type === "street" && e.street === "river");
-  if (riverAt < 0) return "This hand ended before the river.";
-  const moves = events.slice(riverAt + 1).flatMap((e) => (e.type === "action" ? [e] : []));
-  if (moves.length === 0) return "A player was all-in before the river, so there was no betting on it.";
-  // A bet is a raise from nothing.
-  const firstBet = moves.findIndex((e) => e.action === "raise");
-  if (firstBet < 0) return "Nobody bet on the river.";
-  if (moves[firstBet]!.player === human) return "You made the first bet on the river.";
-  const answer = moves.slice(firstBet + 1).find((e) => e.player === human);
-  if (answer?.action === "raise") return "You raised the bot's bet instead of calling or folding.";
-  return NO_SUCH_DECISION;
+/** Why a hand had no call or fold that faced a bet: you made no move, you only raised the bets, or you faced none. */
+function missingGradedMove(events: readonly LeanEvent[], human: number): string {
+  // Chips each player has put in on this street: a player faces a bet when the other has put in more.
+  const bets = [0, 0];
+  let moved = false;
+  let raisedBets = false;
+  let answeredBet = false;
+  for (const e of events) {
+    if (e.type === "street") bets.fill(0);
+    else if (e.type === "blind") bets[e.player] = (bets[e.player] ?? 0) + e.amount;
+    else if (e.type === "action") {
+      const facing = (bets[1 - e.player] ?? 0) > (bets[e.player] ?? 0);
+      if (e.player === human) {
+        moved = true;
+        if (facing && e.action === "raise") raisedBets = true;
+        if (facing && (e.action === "call" || e.action === "fold")) answeredBet = true;
+      }
+      bets[e.player] = (bets[e.player] ?? 0) + e.amount;
+    }
+  }
+  if (!moved) return "You made no move in this hand.";
+  if (answeredBet) return NO_SUCH_DECISION;
+  if (raisedBets) return "You raised the bets you faced instead of calling or folding.";
+  return "You never faced a bet in this hand.";
 }

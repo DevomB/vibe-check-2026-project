@@ -2,12 +2,14 @@ import { describe, expect, it } from "vitest";
 import type { LeanEvent, LeanReview, ReviewDecision } from "@/lean/protocol";
 import { describeEvents } from "@/hooks/useGame";
 import {
+  ANY_HAND_NOTE,
   LABELS,
   boardAt,
   buildMoveList,
   formatBb,
   formatPct,
   gradedCoach,
+  isRiverSetGrade,
   labelCounts,
   movesFromReview,
   noGradeReason,
@@ -134,7 +136,22 @@ describe("gradedCoach", () => {
       better: null,
       worths: "Calling was worth +1.57 BB; folding was worth 0.00 BB.",
       band: "Best: worth as much as the best choice.",
+      note: null,
     });
+  });
+
+  it("says what an any-hand grade assumes, and that it is not proved", () => {
+    const turnFold: ReviewDecision = { ...RIVER_CALL, street: "turn", your_action: "fold", label: "Mistake", model: "any-hand", equity_had: 0.42, equity_needed: 0.25 };
+    const c = gradedCoach(turnFold)!;
+    expect(c.chances).toBe("You win 42.0% against any two cards the bot could hold (a tie counts half). Calling needed 25.0% to break even.");
+    expect(c.note).toBe(ANY_HAND_NOTE);
+    expect(c.note).toMatch(/not proved in Lean\.$/);
+    expect(gradedCoach({ ...turnFold, street: "flop" })!.note).toMatch(/1,000 random deals, so it is an estimate\.$/);
+    expect(isRiverSetGrade(turnFold)).toBe(false);
+    // An engine without the field graded only the river set.
+    expect(isRiverSetGrade(RIVER_CALL)).toBe(true);
+    expect(isRiverSetGrade({ ...RIVER_CALL, model: "river-set" })).toBe(true);
+    expect(isRiverSetGrade(ungraded("river", "call"))).toBe(false);
   });
 
   it("names the other choice as Best when yours was not", () => {
@@ -187,42 +204,34 @@ describe("labels", () => {
 });
 
 describe("noGradeReason", () => {
-  const reason = (why: string) => `Lean grades one decision: your call or fold after the bot makes the first bet on the river. ${why}`;
-  const toRiver = EVENTS.slice(0, 11);
-  const act = (player: number, action: "check" | "raise" | "fold", amount = 0): LeanEvent => ({ type: "action", player, action, amount, allIn: false });
+  const reason = (why: string) => `Lean grades your calls and folds when you face a bet. ${why}`;
+  const blinds = EVENTS.slice(0, 2);
+  const act = (player: number, action: "check" | "call" | "raise" | "fold", amount = 0): LeanEvent => ({ type: "action", player, action, amount, allIn: false });
 
-  it("says the hand ended before the river", () => {
-    expect(noGradeReason(EVENTS.slice(0, 4), 0)).toBe(reason("This hand ended before the river."));
+  it("says when you made no move", () => {
+    // You are the big blind, and the bot folds its small blind.
+    const botFolds: LeanEvent[] = [{ type: "blind", player: 1, amount: 5, kind: "small" }, { type: "blind", player: 0, amount: 10, kind: "big" }, act(1, "fold"), { type: "win", player: 0, amount: 15 }];
+    expect(noGradeReason(botFolds, 0)).toBe(reason("You made no move in this hand."));
   });
 
-  it("says when nobody bet on the river", () => {
-    expect(noGradeReason([...toRiver, act(1, "check"), act(0, "check")], 0)).toBe(reason("Nobody bet on the river."));
-  });
-
-  it("says when you bet the river first", () => {
-    expect(noGradeReason([...toRiver, act(1, "check"), act(0, "raise", 20), act(1, "fold")], 0)).toBe(
-      reason("You made the first bet on the river."),
-    );
-  });
-
-  it("says when you raised the bot's river bet", () => {
-    expect(noGradeReason([...toRiver, act(1, "raise", 20), act(0, "raise", 60), act(1, "fold")], 0)).toBe(
-      reason("You raised the bot's bet instead of calling or folding."),
-    );
-  });
-
-  it("says when an all-in left no river betting", () => {
-    const allIn: LeanEvent[] = [
-      ...EVENTS.slice(0, 2),
-      { type: "action", player: 0, action: "raise", amount: 495, allIn: true, to: 500 },
-      { type: "action", player: 1, action: "call", amount: 490, allIn: true },
-      ...EVENTS.filter((e) => e.type === "street"),
-      { type: "win", player: 0, amount: 1000 },
+  it("says when you never faced a bet", () => {
+    // You are the big blind: the bot calls, then everyone checks to the end.
+    const checkedDown: LeanEvent[] = [
+      { type: "blind", player: 1, amount: 5, kind: "small" },
+      { type: "blind", player: 0, amount: 10, kind: "big" },
+      act(1, "call", 5),
+      act(0, "check"),
+      ...EVENTS.filter((e) => e.type === "street").flatMap((street) => [street, act(0, "check"), act(1, "check")]),
     ];
-    expect(noGradeReason(allIn, 0)).toBe(reason("A player was all-in before the river, so there was no betting on it."));
+    expect(noGradeReason(checkedDown, 0)).toBe(reason("You never faced a bet in this hand."));
   });
 
-  it("falls back when the events are not known, or the hand had the spot", () => {
+  it("says when you raised the bets you faced", () => {
+    // You raise the big blind from the small blind, and the bot folds.
+    expect(noGradeReason([...blinds, act(0, "raise", 25), act(1, "fold")], 0)).toBe(reason("You raised the bets you faced instead of calling or folding."));
+  });
+
+  it("falls back when the events are not known, or the hand had a call or fold that faced a bet", () => {
     expect(noGradeReason(null, 0)).toBe(reason("This hand had no such decision."));
     expect(noGradeReason(EVENTS, 0)).toBe(reason("This hand had no such decision."));
   });

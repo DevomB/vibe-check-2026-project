@@ -38,7 +38,7 @@ function finishedHands(game: Game): number {
 }
 
 export function PokerApp() {
-  const { game, error, thinking, review, loading, peek, peekedHands, setPeek, start, startChallenge, humanAct, nextHand, openReview, closeReview, reveal, quit } =
+  const { game, error, thinking, review, loading, grades, peek, peekedHands, setPeek, start, startChallenge, humanAct, nextHand, openReview, closeReview, reveal, quit } =
     useGame();
   const [showRules, setShowRules] = useState(false);
   /** The "What is guaranteed?" drawer: closed (null), or open at a guarantee id (or the top). */
@@ -318,6 +318,7 @@ export function PokerApp() {
               delay={resultDelay(game)}
               gameOver={status === "gameOver"}
               reviewOpening={reviewOpening}
+              grades={grades.find((g) => g.hand === game.lean.hand) ?? null}
               onNextHand={nextHand}
               onReview={askReview}
             />
@@ -368,6 +369,7 @@ export function PokerApp() {
           delay={resultDelay(game) + 1.2}
           won={game.session.seats[HUMAN_SEAT]!.stack > 0}
           stats={game.stats}
+          grades={grades}
           seed={mysteryHidden ? null : replaySeed}
           replay={{
             sliders: game.lean.sliders ?? null,

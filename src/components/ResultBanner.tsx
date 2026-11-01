@@ -1,5 +1,6 @@
 import { chips } from "@/lib/format";
-import type { Game } from "@/hooks/useGame";
+import type { Game, HandGrades } from "@/hooks/useGame";
+import { ReviewBadge } from "./ReviewBadge";
 
 interface Winner {
   name: string;
@@ -60,17 +61,34 @@ interface BarProps {
   gameOver: boolean;
   /** True while Lean grades the hand: the Review button says "Opening…" and waits. */
   reviewOpening?: boolean;
+  /** Lean's grades for this hand, once they are back; null until then, and in a hidden Mystery game. */
+  grades?: HandGrades | null;
   onNextHand: () => void;
   onReview: () => void;
 }
 
+/** The hand's grades in one line: a badge per graded move, in order. */
+export function HandGradeLine({ grades }: { grades: HandGrades }) {
+  const n = grades.decisions.length;
+  if (n === 0) return <span className="hand-grade muted">No graded move</span>;
+  return (
+    <span className="hand-grade" title="Lean's grade for each of your calls and folds facing a bet. Review shows why.">
+      {grades.decisions.map((d, i) => (
+        <ReviewBadge key={i} label={d.label!} size="sm" />
+      ))}
+      <span className="muted">{n === 1 ? "1 graded move" : `${n} graded moves`}</span>
+    </span>
+  );
+}
+
 /** Replaces the action bar between hands. The result is on the felt (`ResultBadge`), so this bar
- * holds only Review and Next hand. The result stays until the human clicks Next hand; nothing
+ * holds the hand's grades, Review and Next hand. The result stays until the human clicks Next hand; nothing
  * advances on its own. */
-export function NextHandBar({ delay, gameOver, reviewOpening = false, onNextHand, onReview }: BarProps) {
+export function NextHandBar({ delay, gameOver, reviewOpening = false, grades = null, onNextHand, onReview }: BarProps) {
   return (
     <div className="action-bar next-bar" style={{ animationDelay: `${delay}s` }}>
       <div className="action-buttons">
+        {grades && <HandGradeLine grades={grades} />}
         <button className="btn btn-ghost next-btn" onClick={onReview} disabled={reviewOpening}>
           {reviewOpening ? (
             "Opening…"

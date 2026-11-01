@@ -13,9 +13,11 @@
  * Options: --seeds N (search seeds 1..N, default 60). POKER_BIN picks the program; the
  * default is engine/.lake/build/bin/poker (poker.exe on Windows) under the current folder.
  *
- * Every spot is in hand 1 of a new game. A river spot is graded only when the bot opens the
- * river with a bet and the human calls or folds (MVP §6). Each spot is checked by replaying
- * the same seed and moves twice, once ending in a call and once in a fold.
+ * Every spot is in hand 1 of a new game. Each spot is the human's call or fold after the bot
+ * opens the river with a bet: Lean grades it with the bot's river betting set ("model":
+ * "river-set", the proved grade, MVP §6). Lean also grades other calls and folds facing a bet
+ * ("model": "any-hand", not proved); this script ignores those. Each spot is checked by
+ * replaying the same seed and moves twice, once ending in a call and once in a fold.
  */
 import { spawn, execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -96,6 +98,16 @@ function facingRiverBet(s) {
   return s.status === "playing" && s.toAct === 0 && s.board.length === 5 && s.legal.call > 0 && s.players[0].bet === 0;
 }
 
+/**
+ * Is this the proved grade of a call or fold against the bot's opening river bet? Lean marks it
+ * "model": "river-set". An engine from before "model" existed graded only that decision, on
+ * the river.
+ */
+function isRiverSetGrade(d) {
+  if (d.label === null) return false;
+  return d.model === undefined ? d.street === "river" : d.model === "river-set";
+}
+
 /** Scripted human lines: each gives the human's move in a state before the river decision. */
 const LINES = {
   /** Call the small blind, then check, or call any bet. */
@@ -144,9 +156,9 @@ async function replay(engine, spot, final) {
   if (!facingRiverBet(before)) throw new Error(`seed ${spot.seed}: the moves do not reach the bot's opening river bet`);
   const after = (await engine.ok({ cmd: "act", action: final })).state;
   const review = (await engine.ok({ cmd: "review", hand: 1 })).review;
-  const graded = review.decisions.filter((d) => d.label !== null);
+  const graded = review.decisions.filter(isRiverSetGrade);
   if (graded.length !== 1 || graded[0].your_action !== final || graded[0].street !== "river") {
-    throw new Error(`seed ${spot.seed}: expected one graded river ${final}, got ${JSON.stringify(review.decisions)}`);
+    throw new Error(`seed ${spot.seed}: expected one river-set grade of the river ${final}, got ${JSON.stringify(review.decisions)}`);
   }
   const reasons = after.botReasons ?? [];
   return {
@@ -209,7 +221,7 @@ const rank = (label) => LABELS.indexOf(label);
  */
 async function quickLook(engine) {
   const after = (await engine.ok({ cmd: "act", action: "call" })).state;
-  const d = (await engine.ok({ cmd: "review", hand: 1 })).review.decisions.find((x) => x.label !== null);
+  const d = (await engine.ok({ cmd: "review", hand: 1 })).review.decisions.find(isRiverSetGrade);
   const worth = d.worth_bb.call;
   const foldGuess = worth <= 0 ? "Best" : worth < 0.5 ? "Good" : worth < 2 ? "Inaccuracy" : worth < 5 ? "Mistake" : "Blunder";
   const reasons = after.botReasons ?? [];
