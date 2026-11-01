@@ -1,0 +1,1604 @@
+{
+ "ranking: random deals": {
+  "seed": 20261031,
+  "deals": 100000,
+  "sha256": "ecb981b7d499907a3ad413906b1c49c89cdab3161d9e454fde2fa4e8be15bc8c",
+  "first": [
+   "rank 7s 7d | 4s Kd | Jc 9d 8h Ts 2c",
+   "rank 5h 4h | 6c Td | 6s 3s Ad 8h Jd",
+   "rank 4s 6s | 6c 5h | Kd Ac 4d 5c Qd",
+   "rank Kc 9d | 4d 5c | 2d Jc Qh 8d 5h",
+   "rank 9s Qh | 8c 3d | 2s Tc 6c 5s Jh",
+   "rank 6h Qs | 9c Jd | Jh 2d Th Kc Tc",
+   "rank Kc 6c | 9d 7s | 6h 2d Jc Qc Kh",
+   "rank Tc 6d | 3c 3d | 5c 2h 6h 6s Th",
+   "rank 9s Qd | 8h 2c | Td 2h 8d Qs 4s",
+   "rank Tc 8h | 9h 6c | 3d 2c Ts 7s Jh"
+  ]
+ },
+ "ranking: deals from lowRanks": {
+  "seed": 20261031,
+  "deals": 2000,
+  "sha256": "e81d4ed4aa646f4d6500331cec22250bc2f74ef8bc39003f0334bd4b465a9ebf",
+  "first": [
+   "rank Ad 6d | 2h Ac | 2d 6h 3c 4c 5d",
+   "rank 6h 6c | Ac Ah | 3c 5d 5h 4c 6s",
+   "rank 4c 3h | 6s 5c | 2d 4h 4d 2s 5d",
+   "rank 2s 2d | 3d 4c | Ad 2h 4s 5d 3s",
+   "rank As 3d | 3h 2c | 2d 6d 4h 2s 3c",
+   "rank 2s 4c | 5c Ac | 4s 5h Ad 6d 5d",
+   "rank Ac 3c | 4c 2c | 5d 2h 5h 6d 5c",
+   "rank 4c 2s | 6c 2c | 5s 6s 6h 5h 4s",
+   "rank 4s 6c | Ad 4d | 3h 5d 3c 2c 4c",
+   "rank 2s Ac | 3d 3s | 6c 5c As 5d 4s"
+  ]
+ },
+ "ranking: deals from highRanks": {
+  "seed": 20261031,
+  "deals": 2000,
+  "sha256": "c378f5f3f08f25ff82e309ac8e555331ad99a60ae098d72975d0da8a83f09ede",
+  "first": [
+   "rank Qd Kh | Td Th | Ts Jh Kd Ac Jc",
+   "rank Ad Kd | Ac Jc | Jd As Ts Qd Kh",
+   "rank Ad Kh | Td Jh | Qd Qh Kc Tc Ts",
+   "rank Jc Ac | Td Qd | Tc Jd Js Th Ad",
+   "rank Ah Ad | Ks Jh | Qd Js Jc Td Ac",
+   "rank Jh Qc | Kh Td | Qh Ks Tc Kd Ac",
+   "rank As Th | Jh Ks | Qc Kc Ah Kh Ac",
+   "rank Jd Jh | Qh Qs | Kh Js Ks Kc As",
+   "rank Qs Jd | Kc Kh | Qh Ad Th Td Qc",
+   "rank Kd Qd | Kc Jd | Qc Kh Ks Ts Ac"
+  ]
+ },
+ "ranking: deals from hearts": {
+  "seed": 20261031,
+  "deals": 2000,
+  "sha256": "a8902a42b7bab809c02af6a97405dfe402511c8568f580e2ae7c317f5cceb254",
+  "first": [
+   "rank Th 2d | 9h 3c | 2h Kh 2c Qh 6h",
+   "rank 9h 4c | 2s 6h | 2h 8h 7h 2c 4s",
+   "rank 4h 3d | 3s Kh | 7h 9h 5h Jh Qh",
+   "rank 2h 3s | 2c 3h | Ah 5h 4s 3c 3d",
+   "rank 2s Qh | Th 3h | 4h Kh 5h 7h 4c",
+   "rank 7h 3h | 6h 3c | 3d Kh 4c Qh 2s",
+   "rank Qh 3h | 3s 4c | 4d 3c 4h 6h Jh",
+   "rank 5h 4d | 2s Kh | Jh 9h 3s 4c Ah",
+   "rank Jh 4c | 2s 4s | 6h 3c Th 4h Ah",
+   "rank 8h 4s | 2h 3h | 2d Ah Kh 2s 4c"
+  ]
+ },
+ "exact vs known hand: flop": [
+  {
+   "request": "vs 7d 3d | Qh 5d | 6s 7h Qs",
+   "lean": "182 0 808",
+   "leanEquity": 0.18383838383838383,
+   "library": 0.18383838383838383
+  },
+  {
+   "request": "vs Ah 9d | Qd 3c | Th As 7d",
+   "lean": "959 0 31",
+   "leanEquity": 0.9686868686868687,
+   "library": 0.9686868686868687
+  },
+  {
+   "request": "vs 7s Ah | Ks 8h | 4c Ad 5d",
+   "lean": "947 16 27",
+   "leanEquity": 0.9646464646464646,
+   "library": 0.9646464646464646
+  },
+  {
+   "request": "vs 3h 4c | As Ac | Qs 7h 4s",
+   "lean": "189 0 801",
+   "leanEquity": 0.19090909090909092,
+   "library": 0.19090909090909092
+  },
+  {
+   "request": "vs 3d Jc | 4s 2s | Kd Jd 7d",
+   "lean": "956 28 6",
+   "leanEquity": 0.9797979797979798,
+   "library": 0.9797979797979798
+  },
+  {
+   "request": "vs Qh Jh | 8s 3c | As 3s 9d",
+   "lean": "238 0 752",
+   "leanEquity": 0.2404040404040404,
+   "library": 0.2404040404040404
+  },
+  {
+   "request": "vs Jd Kh | Ad 7c | 4s 5h 8c",
+   "lean": "207 12 771",
+   "leanEquity": 0.21515151515151515,
+   "library": 0.21515151515151515
+  },
+  {
+   "request": "vs Tc 4d | 6s Qh | 9s 9h 2d",
+   "lean": "222 33 735",
+   "leanEquity": 0.2409090909090909,
+   "library": 0.2409090909090909
+  },
+  {
+   "request": "vs 4c 8c | Qh 7h | 2s Jh Kc",
+   "lean": "250 8 732",
+   "leanEquity": 0.25656565656565655,
+   "library": 0.25656565656565655
+  },
+  {
+   "request": "vs Ks 7s | Jh 6h | 8c Kc 6d",
+   "lean": "808 0 182",
+   "leanEquity": 0.8161616161616162,
+   "library": 0.8161616161616162
+  },
+  {
+   "request": "vs 5h 8c | 3h 6d | 4h 9d Tc",
+   "lean": "675 69 246",
+   "leanEquity": 0.7166666666666667,
+   "library": 0.7166666666666667
+  },
+  {
+   "request": "vs 9c Qh | 7h Qs | 7d 5c Jd",
+   "lean": "177 0 813",
+   "leanEquity": 0.1787878787878788,
+   "library": 0.1787878787878788
+  },
+  {
+   "request": "vs Jh 6h | Th 4s | Ad Kh 5c",
+   "lean": "730 31 229",
+   "leanEquity": 0.753030303030303,
+   "library": 0.753030303030303
+  },
+  {
+   "request": "vs Kd 4c | Ad Ah | 6s 3s 3c",
+   "lean": "38 0 952",
+   "leanEquity": 0.03838383838383838,
+   "library": 0.03838383838383838
+  },
+  {
+   "request": "vs Ks Jh | 4c 6c | 7c Kd 9d",
+   "lean": "902 0 88",
+   "leanEquity": 0.9111111111111111,
+   "library": 0.9111111111111111
+  },
+  {
+   "request": "vs Jh 7d | Kh Qc | 3h Js 3s",
+   "lean": "720 0 270",
+   "leanEquity": 0.7272727272727273,
+   "library": 0.7272727272727273
+  },
+  {
+   "request": "vs 8d 6s | 3h 8h | 3c Ah 4d",
+   "lean": "150 15 825",
+   "leanEquity": 0.1590909090909091,
+   "library": 0.1590909090909091
+  },
+  {
+   "request": "vs Js Ks | 9c 4s | 5h Qs 9h",
+   "lean": "392 0 598",
+   "leanEquity": 0.39595959595959596,
+   "library": 0.39595959595959596
+  },
+  {
+   "request": "vs 3c 8s | 4h 8d | 3h 9c As",
+   "lean": "830 21 139",
+   "leanEquity": 0.848989898989899,
+   "library": 0.848989898989899
+  },
+  {
+   "request": "vs Tc 5h | Qc 2s | 2d Kh 8d",
+   "lean": "219 0 771",
+   "leanEquity": 0.22121212121212122,
+   "library": 0.22121212121212122
+  },
+  {
+   "request": "vs Ah 3h | 5s 3s | 4c Kh 5c",
+   "lean": "289 42 659",
+   "leanEquity": 0.31313131313131315,
+   "library": 0.31313131313131315
+  },
+  {
+   "request": "vs 6d Ah | Qs 2s | 8h Th 4c",
+   "lean": "769 0 221",
+   "leanEquity": 0.7767676767676768,
+   "library": 0.7767676767676768
+  },
+  {
+   "request": "vs 4d Th | Jd 2d | Ks 3c 8c",
+   "lean": "231 9 750",
+   "leanEquity": 0.23787878787878788,
+   "library": 0.23787878787878788
+  },
+  {
+   "request": "vs 4s Jc | 8h 2s | 5s 6c 3s",
+   "lean": "762 9 219",
+   "leanEquity": 0.7742424242424243,
+   "library": 0.7742424242424243
+  },
+  {
+   "request": "vs 5h Ks | 4s 6c | 5c 9h Th",
+   "lean": "836 0 154",
+   "leanEquity": 0.8444444444444444,
+   "library": 0.8444444444444444
+  },
+  {
+   "request": "vs 7h Jc | 4c 4s | As 2s Ah",
+   "lean": "263 3 724",
+   "leanEquity": 0.26717171717171717,
+   "library": 0.26717171717171717
+  },
+  {
+   "request": "vs 7d Th | 9h 4c | Qd 9d Kc",
+   "lean": "317 11 662",
+   "leanEquity": 0.32575757575757575,
+   "library": 0.32575757575757575
+  },
+  {
+   "request": "vs 6d Ts | 3s 2s | Qh 6h 8d",
+   "lean": "959 0 31",
+   "leanEquity": 0.9686868686868687,
+   "library": 0.9686868686868687
+  },
+  {
+   "request": "vs Jc 3h | 6c 5s | Ts 5d Ks",
+   "lean": "148 0 842",
+   "leanEquity": 0.1494949494949495,
+   "library": 0.1494949494949495
+  },
+  {
+   "request": "vs Ks Kh | Qc 3h | Ah 5d 7s",
+   "lean": "943 0 47",
+   "leanEquity": 0.9525252525252526,
+   "library": 0.9525252525252526
+  }
+ ],
+ "exact vs known hand: turn": [
+  {
+   "request": "vs Qc 2s | 9c Ac | Ts 6c Ks 2c",
+   "lean": "30 0 14",
+   "leanEquity": 0.6818181818181818,
+   "library": 0.6818181818181818
+  },
+  {
+   "request": "vs 2c 4d | Ad 7d | 9h Jh 6d Qd",
+   "lean": "5 0 39",
+   "leanEquity": 0.11363636363636363,
+   "library": 0.11363636363636363
+  },
+  {
+   "request": "vs Jh 6d | 8s 5s | 4c Jc Qs Kd",
+   "lean": "44 0 0",
+   "leanEquity": 1,
+   "library": 1
+  },
+  {
+   "request": "vs 8c Td | Qs 2d | Jh 4h 4s 8s",
+   "lean": "41 0 3",
+   "leanEquity": 0.9318181818181818,
+   "library": 0.9318181818181818
+  },
+  {
+   "request": "vs Qd 9c | Qh 5h | Qc Qs Jh 7d",
+   "lean": "23 18 3",
+   "leanEquity": 0.7272727272727273,
+   "library": 0.7272727272727273
+  },
+  {
+   "request": "vs Jh Kd | 5h 6d | As 8h Td 2h",
+   "lean": "38 0 6",
+   "leanEquity": 0.8636363636363636,
+   "library": 0.8636363636363636
+  },
+  {
+   "request": "vs 8d 2c | Qd 7s | Ac Qh Qs 2s",
+   "lean": "0 0 44",
+   "leanEquity": 0,
+   "library": 0
+  },
+  {
+   "request": "vs 5s 6s | Jh Qh | 6d Kh 7h Jd",
+   "lean": "3 0 41",
+   "leanEquity": 0.06818181818181818,
+   "library": 0.06818181818181818
+  },
+  {
+   "request": "vs 5h 3h | Kh 6h | 7h Kd Js 2s",
+   "lean": "0 0 44",
+   "leanEquity": 0,
+   "library": 0
+  },
+  {
+   "request": "vs 8s 5h | 9s 2h | 4h 2s Kh 9c",
+   "lean": "0 0 44",
+   "leanEquity": 0,
+   "library": 0
+  },
+  {
+   "request": "vs Qh Th | Ac Js | Ks 4c Ts 9c",
+   "lean": "38 0 6",
+   "leanEquity": 0.8636363636363636,
+   "library": 0.8636363636363636
+  },
+  {
+   "request": "vs 5s Ah | 6c 7d | Jh As Kc 8h",
+   "lean": "44 0 0",
+   "leanEquity": 1,
+   "library": 1
+  },
+  {
+   "request": "vs 4d Qc | 3s Qs | Ts Qd Ac 9h",
+   "lean": "3 38 3",
+   "leanEquity": 0.5,
+   "library": 0.5
+  },
+  {
+   "request": "vs 6s 6h | 8s 7s | 6d 5s 5c Qs",
+   "lean": "44 0 0",
+   "leanEquity": 1,
+   "library": 1
+  },
+  {
+   "request": "vs 3d 2d | 5c 7d | Th Jc 4d Ad",
+   "lean": "16 3 25",
+   "leanEquity": 0.3977272727272727,
+   "library": 0.3977272727272727
+  },
+  {
+   "request": "vs Js Kd | 9d Jd | 6s 5d 9s Ah",
+   "lean": "3 0 41",
+   "leanEquity": 0.06818181818181818,
+   "library": 0.06818181818181818
+  },
+  {
+   "request": "vs 2d 3c | Ad Kc | Jh 5h 5s 8s",
+   "lean": "6 0 38",
+   "leanEquity": 0.13636363636363635,
+   "library": 0.13636363636363635
+  },
+  {
+   "request": "vs 8c 2h | 7c 9c | Ad 4d 9d 3d",
+   "lean": "3 9 32",
+   "leanEquity": 0.17045454545454544,
+   "library": 0.17045454545454544
+  },
+  {
+   "request": "vs 5c 5s | 8c Td | Ts Qd 2c Tc",
+   "lean": "2 0 42",
+   "leanEquity": 0.045454545454545456,
+   "library": 0.045454545454545456
+  },
+  {
+   "request": "vs 6d 4c | 6c 2d | Ad 7h Js 5d",
+   "lean": "11 30 3",
+   "leanEquity": 0.5909090909090909,
+   "library": 0.5909090909090909
+  },
+  {
+   "request": "vs 3c 6s | Jc 7c | Kc Kd 7d 2c",
+   "lean": "0 0 44",
+   "leanEquity": 0,
+   "library": 0
+  },
+  {
+   "request": "vs Kh Qc | 7h 3s | Jd 2d 4s Ah",
+   "lean": "34 0 10",
+   "leanEquity": 0.7727272727272727,
+   "library": 0.7727272727272727
+  },
+  {
+   "request": "vs 3d 9d | Ts 6c | 9s As 2c 2d",
+   "lean": "41 0 3",
+   "leanEquity": 0.9318181818181818,
+   "library": 0.9318181818181818
+  },
+  {
+   "request": "vs 9h 3d | 6h Kc | Qs Kd 8c 7d",
+   "lean": "0 0 44",
+   "leanEquity": 0,
+   "library": 0
+  },
+  {
+   "request": "vs 7c Ad | Kc 7h | Kd 8s 2s 4d",
+   "lean": "3 0 41",
+   "leanEquity": 0.06818181818181818,
+   "library": 0.06818181818181818
+  },
+  {
+   "request": "vs Qs 4d | 9h As | Qd 7s 6s 9d",
+   "lean": "39 0 5",
+   "leanEquity": 0.8863636363636364,
+   "library": 0.8863636363636364
+  },
+  {
+   "request": "vs Qh 9h | 5s 5c | 4c 2h 4d 4s",
+   "lean": "7 0 37",
+   "leanEquity": 0.1590909090909091,
+   "library": 0.1590909090909091
+  },
+  {
+   "request": "vs 4s 2c | Jh 7c | 3d 8h Qh Jd",
+   "lean": "0 0 44",
+   "leanEquity": 0,
+   "library": 0
+  },
+  {
+   "request": "vs Qd Th | 9d Ah | 5c 6d 5d Qs",
+   "lean": "41 0 3",
+   "leanEquity": 0.9318181818181818,
+   "library": 0.9318181818181818
+  },
+  {
+   "request": "vs 6d Ac | Qd Tc | 8c 3c 5s Ks",
+   "lean": "38 0 6",
+   "leanEquity": 0.8636363636363636,
+   "library": 0.8636363636363636
+  }
+ ],
+ "exact vs known hand: river": [
+  {
+   "request": "vs 3d Qh | Ac Kd | 5h Js 8h 7d 2d",
+   "lean": "0 0 1",
+   "leanEquity": 0,
+   "library": 0
+  },
+  {
+   "request": "vs Jh 7s | Jc As | 7h Th Kd 2s Ah",
+   "lean": "0 0 1",
+   "leanEquity": 0,
+   "library": 0
+  },
+  {
+   "request": "vs 3c 6d | 8h Kc | Ad 8d 6c 4h 9c",
+   "lean": "0 0 1",
+   "leanEquity": 0,
+   "library": 0
+  },
+  {
+   "request": "vs Jd Js | Kd Th | Qs 4c 7c 3h Tc",
+   "lean": "1 0 0",
+   "leanEquity": 1,
+   "library": 1
+  },
+  {
+   "request": "vs 6s Kc | 3s Jc | 7d 5h 8c 7s 9s",
+   "lean": "1 0 0",
+   "leanEquity": 1,
+   "library": 1
+  },
+  {
+   "request": "vs 9c Th | Jh Jd | 8h 8d Ah 6h 7s",
+   "lean": "1 0 0",
+   "leanEquity": 1,
+   "library": 1
+  },
+  {
+   "request": "vs Qs 3h | Qc 9s | Ad 9d Ks 4h 3s",
+   "lean": "0 0 1",
+   "leanEquity": 0,
+   "library": 0
+  },
+  {
+   "request": "vs 9s 8d | 9c 6s | 9h Qs 2s As Th",
+   "lean": "0 1 0",
+   "leanEquity": 0.5,
+   "library": 0.5
+  },
+  {
+   "request": "vs Kd 9s | Js 9h | 4h 5c 3c Tc 5h",
+   "lean": "1 0 0",
+   "leanEquity": 1,
+   "library": 1
+  },
+  {
+   "request": "vs 3c Qc | Qh 9h | 6c Js 9d Ad Th",
+   "lean": "0 0 1",
+   "leanEquity": 0,
+   "library": 0
+  },
+  {
+   "request": "vs Qh 6h | 2h 5d | 4h 5c Kc 6s 9c",
+   "lean": "1 0 0",
+   "leanEquity": 1,
+   "library": 1
+  },
+  {
+   "request": "vs 2c 4d | Kh 3s | Kc Td Ac Qs Ad",
+   "lean": "0 0 1",
+   "leanEquity": 0,
+   "library": 0
+  },
+  {
+   "request": "vs 6d As | 7d 2s | 5s 3c 8h 3d Tc",
+   "lean": "1 0 0",
+   "leanEquity": 1,
+   "library": 1
+  },
+  {
+   "request": "vs Ad Js | 4s 9d | Ah 7s 9c 6h Jd",
+   "lean": "1 0 0",
+   "leanEquity": 1,
+   "library": 1
+  },
+  {
+   "request": "vs 3c Qh | 5s Jh | Ad 9s As Qd 4h",
+   "lean": "1 0 0",
+   "leanEquity": 1,
+   "library": 1
+  },
+  {
+   "request": "vs 2h Ac | 7d 8d | Tc 6h Kh 2s 4d",
+   "lean": "1 0 0",
+   "leanEquity": 1,
+   "library": 1
+  },
+  {
+   "request": "vs Th 2s | 4s 4h | 4d 2h Ah Jc 6d",
+   "lean": "0 0 1",
+   "leanEquity": 0,
+   "library": 0
+  },
+  {
+   "request": "vs 6c 2c | 7d Js | 8s 8d Kc Qc 5h",
+   "lean": "0 0 1",
+   "leanEquity": 0,
+   "library": 0
+  },
+  {
+   "request": "vs 5d 6s | 3s 6h | Ad Tc Jh 9h 7c",
+   "lean": "0 1 0",
+   "leanEquity": 0.5,
+   "library": 0.5
+  },
+  {
+   "request": "vs 9s Th | Qs Ac | 3s 8d Ks 8h 7h",
+   "lean": "0 0 1",
+   "leanEquity": 0,
+   "library": 0
+  },
+  {
+   "request": "vs Kh 6c | 4d 6s | Jh 3d Th 6h Td",
+   "lean": "1 0 0",
+   "leanEquity": 1,
+   "library": 1
+  },
+  {
+   "request": "vs 7s 6s | 6c Ts | 8s 7h Js 5h 4c",
+   "lean": "0 1 0",
+   "leanEquity": 0.5,
+   "library": 0.5
+  },
+  {
+   "request": "vs 7d Td | Js 5s | 4c Qd Kd 7s 3d",
+   "lean": "1 0 0",
+   "leanEquity": 1,
+   "library": 1
+  },
+  {
+   "request": "vs 7d Ac | 5h 5s | 2d Td Tc Th 9s",
+   "lean": "0 0 1",
+   "leanEquity": 0,
+   "library": 0
+  },
+  {
+   "request": "vs 4c Qc | 7c 5d | 5c Kh As 4d Jh",
+   "lean": "0 0 1",
+   "leanEquity": 0,
+   "library": 0
+  },
+  {
+   "request": "vs 3d 4s | 5d 9c | 4c Qh 5s Th 4d",
+   "lean": "1 0 0",
+   "leanEquity": 1,
+   "library": 1
+  },
+  {
+   "request": "vs Qc 5c | 2h Qs | 2c 7h 8c 6s 5d",
+   "lean": "1 0 0",
+   "leanEquity": 1,
+   "library": 1
+  },
+  {
+   "request": "vs Jc 3d | 4d 6s | As 2d 7h 6c 5d",
+   "lean": "0 0 1",
+   "leanEquity": 0,
+   "library": 0
+  },
+  {
+   "request": "vs Td Kd | Qd Ah | 9c Ac Js Qc 6d",
+   "lean": "1 0 0",
+   "leanEquity": 1,
+   "library": 1
+  },
+  {
+   "request": "vs 6h 9s | Jh 7s | Ad 2h Tc 4h Qc",
+   "lean": "0 0 1",
+   "leanEquity": 0,
+   "library": 0
+  }
+ ],
+ "exact vs random hand: turn": [
+  {
+   "request": "counts 20261031 | 2s 7d | 8d Ad Js As",
+   "lean": "4550 6699 34291",
+   "leanEquity": 0.1734628897672376,
+   "library": 0.1734628897672376,
+   "n": 45540
+  },
+  {
+   "request": "counts 20261032 | Tc Ac | 6h 3s 5d Ah",
+   "lean": "36114 264 9162",
+   "leanEquity": 0.7959156785243742,
+   "library": 0.7959156785243742,
+   "n": 45540
+  },
+  {
+   "request": "counts 20261033 | Jd Qc | 8d 7s 2h Qs",
+   "lean": "38404 264 6872",
+   "leanEquity": 0.8462011418533157,
+   "library": 0.8462011418533157,
+   "n": 45540
+  },
+  {
+   "request": "counts 20261034 | Ks Qc | Qh Td 7d 9d",
+   "lean": "32125 566 12849",
+   "leanEquity": 0.7116381203337725,
+   "library": 0.7116381203337725,
+   "n": 45540
+  },
+  {
+   "request": "counts 20261035 | 3c Kd | 7s 2s Qc 2d",
+   "lean": "17716 2677 25147",
+   "leanEquity": 0.41841238471673253,
+   "library": 0.41841238471673253,
+   "n": 45540
+  },
+  {
+   "request": "counts 20261036 | 4d Th | Td 2c 7h 3c",
+   "lean": "35478 369 9693",
+   "leanEquity": 0.783102766798419,
+   "library": 0.783102766798419,
+   "n": 45540
+  },
+  {
+   "request": "counts 20261037 | 9c 8d | 4c Kh 9s 8h",
+   "lean": "41030 314 4196",
+   "leanEquity": 0.9044137022397892,
+   "library": 0.9044137022397892,
+   "n": 45540
+  },
+  {
+   "request": "counts 20261038 | 4d Kc | Th 7s Jh 9h",
+   "lean": "10245 4742 30553",
+   "leanEquity": 0.27703118137900745,
+   "library": 0.27703118137900745,
+   "n": 45540
+  },
+  {
+   "request": "counts 20261039 | Ad 7c | Ah 9c Tc 6h",
+   "lean": "37234 1614 6692",
+   "leanEquity": 0.8353315766359245,
+   "library": 0.8353315766359245,
+   "n": 45540
+  },
+  {
+   "request": "counts 20261040 | 2h 5d | Jd 4d 3c 9c",
+   "lean": "10456 387 34697",
+   "leanEquity": 0.2338493631971893,
+   "library": 0.2338493631971893,
+   "n": 45540
+  },
+  {
+   "request": "counts 20261041 | 6d 3h | 6c Kc Ad 5h",
+   "lean": "26619 1868 17053",
+   "leanEquity": 0.6050285463328942,
+   "library": 0.6050285463328942,
+   "n": 45540
+  },
+  {
+   "request": "counts 20261042 | Qs 8h | Th 6c 8c Js",
+   "lean": "29950 700 14890",
+   "leanEquity": 0.6653491436100132,
+   "library": 0.6653491436100132,
+   "n": 45540
+  },
+  {
+   "request": "counts 20261043 | Js Ad | 4d Qd As 4c",
+   "lean": "37299 2592 5649",
+   "leanEquity": 0.8474967061923584,
+   "library": 0.8474967061923584,
+   "n": 45540
+  },
+  {
+   "request": "counts 20261044 | Js Ts | 9d 3s 6h 5s",
+   "lean": "16677 315 28548",
+   "leanEquity": 0.36966403162055333,
+   "library": 0.36966403162055333,
+   "n": 45540
+  },
+  {
+   "request": "counts 20261045 | Th Ks | Js Ah Qc 6d",
+   "lean": "44070 1134 336",
+   "leanEquity": 0.9801712779973649,
+   "library": 0.9801712779973649,
+   "n": 45540
+  },
+  {
+   "request": "counts 20261046 | 3s 2c | 7h Th 5d 2s",
+   "lean": "21748 910 22882",
+   "leanEquity": 0.4875494071146245,
+   "library": 0.4875494071146245,
+   "n": 45540
+  },
+  {
+   "request": "counts 20261047 | 9s Jd | 3s 4s Js 4d",
+   "lean": "35401 1144 8995",
+   "leanEquity": 0.7899209486166008,
+   "library": 0.7899209486166008,
+   "n": 45540
+  },
+  {
+   "request": "counts 20261048 | Tc 7c | Js 2c 7d Jh",
+   "lean": "35052 1358 9130",
+   "leanEquity": 0.7846069389547651,
+   "library": 0.7846069389547651,
+   "n": 45540
+  },
+  {
+   "request": "counts 20261049 | 8s 7s | 5s 4h Qs 4d",
+   "lean": "16721 2475 26344",
+   "leanEquity": 0.3943456302151954,
+   "library": 0.3943456302151954,
+   "n": 45540
+  },
+  {
+   "request": "counts 20261050 | Ks Jc | Kh Jh 7d 9c",
+   "lean": "39985 176 5379",
+   "leanEquity": 0.879951690821256,
+   "library": 0.879951690821256,
+   "n": 45540
+  }
+ ],
+ "exact vs random hand: river": [
+  {
+   "request": "counts 20261031 | 8h Qs | 4h Qc 5c 2d 7h",
+   "lean": "797 6 187",
+   "leanEquity": 0.8080808080808081,
+   "library": 0.8080808080808081,
+   "n": 990
+  },
+  {
+   "request": "counts 20261032 | Ts 3h | Qh 4d Ks Th Kc",
+   "lean": "656 68 266",
+   "leanEquity": 0.696969696969697,
+   "library": 0.696969696969697,
+   "n": 990
+  },
+  {
+   "request": "counts 20261033 | 7s 5d | 5c Ac 7h Kd As",
+   "lean": "672 76 242",
+   "leanEquity": 0.7171717171717171,
+   "library": 0.7171717171717171,
+   "n": 990
+  },
+  {
+   "request": "counts 20261034 | As 4c | Qs 9c 2c Js Th",
+   "lean": "144 57 789",
+   "leanEquity": 0.17424242424242425,
+   "library": 0.17424242424242425,
+   "n": 990
+  },
+  {
+   "request": "counts 20261035 | Tc Jd | Qs 2s 4h 4s 6c",
+   "lean": "245 8 737",
+   "leanEquity": 0.2515151515151515,
+   "library": 0.2515151515151515,
+   "n": 990
+  },
+  {
+   "request": "counts 20261036 | 2d 9d | 4s Jc Qd 5c 7h",
+   "lean": "52 21 917",
+   "leanEquity": 0.06313131313131314,
+   "library": 0.06313131313131314,
+   "n": 990
+  },
+  {
+   "request": "counts 20261037 | 4c 9h | 9d 6h Kh 6s 8c",
+   "lean": "644 62 284",
+   "leanEquity": 0.6818181818181818,
+   "library": 0.6818181818181818,
+   "n": 990
+  },
+  {
+   "request": "counts 20261038 | Tc Kd | Td 8h 5d 6c Ac",
+   "lean": "753 6 231",
+   "leanEquity": 0.7636363636363637,
+   "library": 0.7636363636363637,
+   "n": 990
+  },
+  {
+   "request": "counts 20261039 | 9d 8c | As Kd 2h 4c Kh",
+   "lean": "176 9 805",
+   "leanEquity": 0.18232323232323233,
+   "library": 0.18232323232323233,
+   "n": 990
+  },
+  {
+   "request": "counts 20261040 | 7s Qh | Qs 6d 9c 4d Kc",
+   "lean": "746 6 238",
+   "leanEquity": 0.7565656565656566,
+   "library": 0.7565656565656566,
+   "n": 990
+  },
+  {
+   "request": "counts 20261041 | 7s 8c | 8h 5s 2s 5d 4s",
+   "lean": "734 6 250",
+   "leanEquity": 0.7444444444444445,
+   "library": 0.7444444444444445,
+   "n": 990
+  },
+  {
+   "request": "counts 20261042 | Ad 2c | 9s 9h 4h Jh 2s",
+   "lean": "564 5 421",
+   "leanEquity": 0.5722222222222222,
+   "library": 0.5722222222222222,
+   "n": 990
+  },
+  {
+   "request": "counts 20261043 | Jc 7d | Qh Kh 9c 5h Jd",
+   "lean": "479 40 471",
+   "leanEquity": 0.5040404040404041,
+   "library": 0.5040404040404041,
+   "n": 990
+  },
+  {
+   "request": "counts 20261044 | 7d Ts | As 6s Jc Ks 5s",
+   "lean": "903 0 87",
+   "leanEquity": 0.9121212121212121,
+   "library": 0.9121212121212121,
+   "n": 990
+  },
+  {
+   "request": "counts 20261045 | 6h Kh | 3d 9h Qc Qs 6s",
+   "lean": "729 6 255",
+   "leanEquity": 0.7393939393939394,
+   "library": 0.7393939393939394,
+   "n": 990
+  },
+  {
+   "request": "counts 20261046 | Qc Jc | Td Kd Ah Ts Tc",
+   "lean": "640 9 341",
+   "leanEquity": 0.651010101010101,
+   "library": 0.651010101010101,
+   "n": 990
+  },
+  {
+   "request": "counts 20261047 | 4s Ah | Th 5c Ts Kc 5s",
+   "lean": "559 105 326",
+   "leanEquity": 0.6176767676767677,
+   "library": 0.6176767676767677,
+   "n": 990
+  },
+  {
+   "request": "counts 20261048 | 5s Th | 5c 7c Qd 4c 8d",
+   "lean": "408 6 576",
+   "leanEquity": 0.41515151515151516,
+   "library": 0.41515151515151516,
+   "n": 990
+  },
+  {
+   "request": "counts 20261049 | 6h 8h | Kc Jh 7c 9c Qs",
+   "lean": "134 52 804",
+   "leanEquity": 0.16161616161616163,
+   "library": 0.16161616161616163,
+   "n": 990
+  },
+  {
+   "request": "counts 20261050 | 9s Kd | Ks Td Qc Ad 6s",
+   "lean": "594 54 342",
+   "leanEquity": 0.6272727272727273,
+   "library": 0.6272727272727273,
+   "n": 990
+  },
+  {
+   "request": "counts 20261051 | Kh 3h | Ad Kd Jc Th 4c",
+   "lean": "594 54 342",
+   "leanEquity": 0.6272727272727273,
+   "library": 0.6272727272727273,
+   "n": 990
+  },
+  {
+   "request": "counts 20261052 | Jd 3c | Kc Kd 8d 9c Qh",
+   "lean": "312 69 609",
+   "leanEquity": 0.35,
+   "library": 0.35,
+   "n": 990
+  },
+  {
+   "request": "counts 20261053 | 2h Jd | 3d 6c 7h 5h 6s",
+   "lean": "68 9 913",
+   "leanEquity": 0.07323232323232323,
+   "library": 0.07323232323232323,
+   "n": 990
+  },
+  {
+   "request": "counts 20261054 | Qc 6h | 2h 5d 4d 6s 9c",
+   "lean": "571 6 413",
+   "leanEquity": 0.5797979797979798,
+   "library": 0.5797979797979798,
+   "n": 990
+  },
+  {
+   "request": "counts 20261055 | 2h Qh | 9s 3h 5d Kh 4c",
+   "lean": "192 9 789",
+   "leanEquity": 0.1984848484848485,
+   "library": 0.1984848484848485,
+   "n": 990
+  },
+  {
+   "request": "counts 20261056 | Jc 2s | 7s 3h Jh 2h 9h",
+   "lean": "592 4 394",
+   "leanEquity": 0.6,
+   "library": 0.6,
+   "n": 990
+  },
+  {
+   "request": "counts 20261057 | Ad Jc | Ac 9s 8d 3s Kd",
+   "lean": "885 6 99",
+   "leanEquity": 0.896969696969697,
+   "library": 0.896969696969697,
+   "n": 990
+  },
+  {
+   "request": "counts 20261058 | Kc 3d | 4d 7d Kd 4s 8h",
+   "lean": "757 30 203",
+   "leanEquity": 0.7797979797979798,
+   "library": 0.7797979797979798,
+   "n": 990
+  },
+  {
+   "request": "counts 20261059 | Ks Kc | 3d 2d Td 6c 7s",
+   "lean": "804 1 185",
+   "leanEquity": 0.8126262626262626,
+   "library": 0.8126262626262626,
+   "n": 990
+  },
+  {
+   "request": "counts 20261060 | 3h Ac | Jd Ts 2h Qs 5c",
+   "lean": "280 21 689",
+   "leanEquity": 0.29343434343434344,
+   "library": 0.29343434343434344,
+   "n": 990
+  },
+  {
+   "request": "counts 20261061 | 5h Ad | 9h 5d Kh Jd Tc",
+   "lean": "362 6 622",
+   "leanEquity": 0.3686868686868687,
+   "library": 0.3686868686868687,
+   "n": 990
+  },
+  {
+   "request": "counts 20261062 | Qh 6h | 6s Jd Td 7c 3c",
+   "lean": "539 6 445",
+   "leanEquity": 0.5474747474747474,
+   "library": 0.5474747474747474,
+   "n": 990
+  },
+  {
+   "request": "counts 20261063 | 6s 5d | Kc 4s 9c Jc Th",
+   "lean": "37 30 923",
+   "leanEquity": 0.052525252525252523,
+   "library": 0.052525252525252523,
+   "n": 990
+  },
+  {
+   "request": "counts 20261064 | Ac 4d | 2h 4s 7h Td Tc",
+   "lean": "725 6 259",
+   "leanEquity": 0.7353535353535353,
+   "library": 0.7353535353535353,
+   "n": 990
+  },
+  {
+   "request": "counts 20261065 | Ad 2d | 4d Qd 3s 4c 3h",
+   "lean": "547 105 338",
+   "leanEquity": 0.6055555555555555,
+   "library": 0.6055555555555555,
+   "n": 990
+  },
+  {
+   "request": "counts 20261066 | 9h 5d | 3c 9s 3s 7s Jh",
+   "lean": "625 46 319",
+   "leanEquity": 0.6545454545454545,
+   "library": 0.6545454545454545,
+   "n": 990
+  },
+  {
+   "request": "counts 20261067 | 6h 9d | Tc 4s 3d Ad 9s",
+   "lean": "633 6 351",
+   "leanEquity": 0.6424242424242425,
+   "library": 0.6424242424242425,
+   "n": 990
+  },
+  {
+   "request": "counts 20261068 | 8d Kc | 9s 2s 3c Ks Qs",
+   "lean": "518 4 468",
+   "leanEquity": 0.5252525252525253,
+   "library": 0.5252525252525253,
+   "n": 990
+  },
+  {
+   "request": "counts 20261069 | 6s 9s | Ah 4s Ac 8h 4c",
+   "lean": "156 57 777",
+   "leanEquity": 0.18636363636363637,
+   "library": 0.18636363636363637,
+   "n": 990
+  },
+  {
+   "request": "counts 20261070 | 2d Qs | As 3d Ah Kc 2c",
+   "lean": "528 70 392",
+   "leanEquity": 0.5686868686868687,
+   "library": 0.5686868686868687,
+   "n": 990
+  },
+  {
+   "request": "counts 20261071 | Jc 8c | 9c 3d 3c 4h 4c",
+   "lean": "799 0 191",
+   "leanEquity": 0.807070707070707,
+   "library": 0.807070707070707,
+   "n": 990
+  },
+  {
+   "request": "counts 20261072 | Jh 3d | 8h 8s Th Qd 7s",
+   "lean": "204 57 729",
+   "leanEquity": 0.23484848484848486,
+   "library": 0.23484848484848486,
+   "n": 990
+  },
+  {
+   "request": "counts 20261073 | 6h Ad | 7d 4h As Jc Qc",
+   "lean": "821 30 139",
+   "leanEquity": 0.8444444444444444,
+   "library": 0.8444444444444444,
+   "n": 990
+  },
+  {
+   "request": "counts 20261074 | 7d Jd | 9c 8h 3s 7h Kd",
+   "lean": "533 6 451",
+   "leanEquity": 0.5414141414141415,
+   "library": 0.5414141414141415,
+   "n": 990
+  },
+  {
+   "request": "counts 20261075 | 6h 9d | Kd 6s Td 5c 8h",
+   "lean": "535 6 449",
+   "leanEquity": 0.5434343434343434,
+   "library": 0.5434343434343434,
+   "n": 990
+  },
+  {
+   "request": "counts 20261076 | Jc Ad | 6c Ac 8s 3s Jh",
+   "lean": "975 4 11",
+   "leanEquity": 0.9868686868686869,
+   "library": 0.9868686868686869,
+   "n": 990
+  },
+  {
+   "request": "counts 20261077 | Qh 5d | 6c 2d Qc Jc Kh",
+   "lean": "672 22 296",
+   "leanEquity": 0.6898989898989899,
+   "library": 0.6898989898989899,
+   "n": 990
+  },
+  {
+   "request": "counts 20261078 | 7c Th | As Ah Qc 7d 5c",
+   "lean": "673 68 249",
+   "leanEquity": 0.7141414141414142,
+   "library": 0.7141414141414142,
+   "n": 990
+  },
+  {
+   "request": "counts 20261079 | 3h 8d | 6d Th 6c 3c 7h",
+   "lean": "522 38 430",
+   "leanEquity": 0.5464646464646464,
+   "library": 0.5464646464646464,
+   "n": 990
+  },
+  {
+   "request": "counts 20261080 | Qs 5c | 7d 7s Ts Ks 9c",
+   "lean": "261 69 660",
+   "leanEquity": 0.29848484848484846,
+   "library": 0.29848484848484846,
+   "n": 990
+  },
+  {
+   "request": "counts 20261081 | 4d 5c | 9h 3d Qc 9s 7c",
+   "lean": "12 21 957",
+   "leanEquity": 0.022727272727272728,
+   "library": 0.022727272727272728,
+   "n": 990
+  },
+  {
+   "request": "counts 20261082 | Jh 3d | 2s 8s Ah 7h 5h",
+   "lean": "93 21 876",
+   "leanEquity": 0.10454545454545454,
+   "library": 0.10454545454545454,
+   "n": 990
+  },
+  {
+   "request": "counts 20261083 | 7d Jh | 8d 7s Js 2c Kc",
+   "lean": "923 4 63",
+   "leanEquity": 0.9343434343434344,
+   "library": 0.9343434343434344,
+   "n": 990
+  },
+  {
+   "request": "counts 20261084 | 2c 7c | Td 7s Qs Kc 4d",
+   "lean": "502 46 442",
+   "leanEquity": 0.5303030303030303,
+   "library": 0.5303030303030303,
+   "n": 990
+  },
+  {
+   "request": "counts 20261085 | 9d Jd | 7h Kh 3c Kd Ts",
+   "lean": "280 9 701",
+   "leanEquity": 0.2873737373737374,
+   "library": 0.2873737373737374,
+   "n": 990
+  },
+  {
+   "request": "counts 20261086 | 7d 3s | 2d 8c Td 7h Ad",
+   "lean": "476 30 484",
+   "leanEquity": 0.49595959595959593,
+   "library": 0.49595959595959593,
+   "n": 990
+  },
+  {
+   "request": "counts 20261087 | Qd 2s | Kc Tc 4c Ac Qs",
+   "lean": "310 20 660",
+   "leanEquity": 0.32323232323232326,
+   "library": 0.32323232323232326,
+   "n": 990
+  },
+  {
+   "request": "counts 20261088 | Qs 8s | 4s Ks 9s 3d Qd",
+   "lean": "983 0 7",
+   "leanEquity": 0.9929292929292929,
+   "library": 0.9929292929292929,
+   "n": 990
+  },
+  {
+   "request": "counts 20261089 | 4d 9d | Jh Qc 4c 5h Ah",
+   "lean": "374 47 569",
+   "leanEquity": 0.4015151515151515,
+   "library": 0.4015151515151515,
+   "n": 990
+  },
+  {
+   "request": "counts 20261090 | Td 9d | As Qh 5s Ks 7d",
+   "lean": "260 8 722",
+   "leanEquity": 0.26666666666666666,
+   "library": 0.26666666666666666,
+   "n": 990
+  }
+ ],
+ "estimate vs exact: flop": [
+  {
+   "request": "counts 20261031 | Jc Js | Td Kc 4d",
+   "lean": "759 5 236",
+   "leanEquity": 0.7615,
+   "library": 0.746078733682804,
+   "n": 1000,
+   "errors": 1.1204130771471024
+  },
+  {
+   "request": "counts 20261032 | 2c Kc | As Qs 6s",
+   "lean": "346 73 581",
+   "leanEquity": 0.3825,
+   "library": 0.36675637036414094,
+   "n": 1000,
+   "errors": 1.0330720619078528
+  },
+  {
+   "request": "counts 20261033 | 8s Qs | 7h 6c Js",
+   "lean": "409 26 565",
+   "leanEquity": 0.422,
+   "library": 0.41755015464543677,
+   "n": 1000,
+   "errors": 0.2853391259841297
+  },
+  {
+   "request": "counts 20261034 | 2c Jd | 6s 4h 5s",
+   "lean": "272 66 662",
+   "leanEquity": 0.305,
+   "library": 0.29715144039843394,
+   "n": 1000,
+   "errors": 0.5430879429611812
+  },
+  {
+   "request": "counts 20261035 | Th 2d | 4d 4h Ad",
+   "lean": "263 161 576",
+   "leanEquity": 0.3435,
+   "library": 0.34389080443659537,
+   "n": 1000,
+   "errors": 0.02601723511152128
+  },
+  {
+   "request": "counts 20261036 | 2h Ks | 4h 3d 9c",
+   "lean": "365 20 615",
+   "leanEquity": 0.375,
+   "library": 0.3798783393603005,
+   "n": 1000,
+   "errors": 0.3178420056225663
+  },
+  {
+   "request": "counts 20261037 | Jc Ac | 3d Qc Tc",
+   "lean": "748 11 241",
+   "leanEquity": 0.7535,
+   "library": 0.7514950616245714,
+   "n": 1000,
+   "errors": 0.14671362616075598
+  },
+  {
+   "request": "counts 20261038 | Th Ac | 8h Ad 5c",
+   "lean": "830 11 159",
+   "leanEquity": 0.8355,
+   "library": 0.8488058195273737,
+   "n": 1000,
+   "errors": 1.1745456931524338
+  },
+  {
+   "request": "counts 20261039 | 3d 7d | 8s 9d 2s",
+   "lean": "234 38 728",
+   "leanEquity": 0.253,
+   "library": 0.24449677160130445,
+   "n": 1000,
+   "errors": 0.6256466417317081
+  },
+  {
+   "request": "counts 20261040 | 7h Qs | 9h 8c As",
+   "lean": "400 51 549",
+   "leanEquity": 0.4255,
+   "library": 0.4077841317896822,
+   "n": 1000,
+   "errors": 1.1400063223968706
+  },
+  {
+   "request": "counts 20261041 | Qc 3c | 5c 7d Kh",
+   "lean": "378 46 576",
+   "leanEquity": 0.401,
+   "library": 0.3965931283230081,
+   "n": 1000,
+   "errors": 0.28487391638099374
+  },
+  {
+   "request": "counts 20261042 | 6s 8c | 6c 3s 8h",
+   "lean": "875 6 119",
+   "leanEquity": 0.878,
+   "library": 0.8789747614909502,
+   "n": 1000,
+   "errors": 0.09450878662666104
+  }
+ ],
+ "estimate vs estimate: preflop": [
+  {
+   "request": "counts 20261031 | 7c 4c | ",
+   "lean": "19681 2722 27597",
+   "leanEquity": 0.42084,
+   "library": 0.4211350000000013,
+   "librarySe": 0.0015613465719531976,
+   "n": 50000,
+   "errors": 0.10908425616142337
+  },
+  {
+   "request": "counts 20261032 | Ac 4s | ",
+   "lean": "27388 1969 20643",
+   "leanEquity": 0.56745,
+   "library": 0.5674949999999995,
+   "librarySe": 0.0015666666045301408,
+   "n": 50000,
+   "errors": 0.016583465836400187
+  },
+  {
+   "request": "counts 20261033 | Kd 6s | ",
+   "lean": "26402 1929 21669",
+   "leanEquity": 0.54733,
+   "library": 0.5429600000000065,
+   "librarySe": 0.0015752918408980586,
+   "n": 50000,
+   "errors": 1.601621116069848
+  },
+  {
+   "request": "counts 20261034 | Jh Ah | ",
+   "lean": "32231 995 16774",
+   "leanEquity": 0.65457,
+   "library": 0.6541349999999959,
+   "librarySe": 0.0015041356380825544,
+   "n": 50000,
+   "errors": 0.16697122303411135
+  },
+  {
+   "request": "counts 20261035 | 4d 6d | ",
+   "lean": "19255 2876 27869",
+   "leanEquity": 0.41386,
+   "library": 0.4129800000000004,
+   "librarySe": 0.0015570084123086815,
+   "n": 50000,
+   "errors": 0.32631052784955383
+  },
+  {
+   "request": "counts 20261036 | Ah 2c | ",
+   "lean": "26438 1968 21594",
+   "leanEquity": 0.54844,
+   "library": 0.5487149999999974,
+   "librarySe": 0.0015736163724840951,
+   "n": 50000,
+   "errors": 0.10089582620126686
+  },
+  {
+   "request": "counts 20261037 | Jd Kc | ",
+   "lean": "29594 1098 19308",
+   "leanEquity": 0.60286,
+   "library": 0.6078050000000011,
+   "librarySe": 0.001543949746510552,
+   "n": 50000,
+   "errors": 1.849151559236892
+  },
+  {
+   "request": "counts 20261038 | 7d 7h | ",
+   "lean": "33024 516 16460",
+   "leanEquity": 0.66564,
+   "library": 0.6615099999999988,
+   "librarySe": 0.0014963773584894967,
+   "n": 50000,
+   "errors": 1.5934861605770396
+  },
+  {
+   "request": "counts 20261039 | 4d As | ",
+   "lean": "27388 1969 20643",
+   "leanEquity": 0.56745,
+   "library": 0.5695800000000084,
+   "librarySe": 0.0015657542067642636,
+   "n": 50000,
+   "errors": 0.7854081234883782
+  },
+  {
+   "request": "counts 20261040 | 9h Ad | ",
+   "lean": "29688 1356 18956",
+   "leanEquity": 0.60732,
+   "library": 0.6052200000000009,
+   "librarySe": 0.001545732032404064,
+   "n": 50000,
+   "errors": 0.7843762954255437
+  },
+  {
+   "request": "counts 20261041 | 4s Jc | ",
+   "lean": "21937 2331 25732",
+   "leanEquity": 0.46205,
+   "library": 0.45960499999999543,
+   "librarySe": 0.001575970316900035,
+   "n": 50000,
+   "errors": 0.8957157333698823
+  },
+  {
+   "request": "counts 20261042 | Ts 4h | ",
+   "lean": "20635 2422 26943",
+   "leanEquity": 0.43692,
+   "library": 0.4345450000000025,
+   "librarySe": 0.0015675319549374434,
+   "n": 50000,
+   "errors": 0.8747553024388698
+  },
+  {
+   "request": "counts 20261043 | 4d Ks | ",
+   "lean": "25074 2126 22800",
+   "leanEquity": 0.52274,
+   "library": 0.5221550000000006,
+   "librarySe": 0.0015795858823596772,
+   "n": 50000,
+   "errors": 0.21382180687195643
+  },
+  {
+   "request": "counts 20261044 | Ts 6s | ",
+   "lean": "23238 2138 24624",
+   "leanEquity": 0.48614,
+   "library": 0.4921399999999987,
+   "librarySe": 0.0015809434537642387,
+   "n": 50000,
+   "errors": 2.1911609848466975
+  },
+  {
+   "request": "counts 20261045 | 3c Jh | ",
+   "lean": "21440 2327 26233",
+   "leanEquity": 0.45207,
+   "library": 0.45293000000000355,
+   "librarySe": 0.0015741169432415126,
+   "n": 50000,
+   "errors": 0.3154284271171416
+  },
+  {
+   "request": "counts 20261046 | Jd Qs | ",
+   "lean": "28475 1308 20217",
+   "leanEquity": 0.58258,
+   "library": 0.5816649999999935,
+   "librarySe": 0.0015599064964766352,
+   "n": 50000,
+   "errors": 0.3386584372239247
+  },
+  {
+   "request": "counts 20261047 | 7h 3c | ",
+   "lean": "16766 2920 30314",
+   "leanEquity": 0.36452,
+   "library": 0.3657699999999964,
+   "librarySe": 0.0015230965402757602,
+   "n": 50000,
+   "errors": 0.4738293452851454
+  },
+  {
+   "request": "counts 20261048 | 8d 3d | ",
+   "lean": "19128 2547 28325",
+   "leanEquity": 0.40803,
+   "library": 0.4087750000000006,
+   "librarySe": 0.0015545996249034673,
+   "n": 50000,
+   "errors": 0.27667956665905524
+  },
+  {
+   "request": "counts 20261049 | Kh 8c | ",
+   "lean": "27283 1615 21102",
+   "leanEquity": 0.56181,
+   "library": 0.5613299999999939,
+   "librarySe": 0.0015691992579019427,
+   "n": 50000,
+   "errors": 0.17660480516992696
+  },
+  {
+   "request": "counts 20261050 | Ks 9h | ",
+   "lean": "28186 1411 20403",
+   "leanEquity": 0.57783,
+   "library": 0.5763800000000062,
+   "librarySe": 0.001562581503794279,
+   "n": 50000,
+   "errors": 0.5357531036227825
+  },
+  {
+   "request": "counts 20261051 | 9s 5d | ",
+   "lean": "20178 2573 27249",
+   "leanEquity": 0.42929,
+   "library": 0.4259000000000002,
+   "librarySe": 0.0015636789632146365,
+   "n": 50000,
+   "errors": 1.2516747098323984
+  },
+  {
+   "request": "counts 20261052 | 4h 5d | ",
+   "lean": "17424 3080 29496",
+   "leanEquity": 0.37928,
+   "library": 0.3804350000000003,
+   "librarySe": 0.0015352661358051251,
+   "n": 50000,
+   "errors": 0.434347860193297
+  },
+  {
+   "request": "counts 20261053 | 7d Jd | ",
+   "lean": "25222 1877 22901",
+   "leanEquity": 0.52321,
+   "library": 0.5229799999999907,
+   "librarySe": 0.0015794680104389593,
+   "n": 50000,
+   "errors": 0.08407296699986103
+  },
+  {
+   "request": "counts 20261054 | 2c 9h | ",
+   "lean": "18371 2552 29077",
+   "leanEquity": 0.39294,
+   "library": 0.38970500000000124,
+   "librarySe": 0.001542190043331237,
+   "n": 50000,
+   "errors": 1.211088172241928
+  },
+  {
+   "request": "counts 20261055 | 4c Kd | ",
+   "lean": "25074 2126 22800",
+   "leanEquity": 0.52274,
+   "library": 0.5255700000000013,
+   "librarySe": 0.0015790699006060496,
+   "n": 50000,
+   "errors": 1.034723834062264
+  },
+  {
+   "request": "counts 20261056 | Td 8c | ",
+   "lean": "23908 1944 24148",
+   "leanEquity": 0.4976,
+   "library": 0.4975799999999964,
+   "librarySe": 0.0015811203104128416,
+   "n": 50000,
+   "errors": 0.007303052974406621
+  },
+  {
+   "request": "counts 20261057 | Ts 9h | ",
+   "lean": "24994 1724 23282",
+   "leanEquity": 0.51712,
+   "library": 0.5141850000000092,
+   "librarySe": 0.0015805024067523583,
+   "n": 50000,
+   "errors": 1.0721420181498975
+  },
+  {
+   "request": "counts 20261058 | Js Ah | ",
+   "lean": "31297 995 17708",
+   "leanEquity": 0.63589,
+   "library": 0.6367800000000129,
+   "librarySe": 0.0015208261951978486,
+   "n": 50000,
+   "errors": 0.3378701269143963
+  },
+  {
+   "request": "counts 20261059 | 9s Qc | ",
+   "lean": "27001 1470 21529",
+   "leanEquity": 0.55472,
+   "library": 0.5525849999999963,
+   "librarySe": 0.0015723702419436728,
+   "n": 50000,
+   "errors": 0.7839392986719488
+  },
+  {
+   "request": "counts 20261060 | 9c 3c | ",
+   "lean": "20371 2471 27158",
+   "leanEquity": 0.43213,
+   "library": 0.43156,
+   "librarySe": 0.0015662565766821222,
+   "n": 50000,
+   "errors": 0.2101122244831827
+  },
+  {
+   "request": "counts 20261061 | 8h Ts | ",
+   "lean": "23908 1944 24148",
+   "leanEquity": 0.4976,
+   "library": 0.4982950000000001,
+   "librarySe": 0.0015811296372372507,
+   "n": 50000,
+   "errors": 0.2537795938023046
+  },
+  {
+   "request": "counts 20261062 | Qs 5d | ",
+   "lean": "24109 2122 23769",
+   "leanEquity": 0.5034,
+   "library": 0.49823999999999846,
+   "librarySe": 0.001581129034582567,
+   "n": 50000,
+   "errors": 1.8841772707095035
+  },
+  {
+   "request": "counts 20261063 | 3c 5s | ",
+   "lean": "16567 3123 30310",
+   "leanEquity": 0.36257,
+   "library": 0.36537500000000295,
+   "librarySe": 0.0015227478759630591,
+   "n": 50000,
+   "errors": 1.0635165089653273
+  },
+  {
+   "request": "counts 20261064 | 2h 5s | ",
+   "lean": "15566 3161 31273",
+   "leanEquity": 0.34293,
+   "library": 0.343095000000005,
+   "librarySe": 0.001501268866575876,
+   "n": 50000,
+   "errors": 0.06345485245186831
+  },
+  {
+   "request": "counts 20261065 | Ad 8d | ",
+   "lean": "30265 1429 18306",
+   "leanEquity": 0.61959,
+   "library": 0.6212500000000064,
+   "librarySe": 0.001533944058627949,
+   "n": 50000,
+   "errors": 0.6247955663492349
+  },
+  {
+   "request": "counts 20261066 | 2h Js | ",
+   "lean": "21074 2270 26656",
+   "leanEquity": 0.44418,
+   "library": 0.4426949999999978,
+   "librarySe": 0.001570720016346006,
+   "n": 50000,
+   "errors": 0.5458421238830254
+  }
+ ]
+}
