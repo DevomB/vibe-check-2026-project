@@ -81,6 +81,17 @@ theorem Game.act_of_step {g : Game} {a : Action} {h' : Hand} (hs : step g.hand a
     g.act a = .ok { g with hand := h' } := by
   simp [Game.act, hs, bind, Except.bind, pure, Except.pure]
 
+/-- If the session accepts a move, the game accepted it and the session holds the new game. -/
+theorem Session.move_game {s next : Session} {a : Action} (hm : s.move a = .ok next) :
+    s.game.act a = .ok next.game := by
+  unfold Session.move at hm
+  cases hg : s.game.act a with
+  | error e => simp [hg, bind, Except.bind] at hm
+  | ok g' =>
+    simp [hg, bind, Except.bind, pure, Except.pure] at hm
+    subst hm
+    rfl
+
 /-- If the game accepts a move, so does the session. -/
 theorem Session.move_ok_of_act {s : Session} {a : Action} {g' : Game}
     (hg : s.game.act a = .ok g') : ∃ next, s.move a = .ok next := by
@@ -108,5 +119,97 @@ theorem Session.botChoice_accepted (s : Session) (hs : s.game.Reachable)
     (handSeed s.game.seed s.game.handNo) (s.game.hand.hole bot) s.game.hand.board
   exact Session.move_ok_of_act (Game.act_of_step hstep)
 
+/-! ## (b) Every accepted command keeps the game reachable -/
+
+/-- Picking one of two sessions whose games are reachable gives a reachable game. -/
+theorem ite_game_reachable {c : Prop} [Decidable c] {a b : Session}
+    (ha : a.game.Reachable) (hb : b.game.Reachable) : (if c then a else b).game.Reachable := by
+  split <;> assumption
+
+/-- The bot's moves keep the game reachable. -/
+theorem Session.runBot_reachable : ∀ (fuel : Nat) (s : Session), s.game.Reachable →
+    (Session.runBot fuel s).game.Reachable := by
+  intro fuel
+  induction fuel with
+  | zero => intro s hs; exact hs
+  | succ fuel ih =>
+    intro s hs
+    unfold Session.runBot
+    split
+    · exact hs
+    · dsimp only
+      split
+      · exact hs
+      · next next hm =>
+        apply ih
+        have hn : next.game.Reachable := .act _ hs (Session.move_game hm)
+        -- Logging the reason and keeping the river spot do not change the game.
+        exact ite_game_reachable hn hn
+
+/-- Dealing a hand of a reachable game, then letting the bot play, gives a reachable game. -/
+theorem Session.dealt_reachable (s : Session) (g : Game) (stacks : Player → Nat)
+    (hg : g.Reachable) : (s.dealt g stacks).game.Reachable :=
+  Session.runBot_reachable _ _ hg
+
+/-- A new game the session accepts is reachable. -/
+theorem Session.start_reachable {seed risk bluffPct : Nat} {s' : Session}
+    (hs : Session.start seed risk bluffPct = .ok s') : s'.game.Reachable := by
+  unfold Session.start at hs
+  by_cases h1 : risk > 100 <;> by_cases h2 : bluffPct > 60 <;>
+    simp [h1, h2, throw, throwThe, MonadExceptOf.throw, bind, Except.bind, pure,
+      Except.pure] at hs
+  subst hs
+  exact Session.dealt_reachable _ _ _ (.start seed)
+
+/-- A human move the session accepts, followed by the bot's moves, keeps the game
+reachable. -/
+theorem Session.humanAct_reachable {s s' : Session} {a : Action} (hs : s.game.Reachable)
+    (hok : s.humanAct a = .ok s') : s'.game.Reachable := by
+  by_cases h1 : s.game.hand.ended.isSome = true
+  · simp [Session.humanAct, h1, throw, throwThe, MonadExceptOf.throw, bind,
+      Except.bind] at hok
+  by_cases h2 : s.game.hand.chips.toAct ≠ human
+  · simp [Session.humanAct, h1, h2, throw, throwThe, MonadExceptOf.throw, bind,
+      Except.bind] at hok
+  cases hm : s.move a with
+  | error e =>
+    simp [Session.humanAct, h1, h2, hm, bind, Except.bind] at hok
+  | ok next =>
+    have hn : next.game.Reachable := .act _ hs (Session.move_game hm)
+    simp [Session.humanAct, h1, h2, hm, bind, Except.bind, pure, Except.pure] at hok
+    subst hok
+    exact Session.runBot_reachable _ _ hn
+
+/-- **(b) Every command the session accepts keeps the game reachable.** If the session's
+game is reachable (or there is no game yet), then after any command `Session.handle`
+accepts, the new session's game is reachable. -/
+theorem handle_keeps_reachable (cur : Option Session) (c : Command) (s' : Session)
+    (hcur : ∀ s, cur = some s → s.game.Reachable)
+    (hok : Session.handle cur c = .ok s') :
+    s'.game.Reachable := by
+  cases c with
+  | newGame seed risk bluffPct => exact Session.start_reachable hok
+  | act a =>
+    cases cur with
+    | none => cases hok
+    | some s => exact Session.humanAct_reachable (s := { s with events := #[] }) (hcur s rfl) hok
+  | nextHand =>
+    cases cur with
+    | none => cases hok
+    | some s =>
+      cases hg : s.game.nextHand with
+      | error e => simp [Session.handle, hg, bind, Except.bind] at hok
+      | ok g =>
+        simp [Session.handle, hg, bind, Except.bind, pure, Except.pure] at hok
+        subst hok
+        exact Session.dealt_reachable _ _ _ (.nextHand (hcur s rfl) hg)
+  | state =>
+    cases cur with
+    | none => cases hok
+    | some s =>
+      cases hok
+      exact hcur s rfl
+
 #print axioms bot_move_accepted
 #print axioms Session.botChoice_accepted
+#print axioms handle_keeps_reachable

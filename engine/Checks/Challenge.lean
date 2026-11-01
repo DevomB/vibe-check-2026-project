@@ -4,6 +4,7 @@ import Engine.Proofs.BotSpec
 import Engine.Proofs.EquitySpec
 import Engine.Proofs.BluffSpec
 import Engine.Proofs.ReviewSpec
+import Engine.Session
 
 /-!
 # The main theorems, as agreed by the team (the Comparator "challenge")
@@ -219,3 +220,10 @@ bot picks, for any sliders, seed and cards. -/
 theorem bot_move_accepted (g : Game) (hg : g.Reachable) (hnot : g.hand.ended = none)
     (sl : Sliders) (seed : Nat) (hole board : List Card) :
     ∃ h', step g.hand (botDecide sl seed hole board g.hand.chips).action = .ok h' := sorry
+
+/-- If the session's game is reachable (or there is no game yet), then after any command
+`Session.handle` accepts, the new session's game is reachable. -/
+theorem handle_keeps_reachable (cur : Option Session) (c : Command) (s' : Session)
+    (hcur : ∀ s, cur = some s → s.game.Reachable)
+    (hok : Session.handle cur c = .ok s') :
+    s'.game.Reachable := sorry

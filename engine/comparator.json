@@ -34,7 +34,8 @@
     "review_call_best_iff_equity",
     "no_hindsight",
     "bot_hand_in_review",
-    "bot_move_accepted"
+    "bot_move_accepted",
+    "handle_keeps_reachable"
   ],
   "permitted_axioms": [
     "propext",
