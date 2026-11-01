@@ -24,48 +24,58 @@ research or a local prototype describes a different product.
 Done or present:
 
 - MVP, organizer rules, agent guidance, and published research with a synthesis.
-- Published TypeScript/Next.js prototype source for cards, shuffle, evaluator,
-  betting, bot and UI (`69c4e46`). It remains active development and is ready
-  for teammates to pull; it is not the Lean implementation.
-- Prototype corrections and 167 tests across 9 files, covering
-  validation, chip accounting, all-ins and hand progression.
-- Heads-up 500-chip games, fixed 5/10 blinds, explicit Next Hand and seeded replays.
-- A TypeScript slider-bot module with preflop data, sampled flop counts and exact
-  turn/river counts. The browser still uses the earlier personality bot.
+- A Next.js UI backed by the Lean game program through the Node JSON bridge.
+  Lean decides legal moves, bot actions, hand names, winners and review grades.
+- Heads-up 500-chip games, fixed 5/10 blinds, Risk/Bluff sliders, explicit Next Hand,
+  game-over handling and replay support. Random-game seeds remain private until
+  game over; entering a seed deliberately starts a replay.
 - Lean project under `engine/`, pinned to Lean 4.35.0: card/deck definitions,
   reference hand ranking, seeded shuffle, betting, payouts and hand/game transitions.
-- Lean examples, known-showdown checks and 300 simulated random games, plus proofs
-  that new hands and accepted moves give the turn only to a player who may act.
-  The remaining MVP theorem proofs still need completion and final checks.
-- Root Makefile targets build the Lean project through `cd engine && lake build`.
-  The browser still uses the TypeScript prototype; the JSON bridge is not implemented.
+- The Lean slider bot, fixed preflop data, sampled flop counts, exact turn/river
+  counts, river betting sets and call/fold review against opening river bets.
+- Tier 1 T1-T5 and Tier 2 T6-T8 proofs, with standard-axiom audits, Comparator and
+  kernel re-checks in Linux CI. Their scope and trusted definitions are listed below.
+- Lean examples, known-showdown checks and 300 simulated random games; JavaScript
+  unit tests and tests against the compiled Lean program. TypeScript game code remains
+  a test reference. Differential-test cases and recorded results are under `tests/diff/`.
+- Makefile targets build Lean before running the integration tests.
 
 ## Still needed
 
-- Remaining human-reviewed theorem statements and proofs for the agreed MVP properties.
-- Lean Risk/Bluff bot, equity counts and data, and river review.
-- Node-to-Lean bridge and UI integration, including hand transitions and review history.
-- Differential checks, Tier 1 proofs, axiom audit and Linux/WSL Comparator checks.
-- Fresh-clone `make install && make run`, rehearsed demo hands and accurate proof claims.
+- A complete fresh-clone `make install && make run` rehearsal for the demo setup.
+- Final UI playthroughs covering folds, showdowns, short stacks, reviews, replay and
+  engine restart errors; record the demo seed, sliders, moves, turn mode and commit.
+- The five-minute pitch and final claim review. T9 termination and T10 fast-evaluator
+  equivalence remain optional stretch work.
 
-MVP section 11 records the work status. Tasks are deliberately unassigned
-while the team gets its footing. TypeScript is a rapid prototype; the
-shipping game engine remains Lean.
+MVP section 11 records completed and remaining work without assigning people.
+The shipping game engine is Lean; browser rendering and transport are tested separately.
 
-Before parallel implementation:
+When working in parallel:
 
 1. Work from `engine/` for Lean commands; `engine/lean-toolchain` and
    `engine/lake-manifest.json` are committed. MVP section 15 lists the remaining decisions.
-2. Agree shared card/action/state types and the JSON messages in MVP section 13.
+2. Use the shared card/action/state types in `src/lean/protocol.ts` and the JSON
+   messages in MVP section 13 and `engine/Engine/Protocol.lean`.
    Bet/raise amounts and their bounds are street totals; call amounts are
    additional chips paid. Keep those units consistent across the bridge and UI.
 3. Coordinate edits to shared files, including the Lake config, bridge protocol
    and Makefile, before changing them.
 
-The first integration target is **one complete browser hand against an
-always-call bot** (Checkpoint A). Then add the Risk/Bluff bot, exact river
-call/fold review, and Tier 1 proofs (Checkpoint B). MVP section 9 lists
-what to defer until then.
+The integration target is a complete browser game against the Lean slider bot,
+with at least one graded river decision. MVP section 9 lists what to defer.
+
+On Windows, the Makefile needs a POSIX shell and GNU make. With Node and Lean
+already installed, the equivalent PowerShell launch is:
+
+```powershell
+npm ci
+Push-Location engine
+lake build
+Pop-Location
+npm run build
+npm start
+```
 
 ## What we trust
 

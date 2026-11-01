@@ -164,23 +164,22 @@ A Proofs screen. Blind increases. 3+ players and side pots. Kuhn/Leduc mode. Rea
 11. WHAT EXISTS AND WHAT STILL NEEDS DOING (no personal task allocations)
 DONE / PRESENT:
 - MVP scope, organizer rules, Lean agent guidance, and published research notes, index and synthesis.
-- Published TypeScript/Next.js prototype source: cards, shuffle, evaluator, betting engine, bot and table UI (commit 69c4e46). It is still active development, not the Lean engine.
-- Prototype corrections and 167 tests across 9 files cover validation, chip accounting, all-ins, hand progression, seeded replays and slider-bot decisions. These are TypeScript tests, not Lean proofs.
-- The prototype now uses heads-up 500-chip games, fixed 5/10 blinds and explicit Next Hand. A separate TypeScript slider-bot module has preflop data and flop/turn/river counts; the browser still uses the earlier personality bot.
+- Next.js UI and Node-to-Lean JSON bridge. Lean runs the bot and automatic street transitions until the next human decision or hand end; the browser renders Lean's replies.
+- Heads-up 500-chip games, fixed 5/10 blinds, Risk/Bluff sliders, explicit Next Hand, game-over handling and replays. Random-game seeds are generated on the server and hidden until game over; entered seeds are intentional replays.
+- The Lean slider bot, preflop count data, sampled flop counts, exact turn/river counts, river betting sets and opening-river-bet call/fold review are implemented.
 - Lean project under engine/, pinned to 4.35.0. Poker/Spec/ contains card/deck, legality and hand-ranking definitions; Engine/ contains seeded shuffling, hand/game transitions and payouts.
-- Lean examples, known-showdown checks, scripted engine checks and 300 simulated random games are present. Turn-legality lemmas and general startHand_turn_ok / step_turn_ok proofs are present; remaining MVP proofs and final Comparator checks still need completion.
-- Makefile builds Lean through "cd engine && lake build". The browser still uses TypeScript: the JSON command handler and Node-to-Lean bridge are not implemented yet.
+- Tier 1 T1-T5 and Tier 2 T6-T8 proofs are present, with standard-axiom audits, Comparator and kernel re-checks in Linux CI. These prove their stated Lean properties; they do not prove the browser or Node transport correct.
+- Lean examples, known-showdown checks, 300 simulated random games, JavaScript unit/integration tests against the compiled Lean program, and a differential harness with recorded results under tests/diff/ are present. TypeScript game code remains a test reference.
+- Makefile builds Lean before integration tests. Source, build, proof checks and a final GUI launch rehearsal are separate checks.
 - Product decisions confirmed above: Lean 4.35.0 shipping engine and standard axioms; actual-outcome Risk utility; hand-set Bluff target; deterministic ranking/rounding; opening-bet call/fold review only; detailed reasons after the hand; street-total amounts and legal pot sizing/fallback; explicit Next Hand and separate statuses; Lean-driven bot scheduling; fixed benchmark-selected turn mode; one local game; Tier 1 mandatory, optional proof claims only once completed.
 
 STILL NEEDED:
-- Agree the remaining shared types, replay details, response/error details and performance budgets in section 15 and the MVP review.
-- Remaining human-reviewed theorem statements and proofs for the agreed properties.
-- Lean Risk/Bluff bot, equity counts, preflop data and river review.
-- Node-to-Lean bridge and UI integration using the agreed messages, including hand transitions and stored decision snapshots for review.
-- Runnable Lean/reference tests, Tier 1 proofs, Tier 2 proofs as capacity permits, axiom checks and Comparator configuration.
-- Linux/WSL checking, fresh-clone "make install && make run", reproducible demo hands and final claim review.
+- Fresh-clone "make install && make run" rehearsal on the intended demo setup.
+- Final UI playthroughs: fold, showdown, short stack, graded and ungraded reviews, replay, rejected input and engine restart errors.
+- Record demo seed, Risk/Bluff, human moves, fixed turn mode and commit; rehearse the five-minute pitch and review every claim.
+- T9 hand termination and T10 fast-evaluator equivalence are optional stretch work.
 
-Working together: use separate clones and coordinate before editing the same files. Commit small, "git pull --rebase" before every push, never force-push. Never commit the API key. Tasks are deliberately unassigned while the team gets its footing.
+Working together: use separate clones and coordinate before editing the same files. Commit small, "git pull --rebase" before every push, never force-push. Never commit the API key. Use this status list to avoid duplicating completed work.
 
 
 12. TIMELINE (we leave at 10 PM tonight; it ends Sunday 4:30 PM)
@@ -203,26 +202,33 @@ server-generated 64-bit seed. Node supplies that seed to Lean. Public HTTP state
 set seed to null until gameOver, including between hands, in reviews and in error states.
 An entered seed is an intentional replay and may be displayed because the player already
 knows it. A finished game's seed is revealed for replay; card and action rules stay in Lean.
-Requests, one per line:
-  {"cmd":"new_game","seed":42,"risk":50,"bluff_pct":33}
+Requests, one per line (the HTTP bridge requires entered seeds as strings):
+  {"cmd":"new_game","seed":"42","risk":50,"bluff_pct":33}
   {"cmd":"act","action":"call"}                              (action: fold, check, call, bet, raise)
   {"cmd":"act","action":"raise","amount":120}
   {"cmd":"next_hand"}
+  {"cmd":"state"}
   {"cmd":"review","hand":3}
 Responses below span lines for readability; each actual response is one JSON line.
-State response:
-  {"hand":3,"street":"turn","pot":120,"to_call":60,"status":"playing",
+These independent examples abbreviate state fields. The complete schemas are in
+src/lean/protocol.ts and engine/Engine/Protocol.lean; use those when implementing clients.
+State response (players[0] is human, players[1] is bot):
+  {"ok":true,"state":{"hand":3,"seed":null,"street":"turn","pot":60,
+   "currentBet":60,"minRaise":60,"status":"playing","toAct":0,
    "board":["2c","7d","Js","Qh"],
-   "you":{"cards":["Ah","Kd"],"stack":470},
-   "bot":{"stack":410,"last_action":"bet 60","reason":"bet"},
-   "legal":[{"action":"fold"},{"action":"call","amount":60},{"action":"raise","min":120,"max":470}]}
-Review response:
-  {"hand":3,"decisions":[{"street":"river","your_action":"call","label":"Mistake",
-   "worth_bb":{"call":-4.1,"fold":0},"equity_had":0.12,"equity_needed":0.33}]}
+   "players":[{"cards":["Ah","Kd"],"stack":470,"bet":0},
+              {"cards":null,"stack":410,"bet":60,"lastAction":"bet 60"}],
+   "legal":{"fold":true,"check":false,"call":60,"raise":{"min":120,"max":470}},
+   "botReasons":null}}
+Review response (example: pot 200, call 100, equity 0.24):
+  {"ok":true,"state":{ ...current state... },"review":{"hand":3,"decisions":[
+   {"street":"river","your_action":"call","label":"Mistake",
+    "worth_bb":{"call":-2.8,"fold":0},"equity_had":0.24,"equity_needed":0.333}],
+   "bot_reasons":[ ...post-hand reasons... ]}}
 Error response:
   {"error":"illegal action","state":{ ...the unchanged state... }}
 Cards: rank (2-9, T, J, Q, K, A) + suit (c, d, h, s). Sliders travel as whole numbers (risk 0-100, bluff_pct 0-60). Decimals in responses are for display only; the engine computes exact fractions.
-Status: "playing", "hand_over", or "game_over". Only "hand_over" accepts next_hand. A finished hand retains its result and review until that command; game_over ends the match. Bet/raise amount and min/max are street totals, while call amount is additional chips to pay.
+Status: "playing", "handOver", or "gameOver". Only "handOver" accepts next_hand. A finished hand retains its result and review until that command; gameOver ends the match. State pot contains earlier streets only; add both players' current bet values for the displayed pot. Bet/raise amount and min/max are street totals, while call amount is additional chips to pay.
 
 
 14. THE 5-MINUTE PITCH
@@ -241,10 +247,10 @@ Only present a claim below as proven once its actual Lean theorem and final chec
 4:30 The close (30 seconds): what we would build next (reading the other player, the Proofs screen), and thanks.
 
 
-15. OPEN DECISIONS (default in brackets)
-- Lean version: DECIDED and pinned in engine/lean-toolchain, leanprover/lean4:v4.35.0, with only the three standard axioms. Final Linux/WSL checker runs remain to be completed.
-- Web framework and final folder layout [local prototype is Next.js under src/; final integration still needs agreement].
-- Linux/WSL environment for final Comparator checks [validate a small example before the final audit window].
-- Benchmark budget and chosen turn mode, preflop count-data generation, and replay rules [not settled].
-- Protocol details beyond agreed Next Hand/status/scheduling: review history, detailed post-hand reasons, refresh/restart behavior and error responses [not settled].
-- Final proof-coverage evidence [Tier 1 mandatory; optional properties appear as proven in the pitch only after their own checks pass].
+15. RELEASE CHECKS AND SETTLED INTEGRATION DETAILS
+- Lean 4.35.0 is pinned. Standard-axiom audits, Comparator and kernel re-checks for T1-T8 pass in Linux CI; require a passing run for the final submitted commit too.
+- Next.js lives under src/; the shipping Lean engine lives under engine/. The browser uses src/lean/protocol.ts and the Node bridge, not the TypeScript game implementation.
+- Turn mode is fixed exact, with the compiled benchmark recorded in engine/Engine/Equity.lean. Recheck response times on the demo hardware; do not switch modes silently during play.
+- Preflop counts, review history, post-hand reasons, explicit next_hand, rejected-input replies and engine-loss errors are implemented. One local active game is supported. A lost engine requires a new game; browser refresh does not resume the UI's previous game.
+- Random seeds remain private until gameOver. Replays use an entered seed, the same sliders, human actions and engine version; record all of these for the demo.
+- Fresh-clone launch, final UI rehearsal, reproducible demo hands and accurate pitch claims remain the release checks. Tier 1 is mandatory; advertise optional properties only after their own checks pass.
