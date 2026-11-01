@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { type Action, type LegalActions, potTotal, type HandState } from "@/engine";
+import { type Action, type HandState, type LegalActions, potTotal } from "@/lib/table";
 import { chips } from "@/lib/format";
 
 interface Props {

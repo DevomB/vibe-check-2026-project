@@ -1,4 +1,4 @@
-import type { Card } from "@/engine";
+import type { Card } from "@/lib/cards";
 
 /**
  * Messages between the browser and the Lean game program (`Main.lean`), passed through

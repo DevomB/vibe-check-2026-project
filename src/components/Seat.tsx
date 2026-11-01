@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
-import type { Card, PlayerState } from "@/engine";
+import type { Card } from "@/lib/cards";
+import type { PlayerState } from "@/lib/table";
 import { chips } from "@/lib/format";
 import type { Player } from "@/hooks/useGame";
 import { PlayingCard } from "./PlayingCard";

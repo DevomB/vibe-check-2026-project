@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { type Action, type DealtHand, type HandState, type LegalActions, type Session } from "@/engine";
+import type { Action, DealtHand, HandState, LegalActions, Session } from "@/lib/table";
 import type { ApiReply, LeanCommand, LeanEvent, LeanReview, LeanState } from "@/lean/protocol";
 import { cardText, chips } from "@/lib/format";
 import { HUMAN_COLOR, botFor } from "@/lib/roster";
@@ -8,8 +8,8 @@ import { HUMAN_COLOR, botFor } from "@/lib/roster";
  * Runs a game against the Lean game program. Every rule decision (dealing, which moves are
  * legal, the bot's moves, who wins, the review grades) is made in Lean and arrives through `/api/game`.
  * This file only sends the human's clicks and turns Lean's replies into what the table
- * components draw. The TypeScript engine is used only for its types; hand names and the
- * winning five cards come from Lean too (`handName`, `bestCards`).
+ * components draw (types in `@/lib/table`). Hand names and the winning five cards come from
+ * Lean too (`handName`, `bestCards`). The TypeScript prototype in src/engine is not used here.
  */
 
 /** Heads-up table rules, fixed for the whole game. They are set in Lean (Spec/Basics.lean). */
@@ -116,8 +116,6 @@ function toHandState(s: LeanState, names: string[]): HandState {
     totalBet: p.bet + s.pot / 2,
     folded: p.folded,
     allIn: p.allIn,
-    hasActed: false,
-    mayRaise: true,
     lastAction: p.lastAction,
   }));
   const result = s.result && {
@@ -129,23 +127,17 @@ function toHandState(s: LeanState, names: string[]): HandState {
         winners: s.result.winnings.flatMap((w, i) => (w > 0 ? [i] : [])),
       },
     ],
-    winnings: [...s.result.winnings],
     // Hand names and best cards come from Lean (game.lean.players); none are computed here.
-    hands: s.players.map(() => null),
+    winnings: [...s.result.winnings],
   };
   return {
-    config: { smallBlind: TABLE.smallBlind, bigBlind: TABLE.bigBlind },
     players,
     button: s.button,
-    smallBlindSeat: s.button,
-    bigBlindSeat: 1 - s.button,
-    deck: [],
     board: s.board,
     street: s.street,
     toAct: s.toAct,
     currentBet: s.currentBet,
     minRaise: s.minRaise,
-    events: [],
     result,
   };
 }

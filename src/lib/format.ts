@@ -1,4 +1,4 @@
-import { type Card, rankOf, suitOf } from "@/engine";
+import { type Card, rankOf, suitOf } from "./cards";
 
 export const SUIT_SYMBOL = { c: "♣", d: "♦", h: "♥", s: "♠" } as const;
 

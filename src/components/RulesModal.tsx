@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import type { Card } from "@/engine";
+import type { Card } from "@/lib/cards";
 import { PlayingCard } from "./PlayingCard";
 
 const RANKINGS: { name: string; about: string; cards: Card[] }[] = [

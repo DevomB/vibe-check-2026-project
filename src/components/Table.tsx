@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import type { Card } from "@/engine";
+import type { Card } from "@/lib/cards";
 import { HUMAN_SEAT, type Game } from "@/hooks/useGame";
 import { ChipStack } from "./Chips";
 import { CardSlot, PlayingCard } from "./PlayingCard";
