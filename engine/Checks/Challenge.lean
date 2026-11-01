@@ -400,6 +400,15 @@ theorem botDecide_no_bet_off_river (sl sl' : Sliders) (seed : Nat) (hole board :
     (s : State) (hc : s.toCall = 0) (h5 : board.length ≠ 5) :
     (botDecide sl seed hole board s).action = (botDecide sl' seed hole board s).action := sorry
 
+/-- On a river board (five different cards), with nothing to call and a bet allowed, if the
+bot bets its two cards at Risk `r`, it bets them at every higher Risk `r'`: the value hands are
+the same at every Risk, and the bluffs only grow (see `Engine/Proofs/OneSliderRiver.lean`). -/
+theorem more_risk_never_checks_a_bet (seed : Nat) (a b : Card) (board : List Card) (s : State)
+    (h5 : board.length = 5) (hd : board.Nodup) (h0 : s.toCall = 0)
+    (hbet : ∃ n, Legal s (.raiseTo n)) {r r' : Nat} (hr : r ≤ r')
+    (hc : ∃ n, (botDecide (Sliders.ofRisk r) seed [a, b] board s).action = .raiseTo n) :
+    ∃ n, (botDecide (Sliders.ofRisk r') seed [a, b] board s).action = .raiseTo n := sorry
+
 /-! ## The Risk explorer over the player's Risk (see `Engine/Proofs/Explain.lean`) -/
 
 /-- The Risk explorer shows the real bot. For move number `i` of a hand's recorded bot moves
