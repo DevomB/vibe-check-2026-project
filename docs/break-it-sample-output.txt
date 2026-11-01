@@ -1,0 +1,15 @@
+
+  BUG PLANTED:  At a showdown, pay the pot to the player with the WORSE hand.
+  (one line changed in a copy of Engine/Hand.lean; your files are untouched)
+
+  Asking Lean to re-check the proofs...
+
+  LEAN REFUSES.  (32s)
+  The proof breaks in: Engine/Proofs/Payout.lean, line 119
+  Inside:              payShowdown_ok
+  Theorem that no longer holds: showdown_pays_better_hand (at a showdown, the better hand wins the pot)
+  Full Lean output:     /tmp/.../lean-output.txt
+
+  Now the same check on the code without the bug...
+  ALL PROOFS PASS.  (0s)
+
