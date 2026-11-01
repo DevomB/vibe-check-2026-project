@@ -24,6 +24,7 @@ describe("/api/game input checks", () => {
     ["a negative slider", { cmd: "new_game", seed: "42", risk: -1, bluff_pct: 33 }],
     ["a seed that is not digits", { cmd: "new_game", seed: "abc", risk: 50, bluff_pct: 33 }],
     ["a raise without an amount", { cmd: "act", action: "raise" }],
+    ["a bet without an amount", { cmd: "act", action: "bet" }],
     ["a review without a hand", { cmd: "review" }],
   ])("turns away %s", async (_name, body) => {
     const { status, reply } = await post(body);
@@ -33,6 +34,14 @@ describe("/api/game input checks", () => {
 });
 
 describe.skipIf(!existsSync(leanBinaryPath()))("/api/game with the Lean program", () => {
+  it("accepts bet as a street-total raise", { timeout: 30_000 }, async () => {
+    const start = await post({ cmd: "new_game", seed: "42", risk: 50, bluff_pct: 33 });
+    if (!("ok" in start.reply)) throw new Error(start.reply.error);
+    const { status, reply } = await post({ cmd: "act", action: "bet", amount: 20 });
+    expect(status).toBe(200);
+    expect("ok" in reply).toBe(true);
+  });
+
   it("plays a hand to the end by checking or calling, then reviews it", { timeout: 30_000 }, async () => {
     let { reply } = await post({ cmd: "new_game", seed: "2026", risk: 50, bluff_pct: 33 });
     if (!("ok" in reply)) throw new Error(reply.error);
