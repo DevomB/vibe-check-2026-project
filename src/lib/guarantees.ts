@@ -174,9 +174,10 @@ export const GUARANTEES: readonly Guarantee[] = [
   {
     id: "review",
     code: "T5",
-    title: "The review grades call and fold correctly, under its model",
+    title: "The river grade is right, under its model",
     says: [
-      "A graded call or fold is Best exactly when it was worth at least as much as the other choice.",
+      "These are about one grade: your call or fold after the bot opens the river with a bet.",
+      "Such a call or fold is Best exactly when it was worth at least as much as the other choice.",
       "A decision that lost fewer big blinds never gets a worse label.",
       "Lean computes each worth as an exact average over the bot's possible hands, in big blinds. Folding is worth 0. The screen shows the worths rounded.",
       "Calling is Best exactly when your share of the pot against those hands (a tie counts half) is at least the share calling needed to break even.",
@@ -202,7 +203,8 @@ export const GUARANTEES: readonly Guarantee[] = [
       "For the list of hands: no card was dealt twice, which T2 proves for every game.",
     ],
     limits: [
-      "Only your call or fold after the bot's first river bet is graded. Raises and other streets are not.",
+      "Your other calls and folds facing a bet get an \"any hand\" grade: every hand the bot could hold counts the same, and a call is assumed to check down to showdown. It uses the same labels, but no theorem covers it.",
+      "Bets, raises and checks are not graded.",
       "The model ignores the earlier betting, so it only estimates what the bot really holds.",
       "It makes no claim about raising.",
     ],
@@ -342,7 +344,10 @@ export const GUARANTEES: readonly Guarantee[] = [
       "Look the same: the same bluff share (set by Risk), chips, board and your two cards.",
       "For the second theorem: the bot's cards are ones it bets with on that board, and they are not your cards.",
     ],
-    limits: ["A right decision can still lose chips. The grade looks at the decision, not the hand the bot turned out to hold."],
+    limits: [
+      "A right decision can still lose chips. The grade looks at the decision, not the hand the bot turned out to hold.",
+      "Both theorems are about the river grade only. No theorem covers the \"any hand\" grades of other calls and folds.",
+    ],
   },
   {
     id: "ends",

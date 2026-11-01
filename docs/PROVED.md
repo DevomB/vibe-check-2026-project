@@ -25,7 +25,8 @@ the definitions a reader must still read. Most important first.
    offers are exactly the legal moves, with the right call amount and raise range
    (`legalOptions_exact`).
 
-2. **The review is honest.** Each grade is exact pot-odds arithmetic against the hands the
+2. **The river grade is honest.** This is the grade of your call or fold after the bot opens
+   the river with a bet. It is exact pot-odds arithmetic against the hands the
    bot would really bet with (`review_worth`, `review_lost`). A call is Best exactly when your
    equity meets the price (`review_best_iff`, `review_call_best_iff_equity`). Fewer blinds lost
    never earns a worse label (`review_label_monotone`). The grade uses no hindsight
@@ -132,12 +133,17 @@ the definitions a reader must still read. Most important first.
    the cards left, which favours some places by at most one part in 2^64 / 52 (not proved),
    and with only 2^64 seeds most deck orders never come out (proved, item 9).
 
-5. **The river set ignores earlier streets.** The review's grades are exact for that model,
+5. **The "any hand" grades.** Since Nov 1 the review also grades your other calls and folds
+   facing a bet, before the river or after a river raise. It counts every hand the bot could
+   hold the same and assumes a call checks down to showdown. It uses the river grade's
+   arithmetic and labels, but no theorem covers it, and the app marks it as not proved.
+
+6. **The river set ignores earlier streets.** The river grade is exact for that model,
    not a claim about full-hand strategy. A provable upgrade later: make the set depend on the
    betting so far, then reprove `bluff_frequency`, `bot_bets_its_set` and
    `botDecide_river_follows_set`.
 
-6. **Small gaps.** The text of the bot's reasons is not proved faithful to the decision (only
+7. **Small gaps.** The text of the bot's reasons is not proved faithful to the decision (only
    that the quoted Risk does not change the move). The river bluff reason still quotes the
    internal share. Session state beyond the game, such as the hand logs, has no theorems. The
    turn counts run 46 parallel tasks; the compiler is trusted to run them. The real-board
