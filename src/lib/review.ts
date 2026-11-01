@@ -194,9 +194,8 @@ export function gradedCoach(d: ReviewDecision): GradedCoach | null {
     d.equity_had !== null && d.equity_needed !== null
       ? `You win ${formatPct(d.equity_had)} against the hands the bot bets here (a tie counts half). Calling needed ${formatPct(d.equity_needed)} to break even.`
       : null;
-  let better: string | null = null;
-  if (d.label !== "Best") better = `${GERUND[other]} was Best.`;
-  else if (d.worth_bb && d.worth_bb.call === d.worth_bb.fold) better = "Calling and folding were worth the same.";
+  // Display amounts are rounded; equal decimals do not establish an exact tie.
+  const better = d.label !== "Best" ? `${GERUND[other]} was Best.` : null;
   const worths = d.worth_bb ? `Calling was worth ${formatBb(d.worth_bb.call)}; folding was worth ${formatBb(d.worth_bb.fold)}.` : null;
   return { headline: `${GERUND[mine]} is ${withArticle(d.label)}.`, chances, better, worths, band: `${info.label}: ${info.band}.` };
 }

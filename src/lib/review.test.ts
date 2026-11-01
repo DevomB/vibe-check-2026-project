@@ -148,9 +148,11 @@ describe("gradedCoach", () => {
     expect(gradedCoach(badFold)).toMatchObject({ headline: "Folding is an Inaccuracy.", better: "Calling was Best." });
   });
 
-  it("says when both choices were worth the same", () => {
-    const even: ReviewDecision = { ...RIVER_CALL, worth_bb: { call: 0, fold: 0 }, equity_had: 0.333 };
-    expect(gradedCoach(even)!.better).toBe("Calling and folding were worth the same.");
+  it("does not infer an exact tie from rounded worths", () => {
+    // A positive call EV below 0.005 BB also arrives as 0.00; its Best label stays exact.
+    const rounded: ReviewDecision = { ...RIVER_CALL, worth_bb: { call: 0, fold: 0 }, equity_had: 0.333 };
+    expect(gradedCoach(rounded)!.better).toBeNull();
+    expect(gradedCoach({ ...rounded, label: "Good" })!.better).toBe("Folding was Best.");
   });
 
   it("gives nothing for a move without a grade", () => {
