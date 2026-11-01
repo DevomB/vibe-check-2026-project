@@ -1,7 +1,8 @@
 # Differential tests
 
 The Lean engine against our `poker-calculations` library, pinned to exactly `4.0.3`
-(MVP section 7). Versions below 4.0.0 are not used: 2.2.0 to 3.2.0 had an evaluator bug.
+(MVP section 7). Versions below 4.0.0 are not used: 2.2.0 to 3.2.0 were reported to have an
+evaluator bug.
 
 ## Run
 
@@ -13,7 +14,7 @@ cd tests && npm ci && npm run diff
 ```
 
 `npm run diff -- --deals=2000` does a quick run with fewer random ranking deals. The full run
-takes a few minutes, most of it in the library's exact flop equity.
+took about 4.5 minutes on the machine below.
 
 ## What is compared
 

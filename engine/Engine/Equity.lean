@@ -85,8 +85,9 @@ def riverCounts (hole board : List Card) : Counts :=
 
 Mode: exact, fixed. Benchmarked on the compiled engine (`lake exe equity-bench`, Oct 31, 2026,
 Windows 11, 8 cores): 0.67 to 0.93 s per decision with the 46 river cards counted in parallel,
-3.0 to 3.4 s on one core. That fits the bot's think time, so the turn stays exact. The mode is
-a constant, never chosen by machine speed (MVP §5). -/
+3.0 to 3.4 s on one core. That is under the 1.5 s limit on this machine, so the turn stays
+exact; a machine with fewer cores can be slower than the limit. The mode is a constant, never
+chosen by machine speed (MVP §5). -/
 
 /-- Every outcome on the turn: a river card, and with it a hand the opponent can hold from the
 cards still unseen. Each (river card, opponent hand) pair once: 46 × 990 = 45,540 in all. -/
@@ -116,9 +117,10 @@ def turnCounts (hole board : List Card) : Counts :=
 /-! ## Flop: random deals from a seed
 
 The random numbers come from mulberry32, the generator the TypeScript reference uses
-(`seededRng` in `src/engine/cards.ts`). Using the same generator, bit for bit, means the
-same seed gives the same deals and the same counts in Lean and in TypeScript, and the Lean
-code reproduces the preflop table in `data/preflop.json`. -/
+(`seededRng` in `src/engine/cards.ts`), ported bit for bit. Checked to give the same counts
+as TypeScript on the flop spots in `EquityTests.lean` and `EquityBench.lean`, and on the AA
+entry of `data/preflop.json` (rebuilt by `lake exe equity-bench`). The other preflop entries
+are only checked to within 4 standard errors (`tests/diff`). -/
 
 /-- One step of mulberry32: the next generator state and a random 32-bit number. -/
 def mulberryNext (a : UInt32) : UInt32 × UInt32 :=
@@ -168,8 +170,8 @@ table, 1,000 random deals from `seed` on the flop, exact on the turn and river. 
 inputs always give the same counts. Risk and Bluff are not inputs, so the sliders cannot
 change the counts.
 
-The game never gives other board sizes; for them the counts are one loss, so the bot never
-bets on a hand it cannot count. -/
+The game never gives other board sizes; for them the counts are a single loss (a 0% win
+chance). -/
 def countsFor (seed : Nat) (hole board : List Card) : Counts :=
   match board.length with
   | 0 => preflopCounts hole

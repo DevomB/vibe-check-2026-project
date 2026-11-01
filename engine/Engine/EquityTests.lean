@@ -4,9 +4,9 @@ import Engine.Equity
 # Tests: the equity counts give the same numbers as the TypeScript reference
 
 Each expected value below was computed by `src/ai/slider/counts.ts` on the same cards
-(`riverCounts`, `sampledCounts`) or read from `data/preflop.json`. The turn spots take a few
-seconds each in the interpreter, so they are checked on the compiled engine by
-`lake exe equity-bench` instead, together with the same river and flop spots.
+(`riverCounts`, `sampledCounts`) or read from `data/preflop.json`. The turn is not checked
+here. Its counts are checked against TypeScript by `lake exe equity-bench` (run by hand, not
+part of the build) and against poker-calculations by the differential tests in `tests/diff`.
 -/
 
 /-! ## How many outcomes are counted -/
