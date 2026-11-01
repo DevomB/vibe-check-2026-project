@@ -21,3 +21,4 @@ import Engine.Proofs.Legal
 import Engine.Proofs.RiskUtility
 import Engine.Proofs.EquityExact
 import Engine.Proofs.BluffFrequency
+import Engine.Proofs.Chips
