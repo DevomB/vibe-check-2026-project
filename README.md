@@ -36,11 +36,12 @@ npm start
 To check the proofs yourself: `checks/audit.sh` builds the engine and fails on any `sorry`
 or extra axiom. `lake comparator` and `lake check` (from `engine/`) need Linux.
 
-**Evidence.** Commit `2c1ccac` on `main` passed every CI check: the proof audit, Comparator,
-`lake check`, and a fresh Linux clone that runs `make install`, `make run`, 466 tests and an
+**Evidence.** Commit `923fdb3` on `main` passed every CI check: the proof audit, Comparator,
+`lake check`, and a fresh Linux clone that runs `make install`, `make run`, 492 tests and an
 HTTP smoke test
-([run 41358927590](https://github.com/DevomB/FoldProof/actions/runs/41358927590)).
-It carries 90 Comparator theorems, including the one-street river model.
+([run 41360657401](https://github.com/DevomB/FoldProof/actions/runs/41360657401)).
+It carries 100 Comparator theorems, including the one-street river model and the proof that
+the shuffle gives every deck order exactly once.
 Other documents link here rather than repeat this line. CI skips commits that change only
 docs, so the final commit gets a run started by hand, and this line moves to it.
 
