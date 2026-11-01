@@ -4,7 +4,7 @@ import Engine.Proofs.BotSpec
 import Engine.Proofs.EquitySpec
 import Engine.Proofs.BluffSpec
 import Engine.Proofs.ReviewSpec
-import Engine.Session
+import Engine.Protocol
 
 /-!
 # The main theorems, as agreed by the team (the Comparator "challenge")
@@ -227,3 +227,17 @@ theorem handle_keeps_reachable (cur : Option Session) (c : Command) (s' : Sessio
     (hcur : ∀ s, cur = some s → s.game.Reachable)
     (hok : Session.handle cur c = .ok s') :
     s'.game.Reachable := sorry
+
+open Lean (Json toJson) in
+/-- If a request line holds a game command and `Session.handle` rejects it, `respond` keeps
+the session exactly as it was, and replies with the error and the table as it was before,
+with no new events. -/
+theorem handle_error_unchanged (cur : Option Session) (line : String) (j : Json)
+    (c : Command) (e : String)
+    (hjson : Json.parse line = .ok j) (hreq : parseRequest j = .ok (.game c))
+    (hrej : Session.handle cur c = .error e) :
+    respond cur line =
+      (cur, Json.mkObj [("error", toJson e),
+        ("state", match cur with
+          | some s => stateJson { s with events := #[] }
+          | none => Json.null)]) := sorry

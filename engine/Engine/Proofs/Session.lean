@@ -29,9 +29,9 @@ reply is the error message and the table as it was before, with no new events.
 
 **(b) `handle_keeps_reachable`.** Suppose the session's game is reachable, or there is no
 game yet. If `Session.handle` accepts a command, the new session's game is reachable too.
-The assumption is needed: a `state` command accepts any session and keeps its game. With
-`chips_always_1000` and `no_card_dealt_twice`, T1 and T2 then hold for the game the app
-plays.
+The assumption is needed: a `state` command accepts any session and keeps its game.
+`app_game_reachable` below follows the app from its first line, so with
+`chips_always_1000` and `no_card_dealt_twice`, T1 and T2 hold for the game the app plays.
 
     theorem handle_keeps_reachable (cur : Option Session) (c : Command) (s' : Session)
         (hcur : ∀ s, cur = some s → s.game.Reachable)
@@ -219,13 +219,82 @@ theorem handle_keeps_reachable (cur : Option Session) (c : Command) (s' : Sessio
 - `Session.botChoice_accepted`: in a session whose game is reachable, the engine accepts the
   bot's move. So the old test always passed on such a session.
 - `runBot` only runs on such sessions when the old session's game is reachable (or there is
-  no game yet). `Session.start` runs it on a new game, `next_hand` on a new hand of a
-  reachable game, and `Session.humanAct` after a move the engine accepted in a reachable
-  game (the proofs of `Session.start_reachable`, `handle_keeps_reachable` and
-  `Session.humanAct_reachable` above). Each bot move keeps the game reachable
-  (`Session.runBot_reachable`).
+  no game yet), which in the app is always true (`app_game_reachable` below).
+  `Session.start` runs it on a new game, `next_hand` on a new hand of a reachable game, and
+  `Session.humanAct` after a move the engine accepted in a reachable game (the proofs of
+  `Session.start_reachable`, `handle_keeps_reachable` and `Session.humanAct_reachable`
+  above). Each bot move keeps the game reachable (`Session.runBot_reachable`).
 -/
+
+/-! ## (a) A rejected command changes nothing -/
+
+/-- **(a) A rejected command changes nothing.** If a request line holds a game command and
+`Session.handle` rejects it, `respond` keeps the session exactly as it was, and replies with
+the error and the table as it was before, with no new events. -/
+theorem handle_error_unchanged (cur : Option Session) (line : String) (j : Json)
+    (c : Command) (e : String)
+    (hjson : Json.parse line = .ok j) (hreq : parseRequest j = .ok (.game c))
+    (hrej : Session.handle cur c = .error e) :
+    respond cur line =
+      (cur, Json.mkObj [("error", toJson e),
+        ("state", match cur with
+          | some s => stateJson { s with events := #[] }
+          | none => Json.null)]) := by
+  cases cur <;> simp only [respond, hjson, hreq, hrej]
+
+/-- `respond` changes the session only when `Session.handle` accepts a game command. Every
+other line (bad JSON, an unknown command, a review, a rejected command) keeps it. -/
+theorem respond_keeps_session_unless_accepted (cur : Option Session) (line : String) :
+    (respond cur line).1 = cur ∨
+    ∃ j c s, Json.parse line = .ok j ∧ parseRequest j = .ok (.game c) ∧
+      Session.handle cur c = .ok s ∧ (respond cur line).1 = some s := by
+  cases hj : Json.parse line with
+  | error e => left; simp only [respond, hj]
+  | ok j =>
+    cases hr : parseRequest j with
+    | error e => left; simp only [respond, hj, hr]
+    | ok r =>
+      cases r with
+      | review n =>
+        left
+        cases cur with
+        | none => simp only [respond, hj, hr]
+        | some s => cases hv : s.review n <;> simp only [respond, hj, hr, hv]
+      | game c =>
+        cases hh : Session.handle cur c with
+        | error e => left; simp only [respond, hj, hr, hh]
+        | ok s => right; exact ⟨j, c, s, rfl, hr, hh, by simp only [respond, hj, hr, hh]⟩
+
+/-- One request line keeps the session's game reachable. -/
+theorem respond_keeps_reachable (cur : Option Session) (line : String)
+    (hcur : ∀ s, cur = some s → s.game.Reachable) :
+    ∀ s, (respond cur line).1 = some s → s.game.Reachable := by
+  intro s hs
+  rcases respond_keeps_session_unless_accepted cur line with h | ⟨j, c, s', -, -, hh, h⟩
+  · rw [h] at hs; exact hcur s hs
+  · rw [h, Option.some.injEq] at hs
+    subst hs
+    exact handle_keeps_reachable cur c _ hcur hh
+
+/-- **The game the app plays is reachable.** Start with no game and answer any request
+lines in order, as `Main.lean` does: whenever there is a game, it is reachable. So T1
+(`chips_always_1000`) and T2 (`no_card_dealt_twice`) hold for it. -/
+theorem app_game_reachable (lines : List String) (s : Session)
+    (hs : lines.foldl (fun cur line => (respond cur line).1) none = some s) :
+    s.game.Reachable := by
+  suffices key : ∀ (lines : List String) (init : Option Session),
+      (∀ s, init = some s → s.game.Reachable) →
+      ∀ s, lines.foldl (fun cur line => (respond cur line).1) init = some s → s.game.Reachable from
+    key lines none (by simp) s hs
+  intro lines
+  induction lines with
+  | nil => intro init hinit s hs; exact hinit s hs
+  | cons line rest ih =>
+    intro init hinit s hs
+    exact ih _ (respond_keeps_reachable init line hinit) s hs
 
 #print axioms bot_move_accepted
 #print axioms Session.botChoice_accepted
 #print axioms handle_keeps_reachable
+#print axioms handle_error_unchanged
+#print axioms app_game_reachable
