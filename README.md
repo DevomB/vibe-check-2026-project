@@ -36,12 +36,12 @@ npm start
 To check the proofs yourself: `checks/audit.sh` builds the engine and fails on any `sorry`
 or extra axiom. `lake comparator` and `lake check` (from `engine/`) need Linux.
 
-**Evidence.** The latest code commit on `main`, `575954d`, passed every CI check: the proof
-audit, Comparator, `lake check`, and a fresh Linux clone that runs `make install`, `make run`,
-350 tests and an HTTP smoke test
+**Evidence.** Commit `575954d` on `main` passed every CI check: the proof audit, Comparator,
+`lake check`, and a fresh Linux clone that runs `make install`, `make run`, 350 tests and an
+HTTP smoke test
 ([run 41343366226](https://github.com/DevomB/vibe-check-2026-project/actions/runs/41343366226)).
 Other documents link here rather than repeat this line. CI skips commits that change only
-docs, so the final commit gets a run started by hand.
+docs, so the final commit gets a run started by hand, and this line moves to it.
 
 ## What is proved
 
