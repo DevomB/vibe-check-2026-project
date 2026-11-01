@@ -1,26 +1,42 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ActionBar } from "./ActionBar";
 import { GameOver } from "./GameOver";
 import { Lobby } from "./Lobby";
 import { ReviewModal } from "./ReviewModal";
 import { RulesModal } from "./RulesModal";
+import { ProofsDrawer } from "./ProofsDrawer";
 import { NextHandBar } from "./ResultBanner";
 import { Table, resultDelay } from "./Table";
 import { chips, describeStartingHand } from "@/lib/format";
 import { type GameSettings, HUMAN_SEAT, TABLE, gameStatus, useGame } from "@/hooks/useGame";
 
+/**
+ * Job 4's two optional ReviewModal props (the contract in its task file). They travel in a
+ * spread: before job 4's ReviewModal declares them, TypeScript accepts them and the modal
+ * ignores them; once it declares them, TypeScript checks them against these types.
+ */
+interface ReviewModalExtras {
+  /** True while a Mystery game is not yet revealed. */
+  hideSliderInfo?: boolean;
+  /** Open the Proofs drawer at that guarantee ("review", "bluff" or "risk"). */
+  onShowProof?: (id: string) => void;
+}
+
 export function PokerApp() {
   const { game, error, thinking, review, peek, peekedHands, setPeek, start, humanAct, nextHand, openReview, closeReview, quit } = useGame();
   const [showRules, setShowRules] = useState(false);
+  /** The "What is guaranteed?" drawer: closed (null), or open at a guarantee id (or the top). */
+  const [proofs, setProofs] = useState<{ focus: string | null } | null>(null);
+  const closeProofs = useCallback(() => setProofs(null), []);
   // The sliders used last, so the setup screen keeps them after leaving a table.
   const [lastSettings, setLastSettings] = useState<GameSettings | undefined>(undefined);
   const status = game ? gameStatus(game) : null;
   const lost = game?.lost ?? null;
 
   useEffect(() => {
-    if (status !== "handOver" || showRules || review || lost !== null) return;
+    if (status !== "handOver" || showRules || proofs || review || lost !== null) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.repeat || (e.target instanceof HTMLElement && e.target.closest("button, input, textarea, select, [contenteditable]"))) return;
       if (e.key === " " || e.key === "Enter") {
@@ -33,7 +49,7 @@ export function PokerApp() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [status, showRules, review, lost, nextHand, openReview]);
+  }, [status, showRules, proofs, review, lost, nextHand, openReview]);
 
   const begin = (settings: GameSettings) => {
     setLastSettings(settings);
@@ -67,6 +83,8 @@ export function PokerApp() {
   // While the bot "thinks", the previous state stays on screen and the human cannot act.
   const yourTurn = !thinking && hand.toAct !== null && hand.toAct === youIndex;
   const actor = thinking ? game.players[1 - HUMAN_SEAT]! : hand.toAct !== null ? game.players[seatOf[hand.toAct]!]! : null;
+
+  const reviewExtras: ReviewModalExtras = { hideSliderInfo: false, onShowProof: (id) => setProofs({ focus: id }) };
 
   let strength = "";
   if (you) {
@@ -107,6 +125,9 @@ export function PokerApp() {
             <input type="checkbox" checked={peek} disabled={lost !== null} onChange={(e) => setPeek(e.target.checked)} />
             Peek at bot's cards
           </label>
+          <button className="btn btn-ghost btn-sm" onClick={() => setProofs({ focus: null })}>
+            What is guaranteed?
+          </button>
           <button className="btn btn-ghost btn-sm" onClick={() => setShowRules(true)}>
             How to play
           </button>
@@ -132,7 +153,7 @@ export function PokerApp() {
           ) : (
             <ActionBar
               hand={hand}
-              legal={yourTurn && !showRules ? game.legal : null}
+              legal={yourTurn && !showRules && !proofs ? game.legal : null}
               waiting={you?.folded ? "You folded — watching the rest" : actor ? `${actor.name} is thinking…` : ""}
               botMessage={thinking ? null : game.botLine}
               handStrength={strength}
@@ -177,8 +198,9 @@ export function PokerApp() {
         />
       )}
       {review && (
-        <ReviewModal review={review} peeked={peekedHands.includes(review.hand)} onClose={closeReview} />
+        <ReviewModal {...reviewExtras} review={review} peeked={peekedHands.includes(review.hand)} onClose={closeReview} />
       )}
+      {proofs && <ProofsDrawer focus={proofs.focus} onClose={closeProofs} />}
       {rulesModal}
     </div>
   );
