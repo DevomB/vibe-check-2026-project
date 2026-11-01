@@ -2,6 +2,7 @@ import Engine.Proofs.Reachable
 import Engine.Proofs.RiskSpec
 import Engine.Proofs.BotSpec
 import Engine.Proofs.EquitySpec
+import Engine.Proofs.BluffSpec
 
 /-!
 # The main theorems, as agreed by the team (the Comparator "challenge")
@@ -135,3 +136,29 @@ theorem countsFor_river {seed : Nat} {hole board : List Card} (h : board.length 
 /-- On the turn, the counts the bot uses are the turn counts above. -/
 theorem countsFor_turn {seed : Nat} {hole board : List Card} (h : board.length = 4) :
     countsFor seed hole board = turnCounts hole board := sorry
+
+/-! ## T7: the river betting set has as many bluffs as Bluff asks for
+(see `Engine/Proofs/BluffSpec.lean`) -/
+
+/-- On a river board (five different cards), at any Bluff setting `b` from 0 to 60, the bot's
+river betting set has 324 value hands, and its number of bluffs is the whole number nearest to
+324 × b / (100 − b), halves up: the number that makes bluffs b% of the set. -/
+theorem bluff_frequency (bluffPct : Nat) (board : List Card) (h5 : board.length = 5)
+    (hd : board.Nodup) (hb : bluffPct ≤ 60) :
+    (riverBettingSet bluffPct board).value.length = 324 ∧
+    NearestWhole (riverBettingSet bluffPct board).bluffs.length (324 * bluffPct)
+      (100 - bluffPct) := sorry
+
+/-- On a river board, at any Bluff setting from 0 to 60, no hand is both a value hand and a
+bluff. -/
+theorem value_and_bluffs_apart (bluffPct : Nat) (board : List Card) (h5 : board.length = 5)
+    (hd : board.Nodup) (hb : bluffPct ≤ 60) :
+    ∀ h ∈ (riverBettingSet bluffPct board).value, h ∉ (riverBettingSet bluffPct board).bluffs :=
+  sorry
+
+/-- The bot's river bet (`riverBets`) is true for the hole cards `a`, `b` exactly when they are
+one of the value hands or one of the bluffs in the river betting set, in either order. -/
+theorem bot_bets_its_set (bluffPct : Nat) (board : List Card) (a b : Card) :
+    riverBets bluffPct board [a, b] = true ↔
+      ∃ h ∈ (riverBettingSet bluffPct board).value ++ (riverBettingSet bluffPct board).bluffs,
+        h.cards = (a, b) ∨ h.cards = (b, a) := sorry
