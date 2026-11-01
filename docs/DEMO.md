@@ -7,11 +7,11 @@ Every hand here was played on the compiled Lean engine, with scripted human move
 user has now confirmed all three practice scenes in the browser with the expected grades
 and outcomes. The remaining visual checks are tracked in `DEMO_QUICKSTART.md`.
 
-Integration recheck, November 1: all six scenes/challenges passed again on the integrated
-program, and fresh Linux Makefile launch plus production HTTP checks passed in
-[run 41336322319](https://github.com/DevomB/vibe-check-2026-project/actions/runs/41336322319).
-See `INTEGRATION_REVIEW.md` for the binary hash and validation limits. The original
-discovery identity below is historical; the visual checklist remains unverified.
+Integration recheck, November 1: all six scenes and challenges passed again on the
+integrated program, and CI's fresh Linux clone passed `make run` and the production HTTP
+checks. The CI run is the evidence line in the [README](../README.md#run-it). See
+`INTEGRATION_REVIEW.md` for that binary's hash and the limits of the check. The engine
+record below is from the first discovery run; replace it after the final build.
 
 ## What the hands were checked on
 
@@ -27,19 +27,22 @@ discovery identity below is historical; the visual checklist remains unverified.
 - **Turn mode: exact.** The bot counts every river card and every opponent hand (45,540
   outcomes). The mode is a fixed constant in `engine/Engine/Equity.lean`, with its benchmark.
   The flop uses 1,000 seeded random deals. The river is exact.
-- **Lean proofs CI** on `main` at `df6904a`: green, with audit, Comparator and `lake check`
-  ([run 41281639578](https://github.com/DevomB/vibe-check-2026-project/actions/runs/41281639578)).
+- **Lean proofs CI**: the README's evidence line names the green run (audit, Comparator,
+  `lake check` and a fresh-clone launch).
 - **All hands are hand 1 of a new game, with an entered seed.** You (the human) are on the
   button: you post the small blind, act first before the flop and last after it.
 - **Cards** are written as in the JSON: rank then suit, `T` is a ten. The table shows suit
   symbols instead.
 
-Recheck everything with the program the app will run:
+Recheck everything with the program the app will run. From the repository root, in
+PowerShell:
 
 ```powershell
-$env:POKER_BIN = 'C:\Coding-Projects\vibe-check-2026-project\engine\.lake\build\bin\poker.exe'
+$env:POKER_BIN = "$PWD\engine\.lake\build\bin\poker.exe"
 node docs/demo/find-demo-hands.mjs --check
 ```
+
+In bash: `POKER_BIN=engine/.lake/build/bin/poker node docs/demo/find-demo-hands.mjs --check`.
 
 It prints `PASS` or `FAIL` for the three practice spots and the three scenes, and exits 1 on
 a `FAIL`. `npm test` also replays scene (a) through the route (`src/app/api/game/demo.test.ts`).
@@ -85,8 +88,8 @@ Ivy and Vex are named opponents on the setup screen. Picking one sets both slide
     "Your equity 60% · needed to call 33%". (JSON: `worth_bb.call` 1.57, `equity_had`
     0.596, `equity_needed` 0.333.)
   - Why the bot played this way, last line: "Bet 20: a bluff, picked at Bluff 60%."
-- **Two ways to show the bluff.** Devom picks one in the morning.
-  - **Peek off (works on `main` now).** The audience sees the bet. The bot's cards appear
+- **Two ways to show the bluff.** Both work; pick one before the pitch.
+  - **Peek off.** The audience sees the bet. The bot's cards appear
     only at the showdown, and the reasons after the hand say "a bluff, picked at Bluff 60%".
   - **Peek on (integrated).** Turn on "Peek at bot's cards" before the river. The
     audience sees Ks 9d while the bot bets 20: king-high, betting as a bluff. The moves, the
@@ -162,7 +165,7 @@ process.stdin.on("end", () => {
 });'
 ```
 
-## Practice spots for job 5 (`docs/demo/challenges.json`)
+## Practice spots (`docs/demo/challenges.json`)
 
 Each spot is hand 1 of a new game. `moves` are your moves before the river decision. The
 file also has the river state, the bot's river reason, both results and how it was checked.
@@ -179,7 +182,7 @@ file also has the river state, the bot's river reason, both results and how it w
 - In `right-and-lose` the bot bets 20 on the turn and you call. That is the third move.
 - `human_net_chips` is what you won or lost in hand 1, against your 500 at the start.
 
-## Morning checklist
+## Release checklist
 
 ### UI click-through (Devom)
 
@@ -197,28 +200,28 @@ expected results come from the engine replays above, and from reading the code w
 | 7 | Replay by seed | Rook (0, 0%), seed 1 | After check 3, click "Replay these cards", then All-in 500 again | The same cards (3c 8c) and the same result. Starting seed 1 by hand gives the same cards too. | [ ] | [ ] |
 | 8 | Rejected input | any, seed 1 | Type `15` in the raise box | The UI keeps raises inside Lean's bounds: the box goes back to 20 when it loses focus, so the UI cannot send 15. To see Lean reject it, send `{"cmd":"act","action":"raise","amount":15}` after `new_game` (seed 1): the reply is `{"error":"illegal move",...}` with the state unchanged (checked on the engine). | [ ] | [ ] |
 | 9 | Engine restart error | any | Start a game. Stop the `poker.exe` that this server started. Click any action. | A Game lost dialog offers New game. No live action buttons remain available; subsequent requests continue to report the lost game until a new one starts. | [ ] | [ ] |
-| 10 | Peek toggle (job 1) | Vex (0, 60%), seed 1 | Scene (c), Peek on from the start | Off by default. When on, Ks 9d show, marked as peeked. Nothing else changes: the same bot moves, the same showdown and the same review (+1.6 BB, 60% vs 33%). | [ ] | [ ] |
+| 10 | Peek toggle | Vex (0, 60%), seed 1 | Scene (c), Peek on from the start | Off by default. When on, Ks 9d show, marked as peeked. Nothing else changes: the same bot moves, the same showdown and the same review (+1.6 BB, 60% vs 33%). | [ ] | [ ] |
 
-Stop only the `poker.exe` of your own server (Task Manager shows it under Node). Other jobs
-may run their own copies.
+Stop only the `poker.exe` of your own server (Task Manager shows it under Node). Other
+servers may run their own copies.
 
 Also check the integrated features:
 
 | # | Feature | Opponent, seed | Moves | Expected | Pass | Fail |
 | --- | --- | --- | --- | --- | --- | --- |
-| 11 | Range viewer (job 4) | Vex (0, 60%), seed 6 | Scene (a), open the review | The bot's set on 9s 5d 2c Ks 3d has 324 value hands and 486 bluffs, before your cards are removed (T7: bluffs are the whole number nearest to 324 × 60 / 40). Your cards block some. The beat, tie and lose counts give the 18.5% equity. | [ ] | [ ] |
-| 12 | Risk explorer (job 4) | Ivy (100, 0%), seed 1 | Scene (b), open the review | The bot's preflop decision folds at Risk 100 and calls at Risk 0. There is one change point between them. | [ ] | [ ] |
-| 13 | Proofs drawer (job 5) | any | Click "What is guaranteed?" | It lists T1 to T8 in plain words, each with its Lean names. Every name is in `engine/comparator.json`. | [ ] | [ ] |
-| 14 | Practice challenges (job 5) | buttons on the setup screen | Load each, then call or fold | Each stops at the river bet from the table above. The review gives the labels in the table. `right-and-lose` says "Right decision, unlucky result." | [ ] | [ ] |
-| 15 | Mystery game (job 5) | Mystery on | Play 3 hands, guess, reveal | No slider values or bot reasons show before the reveal. The reveal shows the true Risk and Bluff, and how close the guess was. | [ ] | [ ] |
+| 11 | Range viewer | Vex (0, 60%), seed 6 | Scene (a), open the review | The bot's set on 9s 5d 2c Ks 3d has 324 value hands and 486 bluffs, before your cards are removed (T7: bluffs are the whole number nearest to 324 × 60 / 40). Your cards block some. The beat, tie and lose counts give the 18.5% equity. | [ ] | [ ] |
+| 12 | Risk explorer | Ivy (100, 0%), seed 1 | Scene (b), open the review | The bot's preflop decision folds at Risk 100 and calls at Risk 0. There is one change point between them. | [ ] | [ ] |
+| 13 | Proofs drawer | any | Click "What is guaranteed?" | It lists T1 to T8 in plain words, each with its Lean names. Every name is in `engine/comparator.json`. | [ ] | [ ] |
+| 14 | Practice challenges | buttons on the setup screen | Load each, then call or fold | Each stops at the river bet from the table above. The review gives the labels in the table. `right-and-lose` says "Right decision, unlucky result." | [ ] | [ ] |
+| 15 | Mystery game | Mystery on | Play 3 hands, guess, reveal | No slider values or bot reasons show before the reveal. The reveal shows the true Risk and Bluff, and how close the guess was. | [ ] | [ ] |
 
-### After the merges
+### After an engine change
 
-1. Build the merged engine once, in one checkout.
+1. Build the engine once, in one checkout.
 2. Run `node docs/demo/find-demo-hands.mjs --check` with `POKER_BIN` set to that build. All
    six lines must say `PASS`.
 3. On a `FAIL`, run `node docs/demo/find-demo-hands.mjs --write` to pick new hands. Then
-   update this file, `docs/PITCH.md`, `src/app/api/game/demo.test.ts` and job 5's
+   update this file, `docs/PITCH.md`, `src/app/api/game/demo.test.ts` and
    `src/lib/challenges.ts` together.
 4. Run `npm test` with `POKER_BIN` set. `demo.test.ts` must pass.
 5. Update "What the hands were checked on" above with the new engine hash and commit.
@@ -236,7 +239,7 @@ Also check the integrated features:
 
 ### Build-path notes for the Sunday check
 
-These were seen, not fixed: the build files are frozen tonight.
+These were seen and are not fixed yet; they are planned for after judging.
 
 - `make run` depends on `lean` and runs `npm run build` every time. Its port check
   (`Makefile:37`) runs after the build, so a busy port shows up only after a full build.
