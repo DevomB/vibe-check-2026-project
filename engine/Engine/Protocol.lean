@@ -138,8 +138,26 @@ def RangeSummary.json (r : RangeSummary) : Json :=
     [ ("value", toJson r.value), ("bluffs", toJson r.bluffs), ("blocked", toJson r.blocked),
       ("beat", toJson r.beat), ("tie", toJson r.tie), ("lose", toJson r.lose) ]
 
+/-- One bot move in the Risk explorer (`exploreHand`, `Engine/Explain.lean`). Moves are named
+as the table names them ("Call", "Bet 60"); `actions` has one per Risk from 0 to 100. -/
+def RiskExplorerEntry.json (e : RiskExplorerEntry) : Json :=
+  Json.mkObj
+    [ ("street", toJson (streetName e.street)),
+      ("pot", toJson e.pot),
+      ("toCall", toJson e.toCall),
+      ("counts", Json.mkObj
+        [("win", toJson e.counts.win), ("tie", toJson e.counts.tie), ("loss", toJson e.counts.loss)]),
+      ("risk", toJson e.risk),
+      ("action", toJson (moveText e.state e.action)),
+      ("actions", toJson (e.moves.map (moveText e.state))),
+      ("continuesUpTo", match e.continuesUpTo with | some k => toJson k | none => Json.null),
+      ("riskMatters", toJson e.riskMatters),
+      ("effect", toJson e.effect.name),
+      ("summary", toJson e.effect.summary) ]
+
 /-- The review of hand `n` (MVP §13). Ungraded moves have `null` grades: "not graded yet".
-A graded move also has `range`: the river range viewer's numbers. -/
+A graded move also has `range`: the river range viewer's numbers. `risk_explorer` has one
+entry per bot move, or is `null` while hand `n` is played. -/
 def reviewJson (srv : Session) (n : Nat) (lines : Array ReviewLine) : Json :=
   let ranges := srv.ranges n
   let line (i : Nat) (l : ReviewLine) : Json :=
@@ -158,7 +176,11 @@ def reviewJson (srv : Session) (n : Nat) (lines : Array ReviewLine) : Json :=
   Json.mkObj
     [("hand", toJson n), ("decisions", Json.arr (lines.mapIdx line)),
      -- Like `botReasons`: `null` while hand `n` is still being played.
-     ("bot_reasons", match srv.reasonsFor n with | some rs => toJson rs | none => Json.null)]
+     ("bot_reasons", match srv.reasonsFor n with | some rs => toJson rs | none => Json.null),
+     -- Also `null` while hand `n` is played: the counts show how strong the bot's hand was.
+     ("risk_explorer", match srv.riskExplorer n with
+       | some es => Json.arr (es.toArray.map RiskExplorerEntry.json)
+       | none => Json.null)]
 
 /-! ## Reading requests -/
 

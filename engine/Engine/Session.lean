@@ -43,6 +43,10 @@ structure HandLog where
   decisions : Array Decision := #[]
   /-- One plain sentence per bot move, in order. Shown only once the hand is over. -/
   reasons : Array String := #[]
+  /-- For each bot move, in order: what `botDecide` was given apart from the sliders (the
+  hand's seed, the bot's cards, the board, the chips) and the move made. The review's Risk
+  explorer (`Engine/Explain.lean`) decides again from these; nothing is worked out here. -/
+  botMoves : Array (Nat × List Card × List Card × State × Action) := #[]
 
 /-- What the game program remembers between commands. -/
 structure Session where
@@ -172,6 +176,7 @@ def Session.runBot : Nat → Session → Session
     | .error _ => s   -- never happens: see above
     | .ok next =>
       let next := next.logHand fun l => { l with reasons := l.reasons.push c.reason }
+      let next := next.logHand fun l => { l with botMoves := l.botMoves.push (handSeed s.game.seed s.game.handNo, h.hole bot, h.board, h.chips, c.action) }
       let h' := next.game.hand
       let opensRiver := h.board.length == 5 && h.chips.toCall == 0 && c.action matches .raiseTo _
       let next := if opensRiver && h'.ended.isNone && h'.chips.toAct == human then
