@@ -24,7 +24,7 @@ const text = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Hold'em",
+  title: "FoldProof",
   description: "Heads-up no-limit Texas Hold'em against one bot you build with one slider, Risk.",
 };
 

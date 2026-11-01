@@ -19,7 +19,7 @@ Before you start: have the setup screen open. Check that `node docs/demo/find-de
 
 ## 0:00 The hook (30 seconds)
 
-> "Build your opponent, play it, and review your river calls and folds. The game runs in Lean,
+> "This is FoldProof. Build your opponent, play it, and review your river calls and folds. The game runs in Lean,
 > and our Lean proofs check properties of that code and of the review's stated model."
 
 ## 0:30 Build your opponent (1 minute): scene (b)

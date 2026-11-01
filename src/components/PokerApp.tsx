@@ -243,7 +243,7 @@ export function PokerApp() {
   return (
     <div className="app">
       <header className="topbar">
-        <div className="brand">Hold'em</div>
+        <div className="brand">FoldProof</div>
         <div className="topbar-info">
           <span>
             Hand <b>#{game.session.handNumber}</b>

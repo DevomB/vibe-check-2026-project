@@ -1,4 +1,4 @@
-# Hold'em with a proved game review
+# FoldProof: Hold'em with a proved game review
 
 Design a poker bot's personality, play heads-up Texas Hold'em against it in the browser,
 then get a chess.com-style review of your river calls and folds. The whole game runs in Lean, and
@@ -39,7 +39,7 @@ or extra axiom. `lake comparator` and `lake check` (from `engine/`) need Linux.
 **Evidence.** Commit `2c1ccac` on `main` passed every CI check: the proof audit, Comparator,
 `lake check`, and a fresh Linux clone that runs `make install`, `make run`, 466 tests and an
 HTTP smoke test
-([run 41358927590](https://github.com/DevomB/vibe-check-2026-project/actions/runs/41358927590)).
+([run 41358927590](https://github.com/DevomB/FoldProof/actions/runs/41358927590)).
 It carries 90 Comparator theorems, including the one-street river model.
 Other documents link here rather than repeat this line. CI skips commits that change only
 docs, so the final commit gets a run started by hand, and this line moves to it.

@@ -1,4 +1,4 @@
-# Research phase: verified poker app (Vibecheck 2026)
+# Research phase: FoldProof, a verified poker app (Vibecheck 2026)
 
 > **Historical.** Written on Oct 31, before the build. The shipped product differs: other
 > slider rules (no aggression slider, no quadratic Risk formula), no Kuhn or Leduc mode, a

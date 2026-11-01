@@ -1,4 +1,4 @@
-VIBECHECK 2026 POKER PROJECT: MVP SPEC (v3, Saturday Oct 31)
+FOLDPROOF (VIBECHECK 2026 POKER PROJECT): MVP SPEC (v3, Saturday Oct 31)
 
 CHANGED FROM v2 (decisions confirmed during the MVP review)
 - Removed personal task allocations. Section 11 now records what exists and what still needs doing.
@@ -30,7 +30,7 @@ WHY THIS WINS (the two judging axes)
 1. SETUP CHECKLIST (everyone, before 2:30 PM)
 - Node 22.12 or newer, and npm. Check with "node -v" and "npm -v".
 - Lean 4.35.0 through elan, plus the Lean 4 extension in VS Code. The project must pin leanprover/lean4:v4.35.0 and matching dependencies.
-- git, and your own clone of github.com/DevomB/vibe-check-2026-project.
+- git, and your own clone of github.com/DevomB/FoldProof.
 - make. On Windows: "winget install ezwinports.make".
 - Claude Code. The API key lives only in your own terminal, never in a file in the repo.
 

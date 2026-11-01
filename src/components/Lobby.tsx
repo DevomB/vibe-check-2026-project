@@ -96,9 +96,9 @@ export function Lobby({
           <PlayingCard card="As" size="lg" />
           <PlayingCard card="Kh" size="lg" />
         </div>
-        <h1>Texas Hold'em</h1>
+        <h1>FoldProof</h1>
         <p className="lobby-sub">
-          No-limit, one on one. You and the bot each start with {TABLE.startingStack} chips, and the blinds are{" "}
+          No-limit Texas Hold'em, one on one. You and the bot each start with {TABLE.startingStack} chips, and the blinds are{" "}
           {TABLE.smallBlind} and {TABLE.bigBlind}.
         </p>
         <button className="btn btn-link" onClick={onRules}>
