@@ -1,4 +1,5 @@
 import Engine.Proofs.ReviewSpec
+import Engine.Proofs.BluffFrequency
 
 /-!
 # The review is sound (T5) and never uses hindsight (T8)
@@ -356,3 +357,274 @@ example : ¬ NoHindsight fun h (_ : RiverChoice) => h.hole (other h.chips.toAct)
 #print axioms no_hindsight
 #print axioms bot_hand_in_review
 #print axioms botHands_ne_nil
+
+/-! ## The review always has a hand to consider
+
+On a river board, whatever the human's two cards and the Bluff setting, the bot's betting set
+leaves at least one hand the human's cards do not block: the set has 324 value hands, and at
+most 2 × 47 of the 1,081 candidate hands use one of the human's cards. So the condition
+`spot.botHands ≠ []` of `review_worth` and `review_call_best_iff_equity` holds in every real
+spot, and the examples below can meet it. -/
+
+/-- Keeping the entries that pass `p` or `q` keeps at most as many as the two filters
+together. -/
+theorem length_filter_or_le {α : Type} (p q : α → Bool) :
+    ∀ (l : List α),
+      (l.filter fun x => p x || q x).length ≤ (l.filter p).length + (l.filter q).length
+  | [] => by simp
+  | x :: xs => by
+    have ih := length_filter_or_le p q xs
+    simp only [List.filter_cons]
+    cases p x <;> cases q x <;> simp <;> omega
+
+/-- A card not in a list is in none of the list's pairs. -/
+theorem filter_pairs_eq_nil_of_not_mem {l : List Card} {c : Card} (hc : c ∉ l) :
+    (pairs l).filter (fun p => p.1 == c || p.2 == c) = [] := by
+  rw [List.filter_eq_nil_iff]
+  rintro ⟨a, b⟩ hab
+  have hs := mem_pairs.mp hab
+  have ha : a ∈ l := hs.subset (by simp)
+  have hb : b ∈ l := hs.subset (by simp)
+  simp only [Bool.or_eq_true, beq_iff_eq, not_or]
+  exact ⟨fun h => hc (h ▸ ha), fun h => hc (h ▸ hb)⟩
+
+/-- In a list with no repeats, at most one entry equals `c`. -/
+theorem length_filter_eq_le_one {l : List Card} (hnd : l.Nodup) (c : Card) :
+    (l.filter (· == c)).length ≤ 1 := by
+  have hsub : l.filter (· == c) ⊆ [c] := by
+    intro x hx
+    rw [List.mem_filter] at hx
+    simp only [beq_iff_eq] at hx
+    simp [hx.2]
+  exact List.Nodup.length_le_of_subset (hnd.filter _) hsub
+
+/-- Among the pairs of a list with no repeats, at most `l.length` contain the card `c`. -/
+theorem length_filter_pairs_le {c : Card} :
+    ∀ {l : List Card}, l.Nodup →
+      ((pairs l).filter (fun p => p.1 == c || p.2 == c)).length ≤ l.length
+  | [], _ => by simp [pairs]
+  | x :: xs, hnd => by
+    rw [List.nodup_cons] at hnd
+    obtain ⟨hx, hnd⟩ := hnd
+    have ih := length_filter_pairs_le hnd (c := c)
+    simp only [pairs, List.filter_append, List.length_append, List.filter_map, List.length_map,
+      List.length_cons, Function.comp_def]
+    by_cases hxc : x = c
+    · subst hxc
+      rw [filter_pairs_eq_nil_of_not_mem hx]
+      simp only [List.length_nil, Nat.add_zero]
+      exact Nat.le_succ_of_le (List.length_filter_le _ _)
+    · have h1 : (xs.filter fun y => x == c || y == c).length ≤ 1 := by
+        have : (xs.filter fun y => x == c || y == c) = xs.filter (· == c) := by
+          apply List.filter_congr
+          intro y _
+          simp [hxc]
+        rw [this]
+        exact length_filter_eq_le_one hnd c
+      omega
+
+/-- At most `hole.length × l.length` pairs of a list with no repeats use a card from `hole`. -/
+theorem length_filter_pairs_hole_le {l : List Card} (hnd : l.Nodup) :
+    ∀ (hole : List Card),
+      ((pairs l).filter (fun p => hole.contains p.1 || hole.contains p.2)).length ≤
+        hole.length * l.length
+  | [] => by simp
+  | c :: hs => by
+    have ih := length_filter_pairs_hole_le hnd hs
+    have hc := length_filter_pairs_le hnd (c := c)
+    have key : ((pairs l).filter (fun p => (c :: hs).contains p.1 || (c :: hs).contains p.2)).length ≤
+        ((pairs l).filter (fun p => p.1 == c || p.2 == c)).length +
+        ((pairs l).filter (fun p => hs.contains p.1 || hs.contains p.2)).length := by
+      refine Nat.le_trans (Nat.le_of_eq ?_) (length_filter_or_le _ _ (pairs l))
+      congr 1
+      apply List.filter_congr
+      intro p _
+      simp only [List.contains_cons]
+      cases p.1 == c <;> cases p.2 == c <;> cases hs.contains p.1 <;> cases hs.contains p.2 <;> rfl
+    simp only [List.length_cons, Nat.succ_mul]
+    omega
+
+/-- The cards of the ranked hands are the candidate hands, in some order. -/
+theorem rankRiverHands_cards_perm (board : List Card) :
+    ((rankRiverHands board).map (·.cards)).Perm (riverCandidates board) := by
+  have := (List.mergeSort_perm
+    ((riverCandidates board).map fun (a, b) =>
+      ({ cards := (a, b), score := bestScore ([a, b] ++ board) } : RankedHand))
+    (fun x y => !decide (x.score < y.score))).map (·.cards)
+  simpa [rankRiverHands, Function.comp_def] using this
+
+/-- **The review always has a hand to consider.** On a river board (five different cards),
+with at most two cards in the human's hand, the bot can hold at least one hand of its
+betting set, at every Bluff setting. -/
+theorem botHands_ne_nil_of_board (spot : RiverSpot) (h5 : spot.board.length = 5)
+    (hd : spot.board.Nodup) (hhole : spot.hole.length ≤ 2) : spot.botHands ≠ [] := by
+  intro hnil
+  have hv : valueCount 1081 = 324 := by decide
+  have hV : (riverBettingSet spot.bluffPct spot.board).value =
+      (rankRiverHands spot.board).take 324 := by
+    simp only [riverBettingSet, length_rankRiverHands h5 hd, hv]
+  -- Every value hand is blocked by the human's cards.
+  have hblocked : ∀ h ∈ (rankRiverHands spot.board).take 324, spot.blocks h = true := by
+    intro h hh
+    have := List.filter_eq_nil_iff.mp hnil h (List.mem_append_left _ (hV ▸ hh))
+    simpa using this
+  -- Their cards are 324 different candidate pairs, all of them blocked ...
+  have hlen : ((rankRiverHands spot.board).take 324).length = 324 := by
+    simp [List.length_take, length_rankRiverHands h5 hd]
+  have hnd : (((rankRiverHands spot.board).take 324).map (·.cards)).Nodup :=
+    ((rankRiverHands_cards_perm spot.board).nodup_iff.mpr
+      (pairs_nodup (unseenCards_nodup [] spot.board))).sublist ((List.take_sublist _ _).map _)
+  have hsub : ((rankRiverHands spot.board).take 324).map (·.cards) ⊆
+      (riverCandidates spot.board).filter
+        (fun p => spot.hole.contains p.1 || spot.hole.contains p.2) := by
+    intro p hp
+    rw [List.mem_map] at hp
+    obtain ⟨h, hh, rfl⟩ := hp
+    rw [List.mem_filter]
+    exact ⟨mem_rankRiverHands (List.mem_of_mem_take hh), hblocked h hh⟩
+  have h1 := hnd.length_le_of_subset hsub
+  rw [List.length_map, hlen] at h1
+  -- ... but at most 2 × 47 candidate pairs are blocked.
+  have h2 := length_filter_pairs_hole_le (unseenCards_nodup [] spot.board) spot.hole
+  have h47 : (unseenCards [] spot.board).length = 47 := by
+    have := length_unseenCards (hole := []) (board := spot.board) (by simpa using hd)
+    simp only [List.nil_append, h5] at this
+    omega
+  unfold riverCandidates at h1
+  rw [h47] at h2
+  omega
+
+/-! ## Examples with every condition met (CLAUDE.md §4)
+
+The kernel cannot work out a real betting set, so these use `botHands_ne_nil_of_board` and
+small lemmas instead of computing. -/
+
+-- `exRiverSpot` is a real river spot: five different board cards and two human cards.
+example : exRiverSpot.botHands ≠ [] :=
+  botHands_ne_nil_of_board exRiverSpot rfl (by decide) (by decide)
+
+/-- `review_worth` on `exRiverSpot`: the worths are the spec's totals in big blinds. -/
+example : (reviewRiver exRiverSpot .call).worthCall =
+      ⟨exRiverSpot.total .call, 2 * exRiverSpot.botHands.length * bigBlind⟩ ∧
+    (reviewRiver exRiverSpot .call).worthFold.num = exRiverSpot.total .fold :=
+  review_worth exRiverSpot .call (botHands_ne_nil_of_board exRiverSpot rfl (by decide) (by decide))
+
+/-- `review_lost` has no conditions: on `exRiverSpot`, what folding lost is the better total
+minus 0. -/
+example : (reviewRiver exRiverSpot .fold).lost.num =
+    max (exRiverSpot.total .call) (exRiverSpot.total .fold) - exRiverSpot.total .fold :=
+  (review_lost exRiverSpot .fold).1
+
+/-- `review_call_best_iff_equity` on `exRiverSpot`: calling costs 50, so it applies. -/
+example : (reviewRiver exRiverSpot .call).label = .best ↔
+    (reviewRiver exRiverSpot .call).equityNeeded.LE (reviewRiver exRiverSpot .call).equityHad :=
+  review_call_best_iff_equity exRiverSpot
+    (botHands_ne_nil_of_board exRiverSpot rfl (by decide) (by decide)) (by decide)
+
+/-- No graded decision lost a negative amount. -/
+theorem lost_nonneg (spot : RiverSpot) (choice : RiverChoice) :
+    0 ≤ (reviewRiver spot choice).lost.num := by
+  rw [(review_lost spot choice).1]
+  cases choice
+  · have := Int.le_max_left (spot.total .call) (spot.total .fold); omega
+  · have := Int.le_max_right (spot.total .call) (spot.total .fold); omega
+
+/-- When calling costs nothing, calling never loses against a bot hand. -/
+theorem callResult_nonneg_of_cost_zero (mine : List Nat) (prize : Nat) (bot : RankedHand) :
+    0 ≤ callResult mine prize 0 bot := by
+  simp only [callResult]
+  split
+  · simp
+  · split <;> omega
+
+/-- So when calling costs nothing, the call total is not negative ... -/
+theorem choiceTotal_call_nonneg_of_cost_zero (hands : List RankedHand) (mine : List Nat)
+    (prize : Nat) : 0 ≤ choiceTotal hands mine prize 0 .call := by
+  simp only [choiceTotal]
+  induction hands with
+  | nil => simp
+  | cons h hs ih =>
+    simp only [List.map_cons, List.sum_cons]
+    have := callResult_nonneg_of_cost_zero mine prize h
+    omega
+
+/-- ... and calling lost nothing. -/
+theorem lost_call_of_cost_zero (spot : RiverSpot) (hc : spot.cost = 0) :
+    (reviewRiver spot .call).lost.num = 0 := by
+  rw [(review_lost spot .call).1]
+  have h0 : spot.total .call = choiceTotal spot.botHands spot.myScore spot.prize 0 .call := by
+    simp only [RiverSpot.total, hc]
+  have := choiceTotal_call_nonneg_of_cost_zero spot.botHands spot.myScore spot.prize
+  rw [← h0] at this
+  simp only [RiverSpot.total, choiceTotal]
+  simp only [RiverSpot.total, choiceTotal] at this
+  omega
+
+/-- The same spot as `exRiverSpot`, but the human has no chips left, so calling is free. -/
+def exFreeCallSpot : RiverSpot := { exRiverSpot with stack := 0 }
+
+example : exFreeCallSpot.cost = 0 := by decide
+
+/-- `review_label_monotone` with every condition met: a free call lost nothing, so it lost no
+more than folding in `exRiverSpot` did, and its label is at least as good. -/
+example : (reviewRiver exFreeCallSpot .call).label.rank ≤ (reviewRiver exRiverSpot .fold).label.rank := by
+  apply review_label_monotone
+  unfold Frac.LE
+  rw [lost_call_of_cost_zero exFreeCallSpot (by decide)]
+  have := lost_nonneg exRiverSpot .fold
+  have hden : (0 : Int) ≤ (reviewRiver exFreeCallSpot .call).lost.den := Int.natCast_nonneg _
+  simp only [Int.zero_mul]
+  exact Int.mul_nonneg this hden
+
+/-! ### Known-bad reviews are rejected -/
+
+/-- What `review_worth` asks of any review: in a spot where the bot can hold a hand, the
+call worth is the spec's call total over twice the number of hands, in big blinds, and the
+fold worth is the spec's fold total. -/
+def WorthsFromSpec (review : RiverSpot → RiverChoice → RiverVerdict) : Prop :=
+  ∀ spot choice, spot.botHands ≠ [] →
+    (review spot choice).worthCall = ⟨spot.total .call, 2 * spot.botHands.length * bigBlind⟩ ∧
+    (review spot choice).worthFold.num = spot.total .fold
+
+example : WorthsFromSpec reviewRiver := review_worth
+
+/-- A review that says folding is worth one big blind is rejected. -/
+example : ¬ WorthsFromSpec fun spot choice =>
+    { reviewRiver spot choice with worthFold := ⟨1, 1⟩ } := by
+  intro h
+  have := (h exRiverSpot .call (botHands_ne_nil_of_board exRiverSpot rfl (by decide) (by decide))).2
+  simp [RiverSpot.total, choiceTotal] at this
+
+/-- A review that counts the call worth per hand instead of per two hands is rejected. -/
+example : ¬ WorthsFromSpec fun spot choice =>
+    { reviewRiver spot choice with
+      worthCall := ⟨spot.total .call, spot.botHands.length * bigBlind⟩ } := by
+  intro h
+  have hn := botHands_ne_nil_of_board exRiverSpot rfl (by decide) (by decide)
+  have := congrArg Frac.den (h exRiverSpot .call hn).1
+  simp only at this
+  have hpos : 0 < exRiverSpot.botHands.length := List.length_pos_iff.mpr hn
+  simp only [bigBlind] at this
+  omega
+
+/-- What `review_lost` asks of any grader: what a choice lost is the better choice's total
+minus its own. -/
+def LostFromSpec
+    (grade : List RankedHand → List Nat → Nat → Nat → RiverChoice → RiverVerdict) : Prop :=
+  ∀ hands mine prize cost choice,
+    (grade hands mine prize cost choice).lost.num =
+      max (choiceTotal hands mine prize cost .call) (choiceTotal hands mine prize cost .fold) -
+        choiceTotal hands mine prize cost choice
+
+example : LostFromSpec gradeRiver := grade_lost
+
+/-- A grader that always reports nothing lost is rejected: folding `exHands` above lost
+200 half-chips. -/
+example : ¬ LostFromSpec fun hands mine prize cost choice =>
+    { gradeRiver hands mine prize cost choice with lost := ⟨0, 1⟩ } := by
+  intro h
+  have := h exHands [3] 150 50 .fold
+  revert this
+  decide
+
+#print axioms botHands_ne_nil_of_board
