@@ -1,4 +1,5 @@
 import Engine.Session
+import Engine.Explain
 import Engine.HandName
 import Lean.Data.Json
 
@@ -131,11 +132,19 @@ def stateJson (srv : Session) (peek : Bool := false) (commit : String := "unknow
       ("turnMode", toJson "exact"),
       ("engineCommit", toJson commit) ]
 
-/-- The review of hand `n` (MVP §13). Ungraded moves have `null` grades: "not graded yet". -/
+/-- The river range viewer's six numbers (`rangeOf`, `Engine/Explain.lean`). -/
+def RangeSummary.json (r : RangeSummary) : Json :=
+  Json.mkObj
+    [ ("value", toJson r.value), ("bluffs", toJson r.bluffs), ("blocked", toJson r.blocked),
+      ("beat", toJson r.beat), ("tie", toJson r.tie), ("lose", toJson r.lose) ]
+
+/-- The review of hand `n` (MVP §13). Ungraded moves have `null` grades: "not graded yet".
+A graded move also has `range`: the river range viewer's numbers. -/
 def reviewJson (srv : Session) (n : Nat) (lines : Array ReviewLine) : Json :=
-  let line (l : ReviewLine) : Json :=
+  let ranges := srv.ranges n
+  let line (i : Nat) (l : ReviewLine) : Json :=
     let grade (f : RiverVerdict → Json) := match l.verdict with | some v => f v | none => Json.null
-    Json.mkObj
+    Json.mkObj <|
       [ ("street", toJson (streetName l.street)),
         ("your_action", toJson l.action),
         ("label", grade (toJson ·.label.name)),
@@ -143,8 +152,11 @@ def reviewJson (srv : Session) (n : Nat) (lines : Array ReviewLine) : Json :=
           Json.mkObj [("call", v.worthCall.json 2), ("fold", v.worthFold.json 2)]),
         ("equity_had", grade (·.equityHad.json 3)),
         ("equity_needed", grade (·.equityNeeded.json 3)) ]
+      ++ match ranges[i]?.join with
+        | some r => [("range", r.json)]
+        | none => []
   Json.mkObj
-    [("hand", toJson n), ("decisions", Json.arr (lines.map line)),
+    [("hand", toJson n), ("decisions", Json.arr (lines.mapIdx line)),
      -- Like `botReasons`: `null` while hand `n` is still being played.
      ("bot_reasons", match srv.reasonsFor n with | some rs => toJson rs | none => Json.null)]
 

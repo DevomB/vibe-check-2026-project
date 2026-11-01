@@ -31,3 +31,5 @@ import Engine.Proofs.Chips
 import Engine.Proofs.Deck
 import Engine.Proofs.ReviewSpec
 import Engine.Proofs.Review
+import Engine.Explain
+import Engine.ExplainTests

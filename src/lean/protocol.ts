@@ -140,3 +140,29 @@ export type LeanReply =
  * (HTTP 400) without `lost`, and the game goes on.
  */
 export type ApiReply = LeanReply & { lost?: true };
+
+/* ---------- Review insights: the river range viewer and the Risk explorer ---------- */
+
+/**
+ * The river range viewer's numbers for a graded river decision (`rangeOf` in
+ * `engine/Engine/Explain.lean`). They always add up: value + bluffs = blocked + beat + tie + lose.
+ */
+export interface LeanRange {
+  /** Value hands in the bot's river betting set on this board. */
+  value: number;
+  /** Bluff hands in that set. */
+  bluffs: number;
+  /** Hands in the set that use one of your cards, so the bot cannot hold them. */
+  blocked: number;
+  /** Of the hands left, how many your hand beats, ties and loses to. */
+  beat: number;
+  tie: number;
+  lose: number;
+}
+
+// This merges into `ReviewDecision` above. The field is optional: only graded decisions have it,
+// and Mystery mode removes it until the reveal.
+export interface ReviewDecision {
+  /** Only on graded decisions: the river range viewer's numbers. */
+  range?: LeanRange;
+}
