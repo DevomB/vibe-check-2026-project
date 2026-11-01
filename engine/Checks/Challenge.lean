@@ -775,8 +775,8 @@ theorem every_number_once (seed y : Nat) (hy : y < 2 ^ 64) :
 /-! ## The game never freezes, and the bot cannot see your cards
 (see `Engine/Proofs/Liveness.lean` and `Engine/Proofs/NoPeek.lean`) -/
 /-- The game can never freeze: in every game the engine can reach, while the hand is not
-over, there is a legal move for the player to act (folding is always one), and the engine
-accepts it. -/
+over, there is a legal move for the player to act, and the engine accepts it. (The proof
+uses folding.) -/
 theorem game_never_freezes (g : Game) (hg : g.Reachable) (hnot : g.hand.ended = none) :
     ∃ a, Legal g.hand.chips a ∧ ∃ h', step g.hand a = .ok h' := sorry
 /-- The bot never sees your cards: two sessions that give the bot the same settings and Risk,

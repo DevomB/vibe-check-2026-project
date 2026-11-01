@@ -5,7 +5,8 @@ import Engine.KuhnGame
 
 Run with `lake exe kuhn` from `engine/`. You and the bot take turns being player 1. Each hand
 is dealt from a random number and the bot rolls its own random number; the proofs in
-`Engine/Proofs/KuhnGame.lean` show the bot can't be beaten on average.
+`Engine/Proofs/KuhnGame.lean` show that, if those random numbers are fair, the bot can't be
+beaten on average.
 -/
 
 def cardName : KCard → String

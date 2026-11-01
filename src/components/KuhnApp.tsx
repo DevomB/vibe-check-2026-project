@@ -20,7 +20,7 @@ const MOVE_LABEL: Record<KuhnMove, string> = { check: "Check", bet: "Bet 1", cal
 
 /** What is proved, in plain words, with the Lean theorem behind each line. */
 const PROOFS: { says: string; theorem: string }[] = [
-  { says: "The bot's strategy is a Nash equilibrium: no way of playing beats it on average.", theorem: "kuhn_nash, kuhn_game_unbeatable" },
+  { says: "The bot's strategy is a Nash equilibrium of Kuhn poker: with fair random numbers for the deals and its rolls, no way of playing beats it on average.", theorem: "kuhn_nash, kuhn_game_unbeatable" },
   { says: "This game gives exactly the results the theory predicts, for every way you can play.", theorem: "botP1Total_eq, botP2Total_eq" },
   { says: "The bot rolls the right odds: it bluffs a jack exactly one time in three.", theorem: "botP1_frequencies, botP2_frequencies" },
   { says: "Every deal is equally likely, and only moves allowed by the rules are accepted.", theorem: "kDeal_each_once, kuhn_game_follows_rules" },

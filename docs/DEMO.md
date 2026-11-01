@@ -15,6 +15,9 @@ results. Only scene (b)'s reason changed, because it quotes the Risk. Rook (Risk
 0%) has no exact Risk, so checklist rows 3, 4 and 7 now use Mia (Risk 50), checked on the
 same engine.
 
+For a live "break it" moment, see [BREAK_IT_DEMO.md](BREAK_IT_DEMO.md): `checks/break-it.sh`
+plants a payout bug in a copy of the engine and Lean refuses to accept the proof.
+
 ## What the hands were checked on
 
 - **Engine.** `poker.exe` with SHA-256
