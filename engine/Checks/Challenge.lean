@@ -4,6 +4,7 @@ import Engine.Proofs.BotSpec
 import Engine.Proofs.EquitySpec
 import Engine.Proofs.BluffSpec
 import Engine.Proofs.ReviewSpec
+import Engine.Proofs.BluffCatcherSpec
 import Engine.Proofs.EndsSpec
 import Engine.Proofs.BoardSpec
 import Engine.Protocol
@@ -508,3 +509,87 @@ theorem exploreHandAt_more_risk_continues (risk : Nat) (ms : List BotMoveRecord)
     (hr' : r' ≤ 100)
     (h : (((exploreHandAt risk ms)[i]?.bind fun e => e.moves[r]?).getD Action.fold).continues) :
     (((exploreHandAt risk ms)[i]?.bind fun e => e.moves[r']?).getD Action.fold).continues := sorry
+
+/-! ## Game theory on the river: the bluff catcher (see `Engine/Proofs/BluffCatcher.lean`)
+
+The definitions (`CatchesBluffs`, `RiverSpot.valueHands`, `RiverSpot.bluffHands`) are in
+`Engine/Proofs/BluffCatcherSpec.lean`. -/
+
+/-- **What calling is worth with a bluff catcher.** In half-chips (the review's unit), calling
+wins `2 × prize` against each bluff and loses `2 × cost` against each value hand. -/
+theorem bluff_catcher_call_total (mine : List Nat) (value bluffs : List RankedHand)
+    (prize cost : Nat) (hc : CatchesBluffs mine value bluffs) :
+    choiceTotal (value ++ bluffs) mine prize cost .call =
+      2 * ((bluffs.length : Int) * prize - (value.length : Int) * cost) := sorry
+
+/-- **When calling and folding are worth the same, for any bet.** With a bluff catcher, calling
+pays `cost` chips to win `prize` chips (the pot, including the bet). Calling and folding are
+worth the same exactly when bluffs × prize = value hands × cost. -/
+theorem bluff_catcher_indifferent (mine : List Nat) (value bluffs : List RankedHand)
+    (prize cost : Nat) (hc : CatchesBluffs mine value bluffs) :
+    choiceTotal (value ++ bluffs) mine prize cost .call =
+        choiceTotal (value ++ bluffs) mine prize cost .fold ↔
+      bluffs.length * prize = value.length * cost := sorry
+
+/-- **One bluff in three makes calling and folding worth the same (pot-sized bet).** The bot
+bets `cost` into a pot of `cost`, so calling pays `cost` to win `2 × cost`. Then a bluff
+catcher's call and fold are worth the same exactly when bluffs are one third of the bot's
+bets. -/
+theorem one_third_bluffs_indifferent (mine : List Nat) (value bluffs : List RankedHand)
+    (cost : Nat) (hcost : 0 < cost) (hc : CatchesBluffs mine value bluffs) :
+    choiceTotal (value ++ bluffs) mine (2 * cost) cost .call =
+        choiceTotal (value ++ bluffs) mine (2 * cost) cost .fold ↔
+      3 * bluffs.length = value.length + bluffs.length := sorry
+
+/-- **More than one bluff in three: calling is better** (pot-sized bet, bluff catcher). -/
+theorem more_bluffs_call_better (mine : List Nat) (value bluffs : List RankedHand)
+    (cost : Nat) (hcost : 0 < cost) (hc : CatchesBluffs mine value bluffs) :
+    choiceTotal (value ++ bluffs) mine (2 * cost) cost .fold <
+        choiceTotal (value ++ bluffs) mine (2 * cost) cost .call ↔
+      value.length + bluffs.length < 3 * bluffs.length := sorry
+
+/-- **Fewer than one bluff in three: folding is better** (pot-sized bet, bluff catcher). -/
+theorem fewer_bluffs_fold_better (mine : List Nat) (value bluffs : List RankedHand)
+    (cost : Nat) (hcost : 0 < cost) (hc : CatchesBluffs mine value bluffs) :
+    choiceTotal (value ++ bluffs) mine (2 * cost) cost .call <
+        choiceTotal (value ++ bluffs) mine (2 * cost) cost .fold ↔
+      3 * bluffs.length < value.length + bluffs.length := sorry
+
+/-- **The review agrees: both choices are Best exactly at one bluff in three.** The bot opened
+the river with a pot-sized bet (the pot, with the bet, is twice the bet) that you can afford,
+and your hand catches bluffs against the bot hands you do not block. Then the review grades
+both call and fold Best exactly when one third of those hands are bluffs. -/
+theorem review_both_best_iff_one_third (spot : RiverSpot)
+    (hpot : spot.pot = 2 * spot.toCall) (hafford : spot.toCall ≤ spot.stack)
+    (hbet : 0 < spot.toCall)
+    (hc : CatchesBluffs spot.myScore spot.valueHands spot.bluffHands) :
+    ((reviewRiver spot .call).label = .best ∧ (reviewRiver spot .fold).label = .best) ↔
+      3 * spot.bluffHands.length = spot.valueHands.length + spot.bluffHands.length := sorry
+
+/-- **Risk 50 is two bluffs short of one third.** On every river board the Risk 50 set has
+324 value hands and 160 bluffs. One third would need 162 bluffs (value = 2 × bluffs). -/
+theorem risk50_two_bluffs_short (board : List Card) (h5 : board.length = 5)
+    (hd : board.Nodup) :
+    (riverBettingSet (Sliders.ofRisk 50).bluffPct board).value.length =
+      2 * (riverBettingSet (Sliders.ofRisk 50).bluffPct board).bluffs.length + 4 := sorry
+
+/-- **So at Risk 50 a bluff catcher loses a little by calling a pot-sized bet.** Against the
+whole Risk 50 set (before your own cards remove any hands), calling totals `-8 × cost`
+half-chips over the 484 hands: on average you lose `cost / 121` chips, under 1% of the bet. -/
+theorem risk50_bluff_catcher_call_loses (board : List Card) (h5 : board.length = 5)
+    (hd : board.Nodup) (mine : List Nat) (cost : Nat)
+    (hc : CatchesBluffs mine (riverBettingSet (Sliders.ofRisk 50).bluffPct board).value
+      (riverBettingSet (Sliders.ofRisk 50).bluffPct board).bluffs) :
+    choiceTotal ((riverBettingSet (Sliders.ofRisk 50).bluffPct board).value ++
+        (riverBettingSet (Sliders.ofRisk 50).bluffPct board).bluffs) mine (2 * cost) cost .call =
+      -8 * (cost : Int) := sorry
+
+/-- **No Bluff setting gives exactly one third.** Beside the 324 value hands of every river
+set, no whole-number Bluff share from 0 to 60 gives 162 bluffs. -/
+theorem no_bluff_setting_is_exact : ∀ b ≤ 60, 2 * bluffCount 324 b ≠ 324 := sorry
+
+/-- **33% is the closest.** Every Bluff share from 0 to 60 is at least 4 hands away from
+value = 2 × bluffs, and 33% (Risk 50) is exactly 4 away. -/
+theorem bluff_33_is_closest :
+    (∀ b ≤ 60, 4 ≤ ((324 : Int) - 2 * bluffCount 324 b).natAbs) ∧
+      ((324 : Int) - 2 * bluffCount 324 33).natAbs = 4 := sorry
