@@ -324,18 +324,19 @@ theorem respond_keeps_session_unless_accepted (cur : Option Session) (line : Str
     ∃ j c s, Json.parse line = .ok j ∧ parseRequest j = .ok (.game c) ∧
       Session.handle cur c = .ok s ∧ (respond cur line commit).1 = some s := sorry
 
-/-- The Risk explorer shows the real bot. For move number `i` of a hand's recorded bot moves
-and every Risk `r` from 0 to 100, the explorer's entry at `r` is exactly the action
-`botDecide` returns at Risk `r`, with the game's Bluff and the move's recorded seed, cards,
-board and betting state. -/
+/-- The caution sweep shows the real bot. `exploreHand` is the explorer the app showed before
+the one-slider change: entry `r` is the move at internal caution `r` with the game's Bluff.
+For move number `i` of a hand's recorded bot moves and every `r` from 0 to 100, that entry is
+exactly the action `botDecide` returns at caution `r`, with the game's Bluff and the move's
+recorded seed, cards, board and betting state. (The app's explorer is `exploreHandAt`, below.) -/
 theorem exploreHand_moves (sl : Sliders) (ms : List BotMoveRecord) (i r : Nat)
     (hi : i < ms.length) (hr : r ≤ 100) :
     ((exploreHand sl ms)[i]?.bind fun e => e.moves[r]?) =
       some (botDecide ⟨r, sl.bluffPct⟩ ms[i].seed ms[i].hole ms[i].board ms[i].state).action := sorry
 
-/-- The explorer never goes from fold back to call. For each recorded move, if the explorer
-shows a call or raise at some Risk, it shows a call or raise at every lower Risk too. (Past
-Risk 100 there is no entry; that counts as a fold.) -/
+/-- The caution sweep never goes from fold back to call. For each recorded move, if it shows
+a call or raise at some caution, it shows a call or raise at every lower caution too. (Past
+100 there is no entry; that counts as a fold.) -/
 theorem exploreHand_risk_monotone (sl : Sliders) (ms : List BotMoveRecord) (i : Nat)
     (hi : i < ms.length) :
     RiskMonotone fun r => ((exploreHand sl ms)[i]?.bind fun e => e.moves[r]?).getD .fold := sorry
