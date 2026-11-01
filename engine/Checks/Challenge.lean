@@ -400,12 +400,21 @@ theorem botDecide_no_bet_off_river (sl sl' : Sliders) (seed : Nat) (hole board :
     (s : State) (hc : s.toCall = 0) (h5 : board.length ≠ 5) :
     (botDecide sl seed hole board s).action = (botDecide sl' seed hole board s).action := sorry
 
-/-- On a river board (five different cards), with nothing to call and a bet allowed, if the
-bot bets its two cards at Risk `r`, it bets them at every higher Risk `r'`: the value hands are
-the same at every Risk, and the bluffs only grow (see `Engine/Proofs/OneSliderRiver.lean`). -/
+/-- On a river board, with nothing to call and a bet allowed: if the bot bets its two cards at
+one setting, it bets them at every setting with a Bluff share at least as big (and below 100).
+The value hands are the same, and the bluffs only grow (see `Engine/Proofs/OneSliderRiver.lean`). -/
+theorem more_bluff_never_checks_a_bet (sl sl' : Sliders) (seed : Nat) (a b : Card)
+    (board : List Card) (s : State) (h5 : board.length = 5) (h0 : s.toCall = 0)
+    (hbet : ∃ n, Legal s (.raiseTo n)) (hb : sl.bluffPct ≤ sl'.bluffPct)
+    (hb' : sl'.bluffPct < 100)
+    (hc : ∃ n, (botDecide sl seed [a, b] board s).action = .raiseTo n) :
+    ∃ n, (botDecide sl' seed [a, b] board s).action = .raiseTo n := sorry
+
+/-- The same along the slider: on a river board, with nothing to call and a bet allowed, if
+the bot bets its two cards at Risk `r`, it bets them at every higher Risk `r'`. -/
 theorem more_risk_never_checks_a_bet (seed : Nat) (a b : Card) (board : List Card) (s : State)
-    (h5 : board.length = 5) (hd : board.Nodup) (h0 : s.toCall = 0)
-    (hbet : ∃ n, Legal s (.raiseTo n)) {r r' : Nat} (hr : r ≤ r')
+    (h5 : board.length = 5) (h0 : s.toCall = 0) (hbet : ∃ n, Legal s (.raiseTo n))
+    {r r' : Nat} (hr : r ≤ r')
     (hc : ∃ n, (botDecide (Sliders.ofRisk r) seed [a, b] board s).action = .raiseTo n) :
     ∃ n, (botDecide (Sliders.ofRisk r') seed [a, b] board s).action = .raiseTo n := sorry
 

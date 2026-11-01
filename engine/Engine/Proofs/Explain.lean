@@ -238,11 +238,12 @@ example : ¬ ∀ r ≤ 100, Action.fold =
   decide
 
 /-- `exploreHandAt_more_risk_continues` with every hypothesis met: the same record faces a
-bet of 5, and from the call at Risk 26 follows the call at Risk 100. -/
-example (h : (((exploreHandAt 50 [exRecord])[0]?.bind fun e => e.moves[26]?).getD Action.fold).continues) :
-    (((exploreHandAt 50 [exRecord])[0]?.bind fun e => e.moves[100]?).getD Action.fold).continues :=
+bet of 5, the explorer shows the call at Risk 26 (through `exploreHandAt_moves`, then the bot's
+decision by `decide`), and so it shows the call at Risk 100. -/
+example : (((exploreHandAt 50 [exRecord])[0]?.bind fun e => e.moves[100]?).getD Action.fold).continues :=
   exploreHandAt_more_risk_continues 50 [exRecord] 0 (by decide) (by decide) 26 100 (by decide)
-    (by decide) h
+    (by decide)
+    (by rw [exploreHandAt_moves 50 [exRecord] 0 26 (by decide) (by decide), Option.getD_some]; decide)
 
 /-- `exploreHand_moves` still applies to the caution sweep at the old settings. -/
 example : ((exploreHand ⟨50, 33⟩ [exRecord])[0]?.bind fun e => e.moves[50]?) =
