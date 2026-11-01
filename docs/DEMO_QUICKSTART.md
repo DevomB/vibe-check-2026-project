@@ -63,20 +63,26 @@ process until you have identified the process belonging to the server you intend
 
 Record visual results here; leave unchecked until actually seen:
 
+Browser tester follow-up: all 13 functional checks below passed on the previous demo
+(engine `507b21c`), including the operator-assisted engine-loss test. The report also found
+clipped Game Over buttons and a missing losing-hand label. Those presentation fixes need a
+fresh visual recheck after deployment; these passes do not validate later UI revisions.
+
 | Browser check | Pass | Fail / observation |
 | --- | --- | --- |
 | Practice loads at the expected river | [x] | User confirmed Fast → Avoid a bad call → Call 60 reached the expected review. |
 | Bad call: Mistake and automatic review | [x] | User confirmed the review opens with Mistake, about −2.7 BB. |
-| Retry/fold: Best | [ ] | |
+| Retry/fold: Best | [x] | Browser tester confirmed Best with identical call/fold worths. |
 | Right-and-lose: Best despite losing | [x] | User confirmed the bot wins but the review says Best, +10.3 BB. |
 | Catch a bluff: win and Best | [x] | User confirmed a win and Best, about +1.6 BB, with Peek off. |
 | Peek reveals and re-hides cards | [x] | User confirmed Ks 9d reveal, re-hide, and the review retains the Peek warning. |
-| Range panel shows expected counts | [ ] | |
-| Risk explorer works | [ ] | |
-| Proof links open and close cleanly | [ ] | User supplied the rendered T1–T8 drawer text; T7 focus and closing remain unconfirmed. |
-| Normal Next Hand, all-in and replay | [ ] | |
-| Mystery hides settings, then reveals once | [ ] | |
-| Engine loss offers recovery without live actions | [ ] | |
+| Range panel shows expected counts | [x] | 810 = 324 value + 486 bluffs; 73 blocked; beat 132, tie 9, lose 596. |
+| Risk explorer works | [x] | Tester moved the slider: 0/29 Call, 30/100 Fold. |
+| Range proof link opens at T7 | [x] | User confirmed T7/Bluff is in view and highlighted. |
+| Proof drawer closes back to the review | [x] | T4/T5/T7 links open correctly and close to the intact review. |
+| Normal Next Hand, all-in and replay | [x] | Includes short-stack 20-chip return. New game button clipping remains a reported defect pending retest. |
+| Mystery hides settings, then reveals once | [x] | One observed guess 50/30 vs 17/39 correctly showed differences 33/9. |
+| Engine loss offers recovery without live actions | [x] | Stopped only port-3000 engine PID 15380; user confirmed Game lost, blocked actions and successful New game. |
 
 Use the next 15 minutes for this walkthrough, then fix observed blockers before adding
 anything else. After fixes, repeat the affected scene and rehearse `PITCH.md` with a timer.
