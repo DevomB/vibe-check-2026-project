@@ -202,3 +202,199 @@ example : NearestWhole 486 (324 * 60) (100 - 60) ∧ ¬ NearestWhole 485 (324 * 
 #print axioms bluff_frequency
 #print axioms value_and_bluffs_apart
 #print axioms bot_bets_its_set
+
+/-! ## The ranking is strongest first (MVP §5)
+
+`rankRiverHands` sorts the candidate hands by showdown score with a stable merge sort, and
+the candidates come in card-ID order (`fullDeck` order, lower card first). So the ranking
+follows `RanksAbove` (`Engine/Proofs/BluffSpec.lean`): higher score first, and among equal
+scores the lower card IDs first. Two readable consequences follow: every value hand scores at
+least as well as every hand outside the value set, and every designated bluff scores no better
+than every hand that is not a bluff. -/
+
+/-- A new deck runs in card-ID order. -/
+theorem fullDeck_pairwise_id : fullDeck.Pairwise (fun a b => cardId a < cardId b) := by decide
+
+/-- The cards not on the board, in deck order, run in card-ID order. -/
+theorem unseen_pairwise_id (board : List Card) :
+    (unseenCards [] board).Pairwise (fun a b => cardId a < cardId b) := by
+  unfold unseenCards
+  exact List.Pairwise.sublist List.filter_sublist fullDeck_pairwise_id
+
+/-- `pairs` of an ordered list is ordered: by the first entry, then by the second. -/
+theorem pairs_pairwise {α : Type} {R : α → α → Prop} :
+    ∀ {l : List α}, l.Pairwise R →
+      (pairs l).Pairwise (fun p q => R p.1 q.1 ∨ (p.1 = q.1 ∧ R p.2 q.2))
+  | [], _ => by simp [pairs]
+  | x :: xs, h => by
+    rw [List.pairwise_cons] at h
+    obtain ⟨hx, hxs⟩ := h
+    simp only [pairs]
+    refine List.pairwise_append.mpr ⟨?_, pairs_pairwise hxs, ?_⟩
+    · rw [List.pairwise_map]
+      exact hxs.imp fun hab => Or.inr ⟨rfl, hab⟩
+    intro p hp q hq
+    simp only [List.mem_map] at hp
+    obtain ⟨y, hy, rfl⟩ := hp
+    obtain ⟨u, v⟩ := q
+    have hu : u ∈ xs := (mem_pairs.mp hq).subset (List.mem_cons_self)
+    exact Or.inl (hx u hu)
+
+/-- Lower card IDs: the first cards compared first, then the second cards. -/
+def LowerIds (x y : RankedHand) : Prop :=
+  cardId x.cards.1 < cardId y.cards.1 ∨
+    (cardId x.cards.1 = cardId y.cards.1 ∧ cardId x.cards.2 < cardId y.cards.2)
+
+/-- Before sorting, the scored candidates come with the lower card IDs first. -/
+theorem candidates_pairwise (board : List Card) :
+    ((riverCandidates board).map fun (a, b) =>
+      ({ cards := (a, b), score := bestScore ([a, b] ++ board) } : RankedHand)).Pairwise
+        LowerIds := by
+  rw [List.pairwise_map]
+  unfold riverCandidates
+  refine (pairs_pairwise (unseen_pairwise_id board)).imp ?_
+  rintro ⟨a, b⟩ ⟨c, d⟩ h
+  simp only [LowerIds]
+  rcases h with h | ⟨h1, h2⟩
+  · exact Or.inl h
+  · simp only at h1 h2
+    subst h1
+    exact Or.inr ⟨rfl, h2⟩
+
+/-- The sort's comparison ("not a lower score") is transitive. -/
+theorem scoreLE_trans (a b c : RankedHand) :
+    (!decide (a.score < b.score)) → (!decide (b.score < c.score)) →
+      (!decide (a.score < c.score)) := by
+  simp only [Bool.not_eq_true', decide_eq_false_iff_not]
+  intro hab hbc
+  exact List.not_lt.mpr (List.le_trans (List.not_lt.mp hbc) (List.not_lt.mp hab))
+
+/-- The sort's comparison is total: of two hands, one does not have the lower score. -/
+theorem scoreLE_total (a b : RankedHand) :
+    ((!decide (a.score < b.score)) || (!decide (b.score < a.score))) = true := by
+  simp only [Bool.or_eq_true, Bool.not_eq_true', decide_eq_false_iff_not]
+  by_cases h : a.score < b.score
+  · exact Or.inr (List.lt_asymm h)
+  · exact Or.inl h
+
+/-- Two different entries of a list: one comes before the other. -/
+theorem sublist_pair_of_mem {α : Type} {x y : α} :
+    ∀ {l : List α}, x ∈ l → y ∈ l → x ≠ y → List.Sublist [x, y] l ∨ List.Sublist [y, x] l
+  | [], hx, _, _ => absurd hx List.not_mem_nil
+  | z :: l, hx, hy, hne => by
+    rcases List.mem_cons.mp hx with rfl | hx'
+    · rcases List.mem_cons.mp hy with rfl | hy'
+      · exact absurd rfl hne
+      · exact Or.inl (List.cons_sublist_cons.mpr (List.singleton_sublist.mpr hy'))
+    · rcases List.mem_cons.mp hy with rfl | hy'
+      · exact Or.inr (List.cons_sublist_cons.mpr (List.singleton_sublist.mpr hx'))
+      · rcases sublist_pair_of_mem hx' hy' hne with h | h
+        · exact Or.inl (h.cons _)
+        · exact Or.inr (h.cons _)
+
+/-- A hand that ranks above another scores at least as well. -/
+theorem score_le_of_ranksAbove {x y : RankedHand} (h : RanksAbove x y) : y.score ≤ x.score := by
+  rcases h with h | ⟨h, -⟩
+  · exact List.le_of_lt h
+  · rw [h]
+    exact List.le_refl _
+
+/-- **The ranking is strongest first.** `rankRiverHands` lists every hand above every hand
+after it: by showdown score, and among equal scores by card IDs, lower first (MVP §5). -/
+theorem rankRiverHands_sorted (board : List Card) :
+    (rankRiverHands board).Pairwise RanksAbove := by
+  unfold rankRiverHands
+  simp only
+  generalize hhands : List.map _ (riverCandidates board) = hands
+  have hcand : hands.Pairwise LowerIds := hhands ▸ candidates_pairwise board
+  have hnd : hands.Nodup := hcand.imp fun {a b} h hab => by
+    subst hab
+    simp only [LowerIds] at h
+    omega
+  have hsorted := List.pairwise_mergeSort scoreLE_trans scoreLE_total hands
+  have hperm := List.mergeSort_perm hands (fun x y => !decide (x.score < y.score))
+  have hnd' := hperm.nodup_iff.mpr hnd
+  rw [List.pairwise_iff_forall_sublist]
+  intro x y hxy
+  -- The sort puts `x` before `y`, so `y` does not score higher.
+  have hle := List.pairwise_iff_forall_sublist.mp hsorted hxy
+  simp only [Bool.not_eq_true', decide_eq_false_iff_not] at hle
+  rcases List.le_iff_lt_or_eq.mp (List.not_lt.mp hle) with hlt | heq
+  · exact Or.inl hlt
+  · -- Equal scores: the sort is stable, so `x` came before `y` among the candidates.
+    refine Or.inr ⟨heq.symm, ?_⟩
+    have hx : x ∈ hands := hperm.subset (hxy.subset (by simp))
+    have hy : y ∈ hands := hperm.subset (hxy.subset (by simp))
+    have hne : x ≠ y := List.pairwise_iff_forall_sublist.mp hnd' hxy
+    rcases sublist_pair_of_mem hx hy hne with h | h
+    · exact List.pairwise_iff_forall_sublist.mp hcand h
+    · have hle' : (!decide (y.score < x.score)) = true := by
+        simp [heq, List.lt_irrefl]
+      exact absurd (List.pair_sublist_mergeSort scoreLE_trans scoreLE_total hle' h)
+        (fun h' => not_both_orders hnd' hxy h')
+
+/-- **Value hands are the strongest.** Every value hand scores at least as well as every
+candidate hand outside the value set. -/
+theorem value_strongest (bluffPct : Nat) (board : List Card) :
+    ∀ v ∈ (riverBettingSet bluffPct board).value, ∀ h ∈ rankRiverHands board,
+      h ∉ (riverBettingSet bluffPct board).value → h.score ≤ v.score := by
+  intro v hv h hh hnot
+  simp only [riverBettingSet] at hv hnot
+  generalize valueCount (rankRiverHands board).length = n at hv hnot
+  have hs : ((rankRiverHands board).take n ++ (rankRiverHands board).drop n).Pairwise
+      RanksAbove := by
+    rw [List.take_append_drop]; exact rankRiverHands_sorted board
+  have hh' : h ∈ (rankRiverHands board).take n ++ (rankRiverHands board).drop n := by
+    rwa [List.take_append_drop]
+  rcases List.mem_append.mp hh' with hh' | hh'
+  · exact absurd hh' hnot
+  · exact score_le_of_ranksAbove ((List.pairwise_append.mp hs).2.2 v hv h hh')
+
+/-- **Bluffs are the weakest.** Every designated bluff scores no better than every candidate
+hand that is not a bluff (so no better than any value hand or any hand outside the set). -/
+theorem bluffs_weakest (bluffPct : Nat) (board : List Card) :
+    ∀ b ∈ (riverBettingSet bluffPct board).bluffs, ∀ h ∈ rankRiverHands board,
+      h ∉ (riverBettingSet bluffPct board).bluffs → b.score ≤ h.score := by
+  intro b hb h hh hnot
+  simp only [riverBettingSet] at hb hnot
+  generalize (rankRiverHands board).length -
+    bluffCount (valueCount (rankRiverHands board).length) bluffPct = n at hb hnot
+  have hs : ((rankRiverHands board).take n ++ (rankRiverHands board).drop n).Pairwise
+      RanksAbove := by
+    rw [List.take_append_drop]; exact rankRiverHands_sorted board
+  have hh' : h ∈ (rankRiverHands board).take n ++ (rankRiverHands board).drop n := by
+    rwa [List.take_append_drop]
+  rcases List.mem_append.mp hh' with hh' | hh'
+  · exact score_le_of_ranksAbove ((List.pairwise_append.mp hs).2.2 h hh' b hb)
+  · exact absurd hh' hnot
+
+/-! ### Checks on the ranking statement -/
+
+-- The theorem has no conditions, so it applies to the example board as it is.
+example : (rankRiverHands exBoard).Pairwise RanksAbove := rankRiverHands_sorted exBoard
+
+/-- What "strongest first" asks of any ranking of the candidate hands. -/
+def StrongestFirst (rank : List Card → List RankedHand) : Prop :=
+  ∀ board, (rank board).Pairwise RanksAbove
+
+example : StrongestFirst rankRiverHands := rankRiverHands_sorted
+
+/-- A ranking that puts a weaker hand first is rejected. -/
+example : ¬ StrongestFirst fun _ =>
+    [⟨(card 2 .clubs, card 3 .clubs), [0, 1]⟩, ⟨(card 9 .clubs, card 9 .diamonds), [1, 7]⟩] := by
+  intro h
+  have := h []
+  revert this
+  decide
+
+/-- A ranking that breaks a tie the wrong way (higher card IDs first) is rejected. -/
+example : ¬ StrongestFirst fun _ =>
+    [⟨(card 2 .clubs, card 3 .diamonds), [0, 1]⟩, ⟨(card 2 .clubs, card 3 .clubs), [0, 1]⟩] := by
+  intro h
+  have := h []
+  revert this
+  decide
+
+#print axioms rankRiverHands_sorted
+#print axioms value_strongest
+#print axioms bluffs_weakest

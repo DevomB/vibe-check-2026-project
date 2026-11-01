@@ -179,6 +179,12 @@ theorem botDecide_river_follows_set (sl : Sliders) (seed : Nat) (a b : Card)
       ¬ ∃ h ∈ (riverBettingSet sl.bluffPct board).value ++ (riverBettingSet sl.bluffPct board).bluffs,
         h.cards = (a, b) ∨ h.cards = (b, a)) := sorry
 
+/-- T7: `rankRiverHands`, which the betting set is cut from, lists the candidate hands
+strongest first: every hand ranks above every hand after it (`RanksAbove`: a higher showdown
+score, or the same score and lower card IDs, as MVP §5 asks). -/
+theorem rankRiverHands_sorted (board : List Card) :
+    (rankRiverHands board).Pairwise RanksAbove := sorry
+
 /-! ## T5 and T8: the river review (see `Engine/Proofs/ReviewSpec.lean`) -/
 
 /-- When the bot can hold at least one hand, the review's worth of calling is the spec's
