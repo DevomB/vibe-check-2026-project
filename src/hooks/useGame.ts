@@ -343,6 +343,8 @@ export function useGame() {
   const gradesAsked = useRef(new Set<number>());
   /** The game (its `generation`) whose grading loop is running, or null. */
   const grading = useRef<number | null>(null);
+  /** This game's review requests by hand, so Review reuses the one asked for in the background. */
+  const reviews = useRef(new Map<number, Promise<RouteReply>>());
 
   const markPeeked = useCallback((s: RouteState) => {
     if (s.status === "playing") setPeekedHands((hands) => (hands.includes(s.hand) ? hands : [...hands, s.hand]));
@@ -440,6 +442,26 @@ export function useGame() {
   const resetGrades = useCallback(() => {
     setGrades([]);
     gradesAsked.current = new Set();
+    reviews.current = new Map();
+  }, []);
+
+  /**
+   * Lean's review of finished hand `hand`, asked for once per game: a finished hand's review
+   * never changes. A request that brings no review is forgotten, so the next ask tries again.
+   */
+  const reviewOf = useCallback((hand: number): Promise<RouteReply> => {
+    const known = reviews.current.get(hand);
+    if (known) return known;
+    const asked = sendToLean({ cmd: "review", hand });
+    const map = reviews.current;
+    map.set(hand, asked);
+    const forget = () => {
+      if (map.get(hand) === asked) map.delete(hand);
+    };
+    asked.then((reply) => {
+      if (!("ok" in reply && reply.review)) forget();
+    }, forget);
+    return asked;
   }, []);
 
   /**
@@ -460,7 +482,7 @@ export function useGame() {
         while (gradesAsked.current.has(hand)) hand++;
         if (hand > handsFinished(g)) return;
         gradesAsked.current.add(hand);
-        const reply = await sendToLean({ cmd: "review", hand });
+        const reply = await reviewOf(hand);
         if (gen !== generation.current) return;
         if ("ok" in reply && reply.review) {
           const graded: HandGrades = { hand, decisions: reply.review.decisions.filter((d) => d.label !== null) };
@@ -472,7 +494,7 @@ export function useGame() {
     } finally {
       if (grading.current === gen) grading.current = null;
     }
-  }, []);
+  }, [reviewOf]);
 
   // Grade each hand once it is over; in a Mystery game, once the bot is revealed.
   const finishedCount = game && game.lost === null && !reviewsHidden(game) ? handsFinished(game) : 0;
@@ -597,12 +619,8 @@ export function useGame() {
     // Hold other commands (like Next Hand) until the review is back, so it cannot open over a new hand.
     busy.current = true;
     try {
-      const response = await fetch("/api/game", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cmd: "review", hand } satisfies LeanCommand),
-      });
-      const reply = (await response.json()) as RouteReply;
+      // Usually already asked for in the background when the hand ended.
+      const reply = await reviewOf(hand);
       if (gen !== generation.current || gameRef.current?.lean.hand !== hand) return;
       if ("ok" in reply && reply.review) {
         setError(null);
@@ -619,7 +637,7 @@ export function useGame() {
     } finally {
       if (gen === generation.current) release();
     }
-  }, [failed, release]);
+  }, [failed, release, reviewOf]);
 
   const closeReview = useCallback(() => setReview(null), []);
 

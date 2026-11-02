@@ -294,7 +294,8 @@ export function ReviewModal({ review, game = null, peeked = false, hideSliderInf
               </button>
             </div>
 
-            {hasRiverSetGrade && onShowProof && (
+            {/* The proofs cover the river grade only, so they hide while an any-hand grade is selected. */}
+            {hasRiverSetGrade && !coach?.note && onShowProof && (
               <div className={styles.linkRow}>
                 <button type="button" className={styles.proofLink} onClick={() => onShowProof("review")}>
                   Why can I trust this grade?
