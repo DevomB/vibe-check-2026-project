@@ -253,7 +253,7 @@ Also check the integrated features:
 | `make install && make run` on a fresh clone | [ ] pass [x] fail: GNU make is not installed in this WSL (`make: command not found`; apt has 4.4.1) and there is none on the Windows side. Every recipe step run by hand passed: `cd engine && lake build` from an empty `.lake` in 47.7 s wall (3 min 52 s CPU, 135 jobs, 119 MB binary); incremental rebuild 0.15 s; `npm ci` 8.8 s; `npm run build` 6.6 s; `npm start --port 3001` ready in about 2 s. Re-run the literal command after `sudo apt-get install -y make`. |
 | Scene (a) script above | [x] PASS: six requests all ok; last decision Mistake, worth call −2.67 BB, fold 0, equity had 0.185, needed 0.333 |
 | Full `npm test` against the fresh build | [x] PASS: 23 files, 466 tests, 29 s |
-| Green Lean proofs CI run for this commit (link) | [Run 41360657401 on 923fdb3](https://github.com/DevomB/FoldProof/actions/runs/41360657401), proofs and app jobs both green (100 theorems). Earlier heads 2c1ccac, 8037658 and 46218e2 are green too; runs that show "cancelled" were superseded by the next push under the workflow's concurrency rule, not failures. |
+| Green Lean proofs CI run for this commit (link) | [Run 41364745202 on e59c6ef](https://github.com/DevomB/FoldProof/actions/runs/41364745202), proofs and app jobs both green (109 theorems, 510 tests; the app job is itself a fresh-checkout `make install`, typecheck, tests and HTTP smoke). The run on 1df2cc0 failed only at `lake check`, from a name clash once `kuhn-serve` became a default target, fixed in e59c6ef; runs that show "cancelled" were superseded by the next push, not failures. |
 
 ### Build-path notes for the Sunday check
 
