@@ -68,9 +68,10 @@ sets the bluff share from Risk: 0% for Ivy, 60% for Vex. The table shows both at
 - **Move 1.** Type `150` in the raise box. Click "Raise to 150".
 - **The screen shows:**
   - Ivy folds. You win the blinds. Your stack is 510 (+10).
-  - Click Review. "No graded move in this hand." "Lean grades one decision: your call or
-    fold after the bot makes the first bet on the river. This hand ended before the river."
-    Your raise has no badge in the move list.
+  - Click Review. "No graded move in this hand." "Lean grades your calls and folds when you
+    face a bet." "You raised the bets you faced instead of calling or folding."
+    Your raise has no badge in the move list: "Not graded: Lean grades your calls and folds
+    when you face a bet."
   - Why the bot played this way: "Fold: not worth calling 140 to win 160 at Risk 0, with
     win chance 58%."
 - **Optional contrast.** The same seed with Mia (Risk 50) or Vex (Risk 100) and the same
@@ -90,7 +91,9 @@ sets the bluff share from Risk: 0% for Ivy, 60% for Vex. The table shows both at
   4. River 8d: the bot bets 20 into a pot of 20. Click "Call 20".
 - **The screen shows:**
   - Showdown. Your pair of eights beats the bot's king-high. Your stack is 530 (+30).
-  - Review: it opens on "You call 20", which carries the Best badge (★). The coach box:
+  - Review: it opens on "You call 20", which carries the Best badge (★). The preflop
+    "Call 5" is also Best, with an "any hand" grade (40.8% against any two cards, 25.0%
+    needed, +0.32 BB) whose note says it is not proved in Lean. The river call's coach box:
     "Calling is Best." "You win 59.6% against the hands the bot bets here (a tie counts
     half). Calling needed 33.3% to break even." "Calling was worth +1.57 BB; folding was
     worth 0.00 BB. Best: worth as much as the best choice." (JSON: `worth_bb.call` 1.57,
@@ -205,12 +208,12 @@ expected results come from the engine replays above, and from reading the code w
 
 | # | Check | Opponent, seed | Moves | Expected | Pass | Fail |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | Fold | Mia (Risk 50), seed 1 | Fold | Hand over. You 495, bot 505. Review: "No graded move in this hand." and "This hand ended before the river."; "The bot made no moves this hand." Next hand deals hand 2. | [ ] | [ ] |
+| 1 | Fold | Mia (Risk 50), seed 1 | Fold | Hand over. You 495, bot 505. Review: "You fold" has the Good badge, an "any hand" grade: "You win 40.8% against any two cards the bot could hold (a tie counts half). Calling needed 25.0% to break even." Calling was worth +0.32 BB. The note says it is not proved in Lean. "The bot made no moves this hand." Next hand deals hand 2. | [ ] | [ ] |
 | 2 | Showdown | Vex (Risk 100), seed 1 | Scene (c) | Both hands shown with names: Pair beats High Card. You 530. | [ ] | [ ] |
 | 3 | All-in and game over | Mia (Risk 50), seed 1 | Click the All-in chip, then "All-in 500" | The bot calls 490 all-in. The board runs out to 8d. Your pair of eights wins. Game over: you have 1,000. Seed 1 is shown, with "Replay these cards". No Next hand. | [ ] | [ ] |
 | 4 | Short stack | Mia (Risk 50), seed 1 | Hand 1: Call 5, Check, Check, Check. Next hand. Hand 2: click the All-in chip, then "All-in 510". | Hand 1: the bot checks every street (at Risk 50 its king-high is not in the river betting set); you win at showdown (510). Hand 2: the bot calls 5, you go all-in for 510, and the bot calls 480 all-in, all it has. The 20 it cannot match comes back to you. Board Qh 6c 6s 2s Th: your Ac Js beats its Ah 8s on the kicker. Game over: you have 1,000. | [ ] | [ ] |
 | 5 | Graded review | Vex (Risk 100), seed 6 | Scene (a) | Mistake, −2.67 BB, 18.5% vs 33.3%. | [ ] | [ ] |
-| 6 | Ungraded review | Ivy (Risk 0), seed 1 | Scene (b) | "No graded move in this hand." and "This hand ended before the river." The raise has no badge. | [ ] | [ ] |
+| 6 | Ungraded review | Ivy (Risk 0), seed 1 | Scene (b) | "No graded move in this hand." and "You raised the bets you faced instead of calling or folding." The raise has no badge. | [ ] | [ ] |
 | 7 | Replay by seed | Mia (Risk 50), seed 1 | After check 3, click "Replay these cards", then All-in 500 again | The same cards (3c 8c) and the same result. Starting seed 1 by hand gives the same cards too. | [ ] | [ ] |
 | 8 | Rejected input | any, seed 1 | Type `15` in the raise box | The UI keeps raises inside Lean's bounds: the box goes back to 20 when it loses focus, so the UI cannot send 15. To see Lean reject it, send `{"cmd":"act","action":"raise","amount":15}` after `new_game` (seed 1): the reply is `{"error":"illegal move",...}` with the state unchanged (checked on the engine). | [ ] | [ ] |
 | 9 | Engine restart error | any | Start a game. Stop the `poker.exe` that this server started. Click any action. | A Game lost dialog offers New game. No live action buttons remain available; subsequent requests continue to report the lost game until a new one starts. | [ ] | [ ] |

@@ -15,13 +15,13 @@ above, and tick "Seen" only for what you saw.
 | # | Check | Opponent, seed | Moves | Expect | Seen |
 | --- | --- | --- | --- | --- | --- |
 | 1 | Setup screen | — | — | One Risk slider, 0 to 100, no Bluff slider anywhere. Five presets: Ivy 0 (Rock), Rook 25, Dex 40, Mia 50 (Ideal), Vex 100 (Maniac); clicking one moves the slider. The table header shows the Risk and the bluff share Lean reports: 0% for Ivy, 33% for Mia, 60% for Vex. | [ ] |
-| 2 | Scene (b), fold to a big bet | Ivy (Risk 0), seed 1 | Type 150, "Raise to 150" | Ivy folds; you 510. Review: "No graded move in this hand." The reason: "Fold: not worth calling 140 to win 160 at Risk 0, with win chance 58%." | [ ] |
+| 2 | Scene (b), fold to a big bet | Ivy (Risk 0), seed 1 | Type 150, "Raise to 150" | Ivy folds; you 510. Review: "No graded move in this hand." and "You raised the bets you faced instead of calling or folding." The bot's reason: "Fold: not worth calling 140 to win 160 at Risk 0, with win chance 58%." | [ ] |
 | 3 | Risk explorer on that fold | same, open the review | move the explorer slider | "Folds at Risk 0-35, calls at 36-100." The move flips at 36 and nowhere else. | [ ] |
 | 4 | Contrast | Mia (Risk 50), seed 1 | "Raise to 150" | The bot calls 140 (same cards as row 2; more Risk turned the fold into a call). | [ ] |
-| 5 | Scene (c), the river bluff | Vex (Risk 100), seed 1 | Call 5, Check, Check, Call 20 | Showdown: your pair of eights beats king-high; you 530. Review opens on "You call 20" with the Best badge: 59.6% against 33.3% needed, +1.57 BB. Last reason: "Bet 20: a bluff, picked at Bluff 60%." | [ ] |
+| 5 | Scene (c), the river bluff | Vex (Risk 100), seed 1 | Call 5, Check, Check, Call 20 | Showdown: your pair of eights beats king-high; you 530. Review opens on "You call 20" with the Best badge: 59.6% against 33.3% needed, +1.57 BB. The preflop "Call 5" is Best too, an "any hand" grade marked not proved. Last reason: "Bet 20: a bluff, picked at Bluff 60%." | [ ] |
 | 6 | Peek | Vex (Risk 100), seed 1, Peek on from the start | as row 5 | Ks 9d shown and marked as peeked while the bot bets 20; same moves, showdown and review as row 5. | [ ] |
 | 7 | Scene (a), the graded mistake | Vex (Risk 100), seed 6 | Type 30, "Raise to 30", Check, Check, Call 60 | Bot shows 6s 4c, a straight; you 410. Review opens on "You call 60" with the Mistake badge: 18.5% against 33.3%, −2.67 BB; earlier moves have no badge. "The hands the grade counts": 324 value hands and 486 bluffs, your cards block 73, of the 737 left you beat 132, tie 9, lose to 596. Last reason: "Bet 60: a value hand, among the strongest 30% on this board." | [ ] |
-| 8 | Fold at once | Mia (Risk 50), seed 1 | Fold | You 495, bot 505. Review: "No graded move in this hand." Next Hand deals hand 2. | [ ] |
+| 8 | Fold at once | Mia (Risk 50), seed 1 | Fold | You 495, bot 505. Review: "You fold" is Good, an "any hand" grade marked not proved in Lean (40.8% against 25.0% needed; calling was worth +0.32 BB). Next Hand deals hand 2. | [ ] |
 | 9 | All-in and Game Over | Mia (Risk 50), seed 1 | All-in chip, "All-in 500" | Bot calls 490; board runs out to 8d; your pair of eights wins; Game Over at 1,000; seed 1 shown with Replay. All Game Over buttons visible without horizontal scrolling. | [ ] |
 | 10 | Replay by seed | from row 9 | "Replay these cards", then All-in 500 | Same cards (3c 8c), same result. Typing seed 1 at setup gives the same cards. | [ ] |
 | 11 | Rejected input | any, seed 1 | type 15 in the raise box, click away | The box snaps back to 20; nothing is sent. | [ ] |
@@ -83,8 +83,8 @@ the choice against the bot's defined range, rather than rewarding luck."
 
 1. Return to setup, pick **Ivy** (Risk **0**, the Rock), seed **1**, and **Start**.
 2. Raise **to 150**. The bot folds; your stack becomes **510**.
-3. Open **Review**. Expect **No graded move in this hand.** and **This hand ended before
-   the river.** The raise has no badge.
+3. Open **Review**. Expect **No graded move in this hand.** and **You raised the bets you
+   faced instead of calling or folding.** The raise has no badge.
 4. In the Risk explorer, select the bot's fold and move Risk between **0** and **100**.
    Expect **Fold** at 0, **Call** at 100, and:
    **Folds at Risk 0-35, calls at 36-100.**
