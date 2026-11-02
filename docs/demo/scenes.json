@@ -220,17 +220,22 @@
     },
     "review_if_call": [
       {
-        "equity_had": null,
-        "equity_needed": null,
-        "label": null,
+        "equity_had": 0.408,
+        "equity_needed": 0.25,
+        "label": "Best",
+        "model": "any-hand",
         "street": "preflop",
-        "worth_bb": null,
+        "worth_bb": {
+          "call": 0.32,
+          "fold": 0
+        },
         "your_action": "call"
       },
       {
         "equity_had": null,
         "equity_needed": null,
         "label": null,
+        "model": null,
         "street": "flop",
         "worth_bb": null,
         "your_action": "check"
@@ -239,6 +244,7 @@
         "equity_had": null,
         "equity_needed": null,
         "label": null,
+        "model": null,
         "street": "turn",
         "worth_bb": null,
         "your_action": "check"
@@ -247,6 +253,15 @@
         "equity_had": 0.596,
         "equity_needed": 0.333,
         "label": "Best",
+        "model": "river-set",
+        "range": {
+          "beat": 452,
+          "blocked": 51,
+          "bluffs": 486,
+          "lose": 307,
+          "tie": 0,
+          "value": 324
+        },
         "street": "river",
         "worth_bb": {
           "call": 1.57,

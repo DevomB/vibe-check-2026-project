@@ -85,12 +85,12 @@
     },
     "verified": {
       "engine": {
-        "sha256": "3a392d797dac0ba47e19164482fc136cf6f244a7d91d337e917851c8e313f9d6",
-        "built": "2026-11-01T20:09:33.456Z",
-        "checkout_commit": "f81df9da1ffae55fec1479d871d502b5a4227ff2",
+        "sha256": "b0e0d96306862842fe3f618b3965466d1fc777699739dd7863eefec1da03e362",
+        "built": "2026-11-01T23:42:23.720Z",
+        "checkout_commit": "5dd8508df59870301d7b275dd0d4cdad49d37307",
         "engine_files_changed_in_checkout": false
       },
-      "checked_at": "2026-11-01T20:19:40.000Z",
+      "checked_at": "2026-11-02T00:04:23.614Z",
       "replayed": "call and fold, each from new_game with the same seed and moves"
     }
   },
@@ -181,12 +181,12 @@
     },
     "verified": {
       "engine": {
-        "sha256": "3a392d797dac0ba47e19164482fc136cf6f244a7d91d337e917851c8e313f9d6",
-        "built": "2026-11-01T20:09:33.456Z",
-        "checkout_commit": "f81df9da1ffae55fec1479d871d502b5a4227ff2",
+        "sha256": "b0e0d96306862842fe3f618b3965466d1fc777699739dd7863eefec1da03e362",
+        "built": "2026-11-01T23:42:23.720Z",
+        "checkout_commit": "5dd8508df59870301d7b275dd0d4cdad49d37307",
         "engine_files_changed_in_checkout": false
       },
-      "checked_at": "2026-11-01T20:19:40.000Z",
+      "checked_at": "2026-11-02T00:05:12.848Z",
       "replayed": "call and fold, each from new_game with the same seed and moves"
     }
   },
@@ -276,12 +276,12 @@
     },
     "verified": {
       "engine": {
-        "sha256": "3a392d797dac0ba47e19164482fc136cf6f244a7d91d337e917851c8e313f9d6",
-        "built": "2026-11-01T20:09:33.456Z",
-        "checkout_commit": "f81df9da1ffae55fec1479d871d502b5a4227ff2",
+        "sha256": "b0e0d96306862842fe3f618b3965466d1fc777699739dd7863eefec1da03e362",
+        "built": "2026-11-01T23:42:23.720Z",
+        "checkout_commit": "5dd8508df59870301d7b275dd0d4cdad49d37307",
         "engine_files_changed_in_checkout": false
       },
-      "checked_at": "2026-11-01T20:19:40.000Z",
+      "checked_at": "2026-11-02T00:04:49.501Z",
       "replayed": "call and fold, each from new_game with the same seed and moves"
     }
   }
