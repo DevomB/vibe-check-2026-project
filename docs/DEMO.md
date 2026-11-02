@@ -93,7 +93,8 @@ sets the bluff share from Risk: 0% for Ivy, 60% for Vex. The table shows both at
   - Showdown. Your pair of eights beats the bot's king-high. Your stack is 530 (+30).
   - Review: it opens on "You call 20", which carries the Best badge (★). The preflop
     "Call 5" is also Best, with an "any hand" grade (40.8% against any two cards, 25.0%
-    needed, +0.32 BB) whose note says it is not proved in Lean. The river call's coach box:
+    needed, +0.32 BB) whose note says it is not proved in Lean. While it is selected, the two
+    proof links are hidden; they show again on the river call. The river call's coach box:
     "Calling is Best." "You win 59.6% against the hands the bot bets here (a tie counts
     half). Calling needed 33.3% to break even." "Calling was worth +1.57 BB; folding was
     worth 0.00 BB. Best: worth as much as the best choice." (JSON: `worth_bb.call` 1.57,
