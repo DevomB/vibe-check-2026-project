@@ -55,7 +55,8 @@ def rangeOf (spot : RiverSpot) : RangeSummary :=
 /-- One bot move as the game recorded it in `HandLog.botMoves`: what `botDecide` was given,
 apart from the sliders, and the move the bot made. -/
 structure BotMoveRecord where
-  /-- The hand's seed (`handSeed`). Only the flop's random deals use it. -/
+  /-- The hand's seed (`handSeed`), as passed to the bot. The bot does not use it on any street
+  (`bot_ignores_seed`): its flop deals start from its own cards and the board. -/
   seed : Nat
   /-- The bot's two cards. -/
   hole : List Card

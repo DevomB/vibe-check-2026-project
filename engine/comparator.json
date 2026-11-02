@@ -109,8 +109,8 @@
     "mixSeed_onto",
     "every_number_once",
     "game_never_freezes",
-    "bot_never_sees_your_cards",
-    "bot_ignores_seed_off_flop"
+    "bot_ignores_seed",
+    "bot_never_sees_your_cards"
   ],
   "permitted_axioms": [
     "propext",

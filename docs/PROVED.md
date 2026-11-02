@@ -42,11 +42,11 @@ the definitions a reader must still read. Most important first.
    `bot_calls_only_when_worth_it`, `bot_folds_only_when_not_worth_it`); those theorems assume
    the call is at most the pot, which `viewOf_toCall_le_pot` proves for every view the bot
    gets. A call that cannot lose chips is always taken (`no_loss_always_taken`). The bot never
-   sees your cards: two sessions with the same settings, Risk, game seed, hand number, bot
-   cards, board and chips get the same bot choice whatever your cards and the undealt deck are
-   (`bot_never_sees_your_cards`); off the flop the seed and hand number do not matter either
-   (`bot_ignores_seed_off_flop`; on the flop the bot's random samples start from the hand's
-   seed). More caution never means more calls
+   sees your cards: two sessions with the same settings, Risk, bot cards, board and chips get
+   the same bot choice whatever your cards, the undealt deck, the game seed and the hand number
+   are (`bot_never_sees_your_cards`); the bot ignores the seed on every street, the flop
+   included, whose random deals start from a seed made only from the bot's own cards and the
+   board (`bot_ignores_seed`). More caution never means more calls
    (`more_risk_takes_fewer_gambles`, `risk_monotone`, `botDecide_risk_monotone`). On the river
    it bets exactly its value hands and its chosen bluffs (`bot_bets_its_set`,
    `botDecide_river_follows_set`), with the set ranked strongest first

@@ -71,9 +71,11 @@ input (`botDecide_eq`, true by definition).
   `npx --yes tsx@4.20.6 scripts/gen-preflop.ts`. `engine/Engine/PreflopData.lean` is
   generated from it by `npx --yes tsx@4.20.6 scripts/gen-preflop-lean.ts`. Never edit it by
   hand.
-- **The flop count is an estimate.** It uses 1,000 random deals from the hand's seed, with
-  the same random number generator as the TypeScript (mulberry32). The same seed always
-  gives the same counts.
+- **The flop count is an estimate.** It uses 1,000 random deals with the same random number
+  generator as the TypeScript (mulberry32). The deals start from a seed made only from the
+  bot's own cards and the board (`flopSampleSeed`), not the game's seed, so the same cards
+  always give the same counts and the estimate cannot depend on the shuffle
+  (`bot_ignores_seed`).
 - **The turn and river counts are exact.** The turn counts all 45,540 (river card, opponent
   hand) pairs. This is fixed, not chosen by machine speed. It takes 0.67 to 0.93 s per
   decision on 8 cores (the compiled engine, Oct 31, 2026). Hands are scored with the spec's
