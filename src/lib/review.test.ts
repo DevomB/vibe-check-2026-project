@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { LeanEvent, LeanReview, ReviewDecision } from "@/lean/protocol";
+import type { LeanEvent, LeanHands, LeanReview, ReviewDecision } from "@/lean/protocol";
 import { describeEvents } from "@/hooks/useGame";
 import {
   ANY_HAND_NOTE,
@@ -9,8 +9,10 @@ import {
   formatBb,
   formatPct,
   gradedCoach,
+  handsVerdict,
   isRiverSetGrade,
   labelCounts,
+  moveCoach,
   movesFromReview,
   noGradeReason,
   selectableMoves,
@@ -234,5 +236,56 @@ describe("noGradeReason", () => {
   it("falls back when the events are not known, or the hand had a call or fold that faced a bet", () => {
     expect(noGradeReason(null, 0)).toBe(reason("This hand had no such decision."));
     expect(noGradeReason(EVENTS, 0)).toBe(reason("This hand had no such decision."));
+  });
+});
+
+describe("the hands in a review", () => {
+  const tripsOnBoard = {
+    board: ["7c", "7d", "7h", "Ks", "2c"],
+    you: { cards: ["9c", "4d"], hand: "Three of a Kind", best: ["7c", "7d", "7h", "Ks", "9c"], cards_used: 1 },
+    bot: { cards: ["Kh", "Kd"], hand: "Full House", best: ["7c", "7d", "7h", "Kh", "Kd"], cards_used: 2 },
+    stronger: "bot",
+  } as LeanHands;
+
+  it("names both hands and who was stronger", () => {
+    expect(handsVerdict(tripsOnBoard, "Mia")).toBe("Mia's full house was stronger than your three of a kind.");
+  });
+
+  it("says when the board alone made your hand", () => {
+    const boardPlays = { ...tripsOnBoard, you: { ...tripsOnBoard.you, best: ["7c", "7d", "7h", "Ks", "2c"], cards_used: 0 } } as LeanHands;
+    expect(handsVerdict(boardPlays, "Mia")).toBe(
+      "Mia's full house was stronger than your three of a kind. Your three of a kind was all on the board, so Mia had it too: your own cards did not play.",
+    );
+  });
+
+  it("uses starting hands before the flop", () => {
+    const preflop = {
+      board: [],
+      you: { cards: ["7d", "2s"], hand: null, best: null, cards_used: 0 },
+      bot: { cards: ["Ts", "Ks"], hand: null, best: null, cards_used: 0 },
+      stronger: null,
+    } as LeanHands;
+    expect(handsVerdict(preflop, "Mia")).toBe("Before the flop: you held Seven-Two offsuit, Mia held King-Ten suited.");
+  });
+});
+
+describe("the pot-odds check on your other moves", () => {
+  const base = { street: "flop", label: null, worth_bb: null, equity_had: null, equity_needed: null, hand_then: "Pair" } as const;
+
+  it("calls a call sound when the hand wins more often than the price", () => {
+    const c = moveCoach({ ...base, your_action: "call", win_chance: 0.62, price: 0.25 }, ["Kc", "9d"])!;
+    expect(c.held).toBe("You held a Pair: about 62% to win against a random hand.");
+    expect(c.sound).toBe(true);
+  });
+
+  it("flags a fold that gave up a good price", () => {
+    const c = moveCoach({ ...base, your_action: "fold", win_chance: 0.62, price: 0.25 }, ["Kc", "9d"])!;
+    expect(c.verdict).toBe("A call cost 25% of the pot after calling, less than your hand's chances: folding gave up a good price.");
+    expect(c.sound).toBe(false);
+  });
+
+  it("says nothing it cannot back up when there was no price", () => {
+    const c = moveCoach({ ...base, your_action: "check", win_chance: 0.4, price: null }, ["Kc", "9d"])!;
+    expect(c.verdict).toBeNull();
   });
 });

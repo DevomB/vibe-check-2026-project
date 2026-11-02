@@ -139,11 +139,41 @@ export interface ReviewDecision {
   equity_had: number | null;
   /** The chance needed for a call to break even, 0 to 1. */
   equity_needed: number | null;
+  /** The name of your best hand when you moved, like "Pair"; null before the flop. */
+  hand_then?: string | null;
+  /** Your chance to win against one random hand then, 0 to 1 (ties count half), worked out as the bot does. */
+  win_chance?: number | null;
+  /** The share of the pot after a call that calling would cost: call / (pot + call). Null with no bet to face. */
+  price?: number | null;
+}
+
+/** One player's hand in a review (`handSummaryJson` in engine/Engine/Protocol.lean). */
+export interface LeanHandSummary {
+  cards: Card[];
+  /** The name of the best five-card hand, like "Full House"; null before the flop. */
+  hand: string | null;
+  /** The five cards that make it; null before the flop. */
+  best: Card[] | null;
+  /** How many of the player's own two cards the best hand uses: 0 means the board alone makes it. */
+  cards_used: number;
+}
+
+/** Both players' hands, sent once the hand is over. The bot's cards are always included. */
+export interface LeanHands {
+  board: Card[];
+  you: LeanHandSummary;
+  bot: LeanHandSummary;
+  /** Whose best hand is stronger on the final board; null before the flop. */
+  stronger: "you" | "bot" | "tie" | null;
 }
 
 export interface LeanReview {
   hand: number;
   decisions: ReviewDecision[];
+  /** Both players' cards and hands. Null while the hand is played (and in older replies). */
+  hands?: LeanHands | null;
+  /** The bot's best hand when it made each move, in order (null entries before the flop). */
+  bot_hands?: (string | null)[] | null;
   /** The bot's detailed reason for each of its moves in this hand. Null while the hand is still being played. */
   bot_reasons: string[] | null;
 }

@@ -1,4 +1,7 @@
 name = "poker"
+# Only one executable can be a default target: `lake check` imports every default target into
+# one environment, and two program roots clash (each has `main`, and KuhnServe's stateJson
+# collided with Engine.Protocol's). The Makefile builds `kuhn-serve` as a separate step.
 defaultTargets = ["Engine", "poker"]
 
 # The Lean engine. Human-owned specs live in Poker/Spec/; keep them short and reviewable.
@@ -32,3 +35,13 @@ root = "RiverBench"
 [[lean_exe]]
 name = "difftest"
 root = "DiffTest"
+
+# Play Kuhn poker in the terminal against the proven equilibrium bot (Engine/KuhnGame.lean).
+[[lean_exe]]
+name = "kuhn"
+root = "KuhnMain"
+
+# Kuhn poker for the web page (/kuhn): JSON lines in and out, like the Hold'em program.
+[[lean_exe]]
+name = "kuhn-serve"
+root = "KuhnServe"

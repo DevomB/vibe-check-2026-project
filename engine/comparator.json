@@ -101,7 +101,16 @@
     "picks_one_to_one",
     "each_order_once",
     "shuffle_uses_64_bits",
-    "fewer_seeds_than_orders"
+    "fewer_seeds_than_orders",
+    "seedPicks_eq",
+    "genState_injective",
+    "genState_onto",
+    "mixSeed_injective",
+    "mixSeed_onto",
+    "every_number_once",
+    "game_never_freezes",
+    "bot_never_sees_your_cards",
+    "bot_ignores_seed_off_flop"
   ],
   "permitted_axioms": [
     "propext",

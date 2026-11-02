@@ -8,7 +8,7 @@
  */
 
 /** The ids the drawer can be opened at. The review uses "review", "risk" and "hindsight". */
-export type GuaranteeId = "chips" | "cards" | "legal" | "risk" | "review" | "equity" | "bluff" | "bluffcatcher" | "equilibrium" | "hindsight" | "ends";
+export type GuaranteeId = "chips" | "cards" | "legal" | "nopeek" | "risk" | "review" | "equity" | "bluff" | "bluffcatcher" | "equilibrium" | "hindsight" | "ends";
 
 export interface Guarantee {
   id: GuaranteeId;
@@ -65,6 +65,7 @@ export const GUARANTEES: readonly Guarantee[] = [
       "A hand only goes to a showdown with all 5 board cards.",
       "The shuffle picks the next card from the cards that are left, at a place given by a number from a seeded generator. With n different cards there are n! lists of picks, and each order of the deck comes from exactly one of them. So if the picks are fair, every order of the deck has the same chance: 1 in n!.",
       "The shuffle reads only 64 bits of its seed, and 2^64 is less than 52!. Together, those two facts mean most of the 52! orders of a deck can never come out.",
+      "The generator spreads its numbers perfectly evenly over a full cycle: its step visits all 2^64 states once each, and its scrambling never maps two states to the same number. So among the first 2^64 numbers from any seed, every 64-bit number comes out exactly once.",
     ],
     theorems: [
       "shuffle_same_cards",
@@ -82,10 +83,16 @@ export const GUARANTEES: readonly Guarantee[] = [
       "each_order_once",
       "shuffle_uses_64_bits",
       "fewer_seeds_than_orders",
+      "seedPicks_eq",
+      "genState_injective",
+      "genState_onto",
+      "mixSeed_injective",
+      "mixSeed_onto",
+      "every_number_once",
     ],
     assumes: ["The game started as a new game and then changed only by moves and new hands that the engine accepted."],
     limits: [
-      "It does not prove the generator's numbers are random. They come from a fixed rule (SplitMix64), so the same seed always deals the same cards. That is trusted, not proved.",
+      "It does not prove the generator's numbers are unpredictable, or that one number gives no hint about the next. Those are statistical properties of a fixed rule (SplitMix64), checked by tests, not proofs. The same seed always deals the same cards.",
       "Fewer seeds than orders means the shuffle cannot reach every order, and it does not say the orders it can reach come out equally often.",
     ],
   },
@@ -120,6 +127,20 @@ export const GUARANTEES: readonly Guarantee[] = [
     ],
     limits: [
       "The browser and the Node bridge between the page and the engine are tested, not proved.",
+    ],
+  },
+  {
+    id: "nopeek",
+    code: "T3b",
+    title: "The bot cannot see your cards",
+    says: [
+      "The bot decides from its own two cards, the board, the chips, its settings and the hand's seed. Two games that differ only in your cards or the cards left in the deck get exactly the same bot move.",
+      "Before the flop, on the turn and on the river, the bot does not use the seed either, so its move there does not depend on how the deck was shuffled at all.",
+    ],
+    theorems: ["bot_never_sees_your_cards", "bot_ignores_seed_off_flop"],
+    assumes: ["It is about the engine's own game session, where the bot's move is worked out."],
+    limits: [
+      "On the flop the bot estimates its chances from random deals that start from the hand's seed, and the same seed shuffled the real deck. It never reads the deck or your cards, but the two are not proved independent.",
     ],
   },
   {
@@ -356,8 +377,9 @@ export const GUARANTEES: readonly Guarantee[] = [
     says: [
       "From any game the engine can reach, every run of accepted moves in one hand has at most 200 moves.",
       "So no hand goes on forever.",
+      "The game can never freeze: while a hand is going, the player to act always has a legal move, and the engine accepts it.",
     ],
-    theorems: ["every_hand_ends"],
+    theorems: ["every_hand_ends", "game_never_freezes"],
     assumes: ["The game started as a new game and then changed only by moves and new hands that the engine accepted."],
     limits: [
       "It counts moves in one hand. It does not bound how many hands a game has.",

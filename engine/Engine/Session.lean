@@ -40,6 +40,12 @@ structure Decision where
   graded : Option (RiverSpot × RiverChoice) := none
   /-- For any other call or fold that answers a bet: what to grade against any hand. -/
   facing : Option (FacingSpot × RiverChoice) := none
+  /-- The board when the move was made. For the review's hand summary. -/
+  board : List Card := []
+  /-- The chips the human could win by calling then: the pot with both bets, as for the bot. -/
+  pot : Nat := 0
+  /-- The chips the human had to add to call; 0 with no bet to face. -/
+  toCall : Nat := 0
 
 /-- What is kept about one hand for its review: the human's moves and the bot's reasons. -/
 structure HandLog where
@@ -50,6 +56,9 @@ structure HandLog where
   hand's seed, the bot's cards, the board, the chips) and the move made. The review's Risk
   explorer (`Engine/Explain.lean`) decides again from these; nothing is worked out here. -/
   botMoves : Array (Nat × List Card × List Card × State × Action) := #[]
+  /-- Once the next hand is dealt: the human's cards, the bot's cards and the final board.
+  (While a hand is played, `Session.handCards` reads them from the game.) -/
+  cards : Option (List Card × List Card × List Card) := none
 
 /-- What the game program remembers between commands. -/
 structure Session where
@@ -204,7 +213,9 @@ def Session.dealt (s : Session) (g : Game) (stacks : Player → Nat) : Session :
       ++ streetEvents [] h.board ++ winEvents won
     winnings := won
     riverSpot := none
-    logs := s.logs.push {} }
+    -- Keep the finished hand's cards for its review, then start the new hand's log.
+    logs := (s.logs.modify (s.logs.size - 1) fun l =>
+      { l with cards := some (s.game.hand.hole human, s.game.hand.hole bot, s.game.hand.board) }).push {} }
   Session.runBot botFuel s
 
 /-- A new game at the player's Risk, which must be 0 to 100. The bot's two internal
@@ -230,7 +241,8 @@ def Session.humanAct (s : Session) (a : Action) : Except String Session := do
     | none, .call => if h.chips.toCall > 0 then some (facingSpotOf h, RiverChoice.call) else none
     | none, .fold => if h.chips.toCall > 0 then some (facingSpotOf h, .fold) else none
     | _, _ => none
-  let d : Decision := { street := h.street, action := moveWord h.chips a, graded, facing }
+  let d : Decision := { street := h.street, action := moveWord h.chips a, graded, facing,
+                        board := h.board, pot := h.chips.potToWin, toCall := h.chips.toCall }
   let next := { next with riverSpot := none }.logHand fun l => { l with decisions := l.decisions.push d }
   return Session.runBot botFuel next
 
@@ -264,6 +276,10 @@ structure ReviewLine where
   verdict : Option RiverVerdict
   /-- The any-hand grade, for any other call or fold that answers a bet. -/
   anyHand : Option RiverVerdict := none
+  /-- The board, pot and call when the move was made (see `Decision`). -/
+  board : List Card := []
+  pot : Nat := 0
+  toCall : Nat := 0
 
 /-- The review of hand `n`: every move the human made in it, in order, with a grade for each
 graded one. Reading a review changes nothing and uses no randomness. -/
@@ -273,4 +289,12 @@ def Session.review (s : Session) (n : Nat) : Except String (Array ReviewLine) :=
   return log.decisions.map fun d =>
     { street := d.street, action := d.action,
       verdict := d.graded.map fun (spot, choice) => reviewRiver spot choice,
-      anyHand := d.facing.map fun (spot, choice) => reviewAnyHand spot choice }
+      anyHand := d.facing.map fun (spot, choice) => reviewAnyHand spot choice,
+      board := d.board, pot := d.pot, toCall := d.toCall }
+
+/-- The cards of hand `n`: the human's, the bot's and the board. For the hand being played (or
+just finished) they come from the game; for earlier hands, from the log. -/
+def Session.handCards (s : Session) (n : Nat) : Option (List Card × List Card × List Card) :=
+  if n = s.game.handNo then
+    some (s.game.hand.hole human, s.game.hand.hole bot, s.game.hand.board)
+  else (s.logs[n - 1]?).bind (·.cards)

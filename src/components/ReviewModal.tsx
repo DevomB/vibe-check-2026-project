@@ -7,10 +7,14 @@ import {
   type MoveRow,
   type Street,
   boardAt,
+  botCoach,
   buildMoveList,
   gradedCoach,
+  handWords,
+  handsVerdict,
   isRiverSetGrade,
   labelCounts,
+  moveCoach,
   movesFromReview,
   noGradeReason,
   selectableMoves,
@@ -51,6 +55,8 @@ interface Props {
 const STREET_NAME: Record<Street, string> = { preflop: "Preflop", flop: "Flop", turn: "Turn", river: "River" };
 
 const NOT_GRADED = "Not graded: Lean grades your calls and folds when you face a bet.";
+/** Replaces NOT_GRADED under the pot-odds advice on one of your moves (`moveCoach`). */
+const ROUGH_GUIDE = "A rough guide, not a grade: Lean grades your calls and folds when you face a bet.";
 
 function Cards({ cards, slots = 0 }: { cards: readonly Card[]; slots?: number }) {
   return (
@@ -144,14 +150,19 @@ export function ReviewModal({ review, game = null, peeked = false, hideSliderInf
   const at = row?.at ?? null;
   const board = fromEvents ? boardAt(streets, at) : sameHand ? game.lean.board : [];
   const street = fromEvents ? streetAt(streets, at) : (row?.decision?.street ?? null);
-  const yourCards = sameHand ? (game.lean.players[human]?.cards ?? []) : [];
-  const shownBotCards = sameHand && game.lean.result?.showdown ? (game.lean.players[1 - human]?.cards ?? null) : null;
+  const hands = review.hands ?? null;
+  const yourCards = hands?.you.cards ?? (sameHand ? (game.lean.players[human]?.cards ?? []) : []);
+  // The review always shows the bot's cards once the hand is over.
+  const shownBotCards = hands?.bot.cards ?? (sameHand && game.lean.result?.showdown ? (game.lean.players[1 - human]?.cards ?? null) : null);
   // Mystery: hands finished before the guess were decided without knowing the bot's Risk.
   const decidedBeforeReveal = game?.mode.kind === "mystery" && game.mode.reveal !== null && review.hand <= (game.mode.handsBeforeReveal ?? 0);
 
   const coach = row?.decision ? gradedCoach(row.decision) : null;
   const reasons = hideSliderInfo ? null : review.bot_reasons;
   const botReason = row && row.botMove !== null && reasons ? (reasons[row.botMove] ?? null) : null;
+  const yourMove = row && row.player === human && row.decision && !coach ? moveCoach(row.decision, yourCards) : null;
+  const botMove =
+    row && row.botMove !== null ? botCoach(explorer?.[row.botMove] ?? null, review.bot_hands?.[row.botMove] ?? null, hands?.bot.cards ?? [], botName) : null;
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -185,6 +196,22 @@ export function ReviewModal({ review, game = null, peeked = false, hideSliderInf
           </p>
         )}
 
+        {hands && (
+          <section className={styles.hands} aria-label="The hands">
+            <div className={styles.handRow}>
+              <span className={styles.handWho}>You</span>
+              <Cards cards={hands.you.cards} />
+              <b>{handWords(hands.you)}</b>
+            </div>
+            <div className={styles.handRow}>
+              <span className={styles.handWho}>{botName}</span>
+              <Cards cards={hands.bot.cards} />
+              <b>{handWords(hands.bot)}</b>
+            </div>
+            <p className={styles.handsVerdict}>{handsVerdict(hands, botName)}</p>
+          </section>
+        )}
+
         <div className={styles.main}>
           <div className={styles.side}>
             <EquityBar had={coach ? (row?.decision?.equity_had ?? null) : null} needed={coach ? (row?.decision?.equity_needed ?? null) : null} />
@@ -210,7 +237,7 @@ export function ReviewModal({ review, game = null, peeked = false, hideSliderInf
                     </div>
                   )}
                 </div>
-                {shownBotCards && <p className={styles.spotNote}>Shown at the end. The grade does not use them.</p>}
+                {shownBotCards && <p className={styles.spotNote}>Shown after the hand. The grade never uses them.</p>}
               </div>
             )}
           </div>
@@ -240,14 +267,24 @@ export function ReviewModal({ review, game = null, peeked = false, hideSliderInf
                     <b>{row.text}.</b>
                   </p>
                   {row.player === human ? (
-                    <p className="muted">{NOT_GRADED}</p>
-                  ) : botReason ? (
-                    <p>
-                      Its reason: <q>{botReason}</q>
-                    </p>
-                  ) : hideSliderInfo ? (
-                    <p className="muted">The bot&apos;s reasons stay hidden until you guess its Risk.</p>
-                  ) : null}
+                    <>
+                      {yourMove && <p>{yourMove.held}</p>}
+                      {yourMove?.verdict && <p className={yourMove.sound === false ? styles.offPrice : undefined}>{yourMove.verdict}</p>}
+                      <p className="muted">{yourMove?.verdict ? ROUGH_GUIDE : NOT_GRADED}</p>
+                    </>
+                  ) : (
+                    <>
+                      {botMove?.held && <p>{botMove.held}</p>}
+                      {botReason ? (
+                        <p>
+                          Its reason: <q>{botReason}</q>
+                        </p>
+                      ) : hideSliderInfo ? (
+                        <p className="muted">The bot&apos;s reasons stay hidden until you guess its Risk.</p>
+                      ) : null}
+                      {botMove?.textbook && <p className="muted">{botMove.textbook}</p>}
+                    </>
+                  )}
                 </>
               ) : gradedCount > 0 ? (
                 <p>Step through the hand with the arrows below or the ← → keys. Each graded move carries its badge.</p>
@@ -308,6 +345,8 @@ export function ReviewModal({ review, game = null, peeked = false, hideSliderInf
           </div>
         </div>
 
+        <details className={styles.more}>
+          <summary>More detail: the bot&apos;s betting range, its Risk and all its reasons</summary>
         {!hideSliderInfo && range && (
           <section className={styles.section}>
             <RangeViewer range={range} onShowProof={onShowProof} />
@@ -339,6 +378,8 @@ export function ReviewModal({ review, game = null, peeked = false, hideSliderInf
             </>
           )}
         </section>
+
+        </details>
 
         <div className="modal-actions">
           <button className="btn btn-primary" onClick={onClose}>

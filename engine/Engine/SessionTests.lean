@@ -89,6 +89,19 @@ def foldThenNext := [start42, "{\"cmd\":\"act\",\"action\":\"fold\"}", "{\"cmd\"
   !isError r[3]! && stateOf r[3]! == stateOf r[4]! && ds.size == 1
     && field d "street" == toJson "preflop" && field d "your_action" == toJson "fold"
     && field d "model" == toJson "any-hand" && field d "label" != Json.null
+    -- 7-2 offsuit before the flop: no named hand yet, 34.5% against a random hand, and
+    -- calling 5 to win 15 would have cost a quarter of the pot after the call. The grade
+    -- uses the same 34.5%, so folding gave up 0.19 big blinds: Good.
+    && field d "hand_then" == Json.null && field d "win_chance" == Json.num ⟨345, 3⟩
+    && field d "price" == Json.num ⟨250, 3⟩ && field d "equity_had" == Json.num ⟨345, 3⟩
+    && field d "label" == toJson "Good"
+
+-- Once the hand is over, its review shows both players' cards, the bot's included.
+#guard
+  let r := runLines (foldThenNext ++ ["{\"cmd\":\"review\",\"hand\":1}"])
+  let hands := field (field r[3]! "review") "hands"
+  field (field hands "you") "cards" == Json.arr #["7d", "2s"]
+    && field (field hands "bot") "cards" == Json.arr #["Ts", "Ks"]
 
 -- No review for a hand not dealt yet, or hand 0.
 #guard (runLines (foldThenNext ++ ["{\"cmd\":\"review\",\"hand\":3}"])).map isError

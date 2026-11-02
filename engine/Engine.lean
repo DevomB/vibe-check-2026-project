@@ -36,6 +36,11 @@ import Engine.Proofs.Board
 import Engine.Proofs.Accepted
 import Engine.Proofs.Buttons
 import Engine.Proofs.GameHands
+import Engine.Proofs.Liveness
+import Engine.Proofs.NoPeek
+import Engine.Proofs.Kuhn
+import Engine.KuhnGame
+import Engine.Proofs.KuhnGame
 import Engine.Proofs.Deck
 import Engine.Proofs.ReviewSpec
 import Engine.Proofs.Review
@@ -50,3 +55,4 @@ import Engine.Proofs.Explain
 import Engine.Proofs.BluffCatcher
 import Engine.Proofs.Equilibrium
 import Engine.Proofs.Shuffle
+import Engine.Proofs.Generator

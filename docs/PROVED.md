@@ -1,9 +1,10 @@
 # What is proved, and what is not
 
-Sun Nov 1, 2026, main at 3e01c5b. Every theorem named here is stated in
+Sun Nov 1, 2026, main after the no-freeze, no-peek merge. Every theorem named here is stated in
 [`engine/Checks/Challenge.lean`](../engine/Checks/Challenge.lean), proved under
-`engine/Engine/Proofs/`, listed in [`engine/comparator.json`](../engine/comparator.json) (100
-names since the bluff-catcher, equilibrium, Risk 0 and 100, and shuffle-fairness theorems were added; see [GUARANTEES.md](GUARANTEES.md) for the full
+`engine/Engine/Proofs/`, listed in [`engine/comparator.json`](../engine/comparator.json) (109
+names since the bluff-catcher, equilibrium, Risk 0 and 100, shuffle-fairness, generator and
+no-freeze, no-peek theorems were added; see [GUARANTEES.md](GUARANTEES.md) for the full
 table), and checked on every push to main by `checks/audit.sh`, `lake comparator` and
 `lake check`, using only the three standard axioms. The README's "What we trust" section lists
 the definitions a reader must still read. Most important first.
@@ -14,7 +15,9 @@ the definitions a reader must still read. Most important first.
    `startHand_keeps_chips`, `chips_always_1000`). No card is dealt twice (`shuffle_same_cards`,
    `shuffle_fair`, `no_card_dealt_twice`). Only legal moves are accepted and illegal ones are
    rejected (`accepted_move_is_legal`, `illegal_move_rejected`), and whoever is to act can
-   always act (`player_to_act_may_act`). Every hand ends within 200 moves (`every_hand_ends`).
+   always act (`player_to_act_may_act`), and the game can never freeze: while a hand is not
+   over there is a legal move, folding at least, and the engine accepts it
+   (`game_never_freezes`). Every hand ends within 200 moves (`every_hand_ends`).
    The right player wins the pot: at a showdown the better hand ends with more chips and the
    other with fewer, a tie leaves both where they were, and a fold pays the player who did not
    fold (`showdown_pays_better_hand`, `fold_pays_other_player`, `fold_records_other_player`).
@@ -39,7 +42,12 @@ the definitions a reader must still read. Most important first.
    first), it calls exactly when the call pays at its caution (`callPays_iff_takes`,
    `bot_calls_only_when_worth_it`, `bot_folds_only_when_not_worth_it`); those theorems assume
    the call is at most the pot, which `viewOf_toCall_le_pot` proves for every view the bot
-   gets. A call that cannot lose chips is always taken (`no_loss_always_taken`). More caution never means more calls
+   gets. A call that cannot lose chips is always taken (`no_loss_always_taken`). The bot never
+   sees your cards: two sessions with the same settings, Risk, game seed, hand number, bot
+   cards, board and chips get the same bot choice whatever your cards and the undealt deck are
+   (`bot_never_sees_your_cards`); off the flop the seed and hand number do not matter either
+   (`bot_ignores_seed_off_flop`; on the flop the bot's random samples start from the hand's
+   seed). More caution never means more calls
    (`more_risk_takes_fewer_gambles`, `risk_monotone`, `botDecide_risk_monotone`). On the river
    it bets exactly its value hands and its chosen bluffs (`bot_bets_its_set`,
    `botDecide_river_follows_set`), with the set ranked strongest first
@@ -110,6 +118,14 @@ the definitions a reader must still read. Most important first.
    together, most of the 52! deck orders can never come out (a consequence of the two, not a
    separate theorem).
 
+10. **The generator spreads its numbers evenly (randomness, part 2).** The numbers the shuffle
+    uses are the SplitMix64 generator's numbers (`seedPicks_eq`). Its step visits all 2^64
+    states, each once, before repeating (`genState_injective`, `genState_onto`), and its
+    scrambling never maps two states to the same number and reaches every 64-bit number
+    (`mixSeed_injective`, `mixSeed_onto`; the proof writes down the exact inverse). So among the
+    first 2^64 numbers from any seed, every 64-bit number comes out exactly once
+    (`every_number_once`): no number is favoured.
+
 ## Not proved, most important first
 
 1. **That the bot plays well.** No theorem about winning or exploitability over whole
@@ -127,9 +143,10 @@ the definitions a reader must still read. Most important first.
    seeded deals. Only the turn and river counts are exact.
 
 4. **Randomness.** The shuffle method is proved fair (item 9): fair picks give every deck order
-   the same chance. What is not proved is that the picks are fair. They come from a fixed rule
-   (SplitMix64) on purpose, so a game can be replayed; "random" is not something a fixed rule
-   can be proved to be. Two smaller gaps: each pick is the generator's 64-bit number modulo
+   the same chance. The generator's numbers are proved perfectly even over a
+   full cycle (item 10). What is not proved is that they look unpredictable: that one number
+   gives no hint about the next. That is a statistical property of a fixed rule (SplitMix64,
+   chosen so a game can be replayed), which tests check and proofs cannot. Two smaller gaps: each pick is the generator's 64-bit number modulo
    the cards left, which favours some places by at most one part in 2^64 / 52 (not proved),
    and with only 2^64 seeds most deck orders never come out (proved, item 9).
 
@@ -143,7 +160,14 @@ the definitions a reader must still read. Most important first.
    betting so far, then reprove `bluff_frequency`, `bot_bets_its_set` and
    `botDecide_river_follows_set`.
 
-7. **Small gaps.** The text of the bot's reasons is not proved faithful to the decision (only
+7. **Kuhn poker is proved but not registered.** The Kuhn poker game and its bot
+   (`Engine/KuhnGame.lean`, proofs in `Engine/Proofs/Kuhn.lean`, `KuhnSpec.lean` and
+   `Proofs/KuhnGame.lean`) are kernel-checked at build time, with examples and `#print axioms`,
+   but none of those theorems is in `Checks/Challenge.lean` or `comparator.json`, so Comparator
+   and the audit's axiom check do not cover them yet. Their "cannot be beaten on average" claim
+   assumes fair random numbers for the deals and the bot's rolls.
+
+8. **Small gaps.** The text of the bot's reasons is not proved faithful to the decision (only
    that the quoted Risk does not change the move). The river bluff reason still quotes the
    internal share. Session state beyond the game, such as the hand logs, has no theorems. The
    turn counts run 46 parallel tasks; the compiler is trusted to run them. The real-board

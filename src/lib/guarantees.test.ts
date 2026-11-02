@@ -16,11 +16,12 @@ describe("the guarantees in the Proofs drawer", () => {
     expect(GUARANTEES.flatMap((g) => g.theorems)).toContain(name);
   });
 
-  it("has one entry per guarantee, T1 to T9 with T7b and T7c, in order", () => {
+  it("has one entry per guarantee, T1 to T9 with T3b, T7b and T7c, in order", () => {
     expect(GUARANTEES.map((g) => `${g.code} ${g.id}`)).toEqual([
       "T1 chips",
       "T2 cards",
       "T3 legal",
+      "T3b nopeek",
       "T4 risk",
       "T5 review",
       "T6 equity",
